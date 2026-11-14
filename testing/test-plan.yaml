@@ -258,7 +258,7 @@ tests:
     kind: standard
     wave: 3
     phase: 3
-    tier: bench
+    tier: bench+   # usa bench-ap-internet (releases reales de GitHub)
     verifies: [clima:T17, clima:T19, clima:FR-OTA-02, clima:FR-OTA-06, FR-PER-02]
     needs: [bench-wifi-ap, bench-ap-internet, bench-mqtt-broker, github-test-releases, bench-driver, bench-serial-monitor, dut-board]
     expect: >
@@ -269,7 +269,7 @@ tests:
     kind: standard
     wave: 3
     phase: 3
-    tier: bench
+    tier: bench+   # usa bench-ap-internet (releases reales de GitHub)
     verifies: [clima:FR-OTA-07, FR-OTA-A2]
     needs: [bench-wifi-ap, bench-ap-internet, bench-mqtt-broker, github-test-releases, bench-driver, bench-serial-monitor, dut-board]
     expect: >
@@ -280,7 +280,7 @@ tests:
     kind: standard
     wave: 3
     phase: 3
-    tier: bench
+    tier: bench+   # usa bench-ap-internet (releases reales de GitHub)
     verifies: [FR-OTA-A1]
     needs: [bench-wifi-ap, bench-ap-internet, bench-mqtt-broker, bench-lazos-fuga, nodo-io-montaje, bench-driver, bench-serial-monitor, dut-board]
     expect: >
@@ -302,4 +302,6 @@ tier_checks:
   host: ci.yml/host-tests (tier_smoke)
   other: ci.yml/config-checks + build.yml/Verify build constraints (C-HW-01/02/03/08, C-BLD-01…04, C-SEC-A3)
 
-gate_verdicts: []   # [{gate, verdict, date, commit}] — los escribe el checker
+gate_verdicts:   # [{gate, verdict, date, commit}] — los escribe el checker
+  - {gate: 01-load-defined, verdict: OPEN, date: 2026-11-14, commit: c3e5053}
+  - {gate: 02-ai-harnessed, verdict: OPEN, date: 2026-11-14, commit: c3e5053, note: "observación menor: JRN-03.* a bench+ (corregido después)"}
