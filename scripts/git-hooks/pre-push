@@ -64,7 +64,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   [ -f "$ROOT/testing/test-plan.yaml" ] && pre=$(sed -n 's/^    mac: \([0-9a-fA-F:]\{14\}\).*/\1/p' "$ROOT/testing/test-plan.yaml" | head -1 | tr 'A-F' 'a-f')
   # (sin pipefail aquí: un grep sin coincidencias no es un error)
   ajenas=$(set +o pipefail; git log -p --format= $range | grep '^+' | grep -oiE '\b([0-9a-f]{2}:){5}[0-9a-f]{2}\b' | tr 'A-F' 'a-f' \
-           | grep -v '^24:0a:c4:a1:b2:c3$' | { [ -n "$pre" ] && grep -v "^$pre" || cat; } | sort -u | wc -l)
+           | grep -v -e '^24:0a:c4:a1:b2:c3$' -e '^aa:bb:cc:dd:ee:ff$' | { [ -n "$pre" ] && grep -v "^$pre" || cat; } | sort -u | wc -l)
   [ "$ajenas" -eq 0 ] || fail "$ajenas MAC ajena(s) al DUT en los commits que se suben ($range); redáctalas (<mac>)"
 done
 echo "pre-push: $checked commit(s) revisados — gitleaks y $(wc -l < "$patterns") patrón(es) de .env sin hallazgos" >&2
