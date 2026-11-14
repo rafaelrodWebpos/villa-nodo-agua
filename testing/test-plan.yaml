@@ -1,0 +1,106 @@
+# Plan de pruebas — Nodo Agua
+#
+# Propiedad de /build. Cada test declara lo que verifica (verifies: IDs del
+# FSD), lo que necesita (needs: capacidades) y dónde está su ejecutable (impl:).
+# El bloqueo se CALCULA a partir de needs × capabilities; nunca se escribe.
+# Los resultados (status, commit, date) los escribe quien ejecuta el test.
+
+project: villa-nodo-agua
+fsd: docs/Functionality/FSD-nodo-agua.md
+fsd_version: 0.3.0
+fsd_inherits: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.9   # clima:<ID>
+testing_standard: docs/Method/standards/testing.md
+debugging_agenda: testing/debugging-agenda.md
+gates_dir: testing/gates/
+
+dut:
+  board: Waveshare ESP32-S3-DEV-KIT-N8R8, módulo ESP32-S3-WROOM-1 N8R8 (clima:C-HW-01) + E/S de FSD §2.2
+  target: esp32s3
+  flash: 8MB (clima:C-HW-02)
+  slot: por asignar en /commission
+  identity: por leer en /commission (la MAC no se publica salvo que la placa sea unidad permanente del banco, NFR-SEC-01)
+  boot_marker: "Init complete"            # última línea de app_main (contrato del testbench)
+  bench_image_marker: NODO-BENCH-IMAGE    # solo en la imagen de banco (C-LOG-01)
+  efuses: nunca se queman en una placa del banco (C-SEC-A3)
+
+testbench:
+  status: montado (compartido con villa-nodo-clima-piloto)
+  address: no se versiona — el repo es público; se lee de .env (ignorado por git)
+  reported: 2026-11-14   # GET /api/info: ok, build b5623c4, capabilities [bench-ap-internet, bench-sntp-block, bench-dns-override, bench-mqtt-auth, bench-traffic-capture, bench-serial-write]
+  note: >
+    Las capacidades del banco se copian de lo que el banco reporta (y de la
+    declaración del piloto en el mismo banco) y se declaran yes sin prueba
+    propia. Lo que el banco no tiene queda en no con su motivo y su CR-TB.
+
+tiers: [host, target, bench, bench+, field, other, manual]   # FSD §24.0 + convenciones
+
+# ---------------------------------------------------------------------------
+# Capacidades. Banco: copiadas de lo que reporta; un proyecto no las prueba.
+# Proyecto: unproven hasta verlas funcionar aquí; cada unproven que necesita
+# un test de banco es un punto de la agenda de depuración.
+# ---------------------------------------------------------------------------
+capabilities:
+  # --- banco (reportadas) ---
+  bench-flash:            {what: grabar el DUT por /api/flash con los offsets de flash_args, available: yes}
+  bench-chip-info:        {what: leer chip, MAC y flash del DUT (/api/chip/info), available: yes}
+  bench-serial-monitor:   {what: leer la consola del DUT por el slot, available: yes}
+  bench-dual-console:     {what: observar a la vez UART0 y USB-Serial/JTAG, available: no, reason: el banco proxifica un devnode por slot (igual que en el piloto)}
+  bench-udp-log-receiver: {what: receptor UDP 5555 del banco, available: yes}
+  bench-wifi-ap:          {what: SoftAP del banco, available: yes}
+  bench-wifi-ap-outage:   {what: apagar y encender el AP del banco, available: yes}
+  bench-portal-driver:    {what: el banco se une al AP del DUT y maneja el portal, available: yes}
+  bench-portal-dns:       {what: relé HTTP del banco con el DNS del DHCP del DUT, available: no, reason: observado en el piloto el 2026-11-04}
+  bench-mqtt-broker:      {what: broker mosquitto del banco, puerto 1883, available: yes}
+  bench-broker-outage:    {what: parar y arrancar el broker del banco, available: yes}
+  bench-mqtt-auth:        {what: broker con usuario y contraseña, available: yes}
+  bench-operator-prompt:  {what: avisos bloqueantes al operador en la UI del banco, available: yes}
+  bench-ap-internet:      {what: el AP del banco da salida a Internet (nivel bench+), available: yes}
+  bench-sntp-block:       {what: bloquear UDP/123 hacia fuera, available: yes}
+  bench-dns-override:     {what: resolver un host permitido hacia un HTTPS autofirmado, available: yes}
+  bench-traffic-capture:  {what: capturar el tráfico que sale del DUT (FR-SEC-A2), available: yes}
+  bench-serial-write:     {what: escribir en la consola del DUT, available: yes}
+  bench-power-cycle:      {what: cortar y devolver la alimentación del DUT por instrumento, available: no, reason: igual que en el piloto (EN/BOOT por GPIO sin cablear)}
+  bench-driver:           {what: TestbenchDriver en el devcontainer, available: yes, pinned: .devcontainer/Dockerfile (TESTBENCH_COMMIT)}
+
+  # --- banco: capacidades nuevas de este nodo (FSD §3.1) ---
+  bench-lazos-fuga:        {what: 8 lazos en seca/mojada/abierta/corto, available: no, reason: CR-TB-16 — hardware en compras-nodo-agua-banco.md (fin de mes) + fork del banco con puerta S6}
+  bench-finales-valvula:   {what: forzar y cortar los finales de la válvula real, available: no, reason: CR-TB-17 — ídem}
+  bench-entradas-digitales: {what: flotador, red presente y botón local, available: no, reason: CR-TB-18 — ídem}
+  bench-fuente-4-20ma:     {what: corriente programable 0–25 mA en la entrada de nivel, available: no, reason: CR-TB-19 — ídem}
+  bench-tensiones:         {what: 0–5 V en presión y Vbat equivalente, available: no, reason: CR-TB-20 — ídem}
+  bench-senal-pinza:       {what: senoide de 60 Hz de amplitud programable en la entrada de la pinza, available: no, reason: CR-TB-21 — ídem}
+  bench-salidas-dut:       {what: leer IN1, IN2, relé, zumbador y LED con marca de tiempo, available: no, reason: CR-TB-22 — ídem}
+
+  # --- infraestructura propia ---
+  hosted-ci:              {what: runner alojado de GitHub (host, build, escaneo de secretos), available: yes}
+  release-verification:
+    what: journey lanzado por tag contra el artefacto publicado (runner self-hosted en el devcontainer)
+    available: no
+    reason: runner instalado en la imagen pero sin registrar — el registro es una autorización del propietario (scripts/runner/register.sh)
+
+  # --- equipo y pares del proyecto (unproven hasta verlos funcionar aquí) ---
+  dut-board:          {what: la Waveshare del DUT identificada como la unidad del FSD, available: unproven}
+  nodo-io-montaje:    {what: 3 ADS1115 (0x48/0x49/0x4A), puente H, relé, LED, zumbador y botón cableados según FSD §2.2, available: unproven}
+  valvula-real:       {what: válvula de bola de 12 V con finales (C-HW-21) en el banco, available: unproven}
+  sensores-reales:    {what: transductor 4–20 mA con lazo a 24 V, sensor de presión, pinza, flotador y sondas de fuga reales, available: unproven}
+  home-assistant-test: {what: HA de prueba con MQTT hacia el broker del banco (la del piloto), available: unproven}
+  github-test-releases: {what: pre-releases ota-test-* de este repo, available: unproven}
+  field-site:         {what: el nodo instalado con la bomba, la válvula y el HA reales (nivel field), available: unproven}
+
+tests:
+  - id: TIER-HOST
+    shape: unit
+    kind: standard
+    wave: 0
+    phase: 1
+    tier: host
+    verifies: []
+    needs: [hosted-ci]
+    expect: el nivel host compila, enlaza y ejecuta (tier_smoke); no verifica el FSD
+    impl: tests/host/tier_smoke.c
+
+tier_checks:
+  host: ci.yml/host-tests (tier_smoke)
+  other: ci.yml/config-checks + build.yml/Verify build constraints (C-HW-01/02/03/08, C-BLD-01…04, C-SEC-A3)
+
+gate_verdicts: []   # [{gate, verdict, date, commit}] — los escribe el checker

@@ -111,6 +111,19 @@ Heredadas sin cambios: **clima:C-HW-01** (Waveshare ESP32-S3-DEV-KIT-N8R8),
 particiones y **clima:C-BLD-01…04** también se heredan tal cual (dos slots OTA de 3 MB,
 ESP-IDF 6.x, rollback activado).
 
+**Tabla de particiones (normativa).** Es la de clima §2.2, copiada aquí porque la CI la
+lee de este documento (`scripts/ci/build_checks.py`).
+
+| Nombre | Tipo | Subtipo | Offset | Tamaño |
+|---|---|---|---|---|
+| nvs | data | nvs | 0x9000 | 0x6000 (24 KB) |
+| otadata | data | ota | 0xF000 | 0x2000 (8 KB) |
+| phy_init | data | phy | 0x11000 | 0x1000 (4 KB) |
+| ota_0 | app | ota_0 | 0x20000 | 0x300000 (3 MB) |
+| ota_1 | app | ota_1 | 0x320000 | 0x300000 (3 MB) |
+
+- **C-BLD-01** [Must] heredado (clima:C-BLD-01): la tabla de particiones debe ser la anterior.
+
 No se hereda clima:C-HW-04/05/06 (SHT41 y alimentación por USB). Las nuevas son:
 
 | ID | Restricción | Procedencia |

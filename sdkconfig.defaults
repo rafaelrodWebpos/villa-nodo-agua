@@ -1,0 +1,37 @@
+# Nodo Agua — configuración de desarrollo y de banco (fuente; sdkconfig se genera)
+CONFIG_IDF_TARGET="esp32s3"
+
+# C-HW-01/02: 8 MB fijos, sin autodetección
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="8MB"
+
+# C-BLD-01: tabla de particiones del FSD §2.2
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"
+
+# C-HW-03: el firmware no requiere PSRAM
+# CONFIG_SPIRAM is not set
+
+# C-LOG-01 / FR-LOG-01: sin log UDP en producción
+# CONFIG_NODO_UDP_LOG is not set
+# CONFIG_NODO_BENCH_BUILD is not set
+
+# C-HW-08: consola primaria en UART0 (CH343) y copia por USB-Serial/JTAG
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG=y
+
+# NFR-WDT-01 (D16): watchdog de tareas de 30 s que reinicia (reset = task_wdt)
+CONFIG_ESP_TASK_WDT_EN=y
+CONFIG_ESP_TASK_WDT_INIT=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=30
+CONFIG_ESP_TASK_WDT_PANIC=y
+
+# C-BLD-04 (Fase 3, SEC-10): rollback de aplicación en el bootloader; FR-OTA-07 y T23
+# dependen de él. El anti-rollback por eFuse no se adopta (FSD §19.3).
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+
+# C-SEC-A3 (P14): sin Secure Boot ni cifrado de flash en placas de desarrollo y de banco.
+# La variante de producción firmada se define antes de la Fase 3 (FSD §22).
+# CONFIG_SECURE_BOOT is not set
+# CONFIG_SECURE_FLASH_ENC_ENABLED is not set
