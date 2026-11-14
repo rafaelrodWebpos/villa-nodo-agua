@@ -7,8 +7,8 @@
 
 project: villa-nodo-agua
 fsd: docs/Functionality/FSD-nodo-agua.md
-fsd_version: 0.3.0
-fsd_inherits: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.9   # clima:<ID>
+fsd_version: 0.3.1
+fsd_inherits: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.9 @ ddf80167e0ed1a0ef72e2783d02265e1eac7e5aa   # clima:<ID>
 testing_standard: docs/Method/standards/testing.md
 debugging_agenda: testing/debugging-agenda.md
 gates_dir: testing/gates/
@@ -17,7 +17,7 @@ dut:
   board: Waveshare ESP32-S3-DEV-KIT-N8R8, módulo ESP32-S3-WROOM-1 N8R8 (clima:C-HW-01) + E/S de FSD §2.2
   target: esp32s3
   flash: 8MB (clima:C-HW-02)
-  slot: por asignar en /commission
+  slot: SLOT2   # GET /api/devices 2026-11-14: SLOT2 absent — conectarla es la fila 1 de la agenda; segunda Waveshare del banco; solo de banco: nunca se instala ni se le queman eFuses (propietario, 2026-11-14)
   identity: por leer en /commission (la MAC no se publica salvo que la placa sea unidad permanente del banco, NFR-SEC-01)
   boot_marker: "Init complete"            # última línea de app_main (contrato del testbench)
   bench_image_marker: NODO-BENCH-IMAGE    # solo en la imagen de banco (C-LOG-01)
@@ -32,6 +32,16 @@ testbench:
     declaración del piloto en el mismo banco) y se declaran yes sin prueba
     propia. Lo que el banco no tiene queda en no con su motivo y su CR-TB.
 
+bench_coordination:   # condición del propietario (2026-11-14): el piloto tiene prioridad
+  rule: no usar el banco mientras villa-nodo-clima-piloto tenga pruebas en curso
+  before_each_bench_session:
+    - comprobar con el propietario o en la UI del banco que no hay una sesión de pruebas del piloto activa
+    - GET /api/devices (con el token de .env) y TestbenchDriver.get_devices(): SLOT1 (DUT del piloto) no debe estar flashing ni monitoring
+    - tomar el candado compartido ~/villa/banco.lock (flock) con el nombre del repo y la hora; si está tomado, no se usa el banco
+  during: solo SLOT2 (dut.slot); nunca se toca SLOT1 ni el AP o el broker si el piloto los está usando
+  after: soltar el candado y dejar AP y broker en el estado en que estaban
+  note: el piloto aún no toma el candado; hasta que lo haga, manda la comprobación con el propietario
+
 tiers: [host, target, bench, bench+, field, other, manual]   # FSD §24.0 + convenciones
 
 # ---------------------------------------------------------------------------
@@ -41,26 +51,34 @@ tiers: [host, target, bench, bench+, field, other, manual]   # FSD §24.0 + conv
 # ---------------------------------------------------------------------------
 capabilities:
   # --- banco (reportadas) ---
-  bench-flash:            {what: grabar el DUT por /api/flash con los offsets de flash_args, available: yes}
-  bench-chip-info:        {what: leer chip, MAC y flash del DUT (/api/chip/info), available: yes}
-  bench-serial-monitor:   {what: leer la consola del DUT por el slot, available: yes}
+  bench-flash:            {what: grabar el DUT por /api/flash con los offsets de flash_args, available: yes, reported_by: "/api/devices (con X-Harness-Token) responde ok, 2026-11-14"}
+  bench-chip-info:        {what: leer chip, MAC y flash del DUT (/api/chip/info), available: yes, reported_by: "/api/devices responde ok, 2026-11-14"}
+  bench-serial-monitor:   {what: leer la consola del DUT por el slot, available: yes, reported_by: "/api/devices responde ok, 2026-11-14"}
   bench-dual-console:     {what: observar a la vez UART0 y USB-Serial/JTAG, available: no, reason: el banco proxifica un devnode por slot (igual que en el piloto)}
-  bench-udp-log-receiver: {what: receptor UDP 5555 del banco, available: yes}
-  bench-wifi-ap:          {what: SoftAP del banco, available: yes}
-  bench-wifi-ap-outage:   {what: apagar y encender el AP del banco, available: yes}
-  bench-portal-driver:    {what: el banco se une al AP del DUT y maneja el portal, available: yes}
+  bench-udp-log-receiver: {what: receptor UDP 5555 del banco, available: yes, reported_by: "/api/udplog responde ok, 2026-11-14"}
+  bench-wifi-ap:          {what: SoftAP del banco, available: yes, reported_by: "/api/wifi/ap_status responde ok, 2026-11-14"}
+  bench-wifi-ap-outage:   {what: apagar y encender el AP del banco, available: yes, reported_by: "/api/wifi/ap_status responde ok, 2026-11-14"}
+  bench-portal-driver:    {what: el banco se une al AP del DUT y maneja el portal, available: yes, reported_by: "/api/wifi/events responde ok, 2026-11-14"}
   bench-portal-dns:       {what: relé HTTP del banco con el DNS del DHCP del DUT, available: no, reason: observado en el piloto el 2026-11-04}
-  bench-mqtt-broker:      {what: broker mosquitto del banco, puerto 1883, available: yes}
-  bench-broker-outage:    {what: parar y arrancar el broker del banco, available: yes}
-  bench-mqtt-auth:        {what: broker con usuario y contraseña, available: yes}
-  bench-operator-prompt:  {what: avisos bloqueantes al operador en la UI del banco, available: yes}
-  bench-ap-internet:      {what: el AP del banco da salida a Internet (nivel bench+), available: yes}
-  bench-sntp-block:       {what: bloquear UDP/123 hacia fuera, available: yes}
-  bench-dns-override:     {what: resolver un host permitido hacia un HTTPS autofirmado, available: yes}
-  bench-traffic-capture:  {what: capturar el tráfico que sale del DUT (FR-SEC-A2), available: yes}
-  bench-serial-write:     {what: escribir en la consola del DUT, available: yes}
+  bench-mqtt-broker:      {what: broker mosquitto del banco, puerto 1883, available: yes, reported_by: "/api/mqtt/status responde ok, 2026-11-14"}
+  bench-broker-outage:    {what: parar y arrancar el broker del banco, available: yes, reported_by: "/api/mqtt/status responde ok, 2026-11-14"}
+  bench-mqtt-auth:        {what: broker con usuario y contraseña, available: yes, reported_by: "/api/info capabilities incluye bench-mqtt-auth (build b5623c4), 2026-11-14"}
+  bench-operator-prompt:  {what: avisos bloqueantes al operador en la UI del banco, available: yes, reported_by: "/api/human/status responde ok, 2026-11-14"}
+  bench-ap-internet:      {what: el AP del banco da salida a Internet (nivel bench+), available: yes, reported_by: "/api/info capabilities incluye bench-ap-internet (build b5623c4), 2026-11-14"}
+  bench-sntp-block:       {what: bloquear UDP/123 hacia fuera, available: yes, reported_by: "/api/info capabilities incluye bench-sntp-block (build b5623c4), 2026-11-14"}
+  bench-dns-override:     {what: resolver un host permitido hacia un HTTPS autofirmado, available: yes, reported_by: "/api/info capabilities incluye bench-dns-override (build b5623c4), 2026-11-14"}
+  bench-traffic-capture:  {what: capturar el tráfico que sale del DUT (FR-SEC-A2), available: yes, reported_by: "/api/info capabilities incluye bench-traffic-capture (build b5623c4), 2026-11-14"}
+  bench-serial-write:     {what: escribir en la consola del DUT, available: yes, reported_by: "/api/info capabilities incluye bench-serial-write (build b5623c4), 2026-11-14"}
   bench-power-cycle:      {what: cortar y devolver la alimentación del DUT por instrumento, available: no, reason: igual que en el piloto (EN/BOOT por GPIO sin cablear)}
-  bench-driver:           {what: TestbenchDriver en el devcontainer, available: yes, pinned: .devcontainer/Dockerfile (TESTBENCH_COMMIT)}
+  bench-driver:
+    what: TestbenchDriver instalado en el devcontainer (nivel bench)
+    available: yes
+    pinned: b5623c457f855ba961946d2a94e0cfac25ca6b25   # .devcontainer/Dockerfile ARG TESTBENCH_COMMIT
+    sha256: efef06678417f299bd7d4cb8ca5636bd5b06d1201de47ff69fa639d7cb76406f
+    installed_by:
+      source: .devcontainer/Dockerfile (ARG TESTBENCH_COMMIT / TESTBENCH_DRIVER_SHA256), en /opt/bench-venv
+      check: .github/workflows/devcontainer.yml — importa TestbenchDriver («TestbenchDriver OK») y lee /opt/bench-venv/TESTBENCH_COMMIT
+      run: 43649749435   # devcontainer image builds, success, commit e5cf772
 
   # --- banco: capacidades nuevas de este nodo (FSD §3.1) ---
   bench-lazos-fuga:        {what: 8 lazos en seca/mojada/abierta/corto, available: no, reason: CR-TB-16 — hardware en compras-nodo-agua-banco.md (fin de mes) + fork del banco con puerta S6}
@@ -88,6 +106,187 @@ capabilities:
   field-site:         {what: el nodo instalado con la bomba, la válvula y el HA reales (nivel field), available: unproven}
 
 tests:
+  # JRN-01 — el recorrido ordinario (pregunta H2, propietario, 2026-11-14). Pasos en
+  # orden; cada uno parte del estado del anterior. Es la puerta de cada sesión con
+  # hardware y los primeros tests de la ola 1. impl lo escribe /build.
+  - id: JRN-01.0
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [clima:C-HW-02]
+    needs: [hosted-ci, bench-flash, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      se graba en SLOT2 la imagen construida por la CI sobre el commit que se prueba, con los offsets de su flash_args y la NVS borrada; tras el reset aparecen la versión, NODO-BENCH-IMAGE (imagen de banco) e «Init complete»
+    status: not_run
+  - id: JRN-01.1
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [clima:T02, clima:FR-POR-01, FR-ID-01]
+    needs: [bench-portal-driver, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      arranca sin configuración: el log muestra ARRANQUE -> PORTAL y el escaneo del banco ve el SSID abierto agua-xxxxxx (xxxxxx de la MAC) en ≤ 10 s
+    status: not_run
+  - id: JRN-01.2
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [clima:T04, clima:T05, clima:FR-POR-06]
+    needs: [bench-portal-driver, bench-wifi-ap, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      el banco envía por el portal su AP, el broker y sitio1/zona1 (ficticios, NFR-SEC-01); el nodo reinicia y se une al AP del banco (con: CONECTANDO_WIFI -> CONECTANDO_BROKER)
+    status: not_run
+  - id: JRN-01.3
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [clima:T11, clima:FR-MQTT-08, FR-HA-A1, FR-PUB-02]
+    needs: [bench-wifi-ap, bench-mqtt-broker, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      pasa a OPERATIVO; status retained con estado = online y las configuraciones de Discovery de §14 llegan retained, sin duplicados
+    status: not_run
+  - id: JRN-01.4
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-PUB-02, FR-VAL-06, FR-BOM-01]
+    needs: [bench-wifi-ap, bench-mqtt-broker, bench-lazos-fuga, bench-finales-valvula, bench-entradas-digitales, bench-salidas-dut, nodo-io-montaje, valvula-real, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      estado inicial publicado retained: valvula/state = abierta, bomba/state = permitida, fuga/1..8 = seca, flotador = agua, red = presente; IN1 = IN2 = 0 y GPIO14 en bajo
+    status: not_run
+    xfail: {strict: true, reason: depende de la compra de fin de mes (agenda 2–5)}
+  - id: JRN-01.5
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-FUG-01, FR-FUG-02, FR-VAL-05, FR-PUB-01]
+    needs: [bench-wifi-ap, bench-mqtt-broker, bench-lazos-fuga, bench-salidas-dut, nodo-io-montaje, valvula-real, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      el banco pone la sonda 1 en mojada: IN1 en alto ≤ 1,5 s, la válvula llega a «cerrada» y el motor se para ≤ 100 ms; llegan el evento fuga (sonda 1) y valvula/state = cerrada con bloqueo_fuga = true ≤ 1 s
+    status: not_run
+    xfail: {strict: true, reason: depende de la compra de fin de mes (agenda 2–5)}
+  - id: JRN-01.6
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-VAL-07, FR-ORD-01]
+    needs: [bench-wifi-ap, bench-mqtt-broker, bench-lazos-fuga, bench-salidas-dut, nodo-io-montaje, valvula-real, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      con la sonda 1 aún mojada, abrir se rechaza (fuga_activa) sin movimiento; el banco la seca y abrir por valvula/set abre la válvula: valvula/state = abierta, bloqueo_fuga = false
+    status: not_run
+    xfail: {strict: true, reason: depende de la compra de fin de mes (agenda 2–5)}
+  - id: JRN-01.7
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-BOM-03, FR-BOM-05]
+    needs: [bench-wifi-ap, bench-mqtt-broker, bench-senal-pinza, bench-tensiones, bench-fuente-4-20ma, bench-entradas-digitales, bench-salidas-dut, nodo-io-montaje, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      con i_seco_a calibrado y tiempos reducidos por config/set, el banco simula marcha con corriente baja y presión baja: bomba/state = cortada (seco), GPIO14 en alto; después nivel ≥ nivel_rearme_pct y flotador con agua durante t_rearme_min: bomba/state = permitida
+    status: not_run
+    xfail: {strict: true, reason: depende de la compra de fin de mes (agenda 2–5)}
+  - id: JRN-01.8
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-ENE-01, FR-ENE-02, FR-ENE-03]
+    needs: [bench-wifi-ap, bench-mqtt-broker, bench-entradas-digitales, bench-tensiones, nodo-io-montaje, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      se corta la alimentación de 12 V (el banco pone red presente en 0 y baja la Vbat equivalente): el nodo sigue funcionando, publica red = ausente ≤ 1 s y, al bajar Vbat de 12,4 V, bateria.estado = baja y un evento bateria_baja (regla de batería baja, obligatoria en todos los nodos)
+    status: not_run
+    xfail: {strict: true, reason: depende de la compra de fin de mes (agenda 2–5)}
+
+  # JRN-02 — protección local sin red (propietario, 2026-11-14)
+  - id: JRN-02.0
+    shape: workflow
+    kind: standard
+    wave: 2
+    phase: 1
+    tier: bench
+    verifies: [FR-HER-02]
+    needs: [bench-wifi-ap, bench-wifi-ap-outage, bench-broker-outage, bench-mqtt-broker, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      nodo en OPERATIVO con la válvula abierta; el banco apaga el broker y su AP: el log muestra la salida de OPERATIVO hacia CONECTANDO_WIFI
+    status: not_run
+    xfail: {strict: true, reason: depende de la compra de fin de mes (agenda 2–5)}
+  - id: JRN-02.1
+    shape: workflow
+    kind: standard
+    wave: 2
+    phase: 1
+    tier: bench
+    verifies: [FR-FUG-02, FR-HER-02]
+    needs: [bench-lazos-fuga, bench-salidas-dut, nodo-io-montaje, valvula-real, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      sin Wi-Fi ni broker, el banco moja la sonda 3: IN1 en alto ≤ 1,5 s y la válvula llega a «cerrada» (líneas val: … (fuga s3)), sin reinicio
+    status: not_run
+    xfail: {strict: true, reason: depende de la compra de fin de mes (agenda 2–5)}
+  - id: JRN-02.2
+    shape: workflow
+    kind: standard
+    wave: 2
+    phase: 1
+    tier: bench
+    verifies: [FR-PUB-02, FR-PER-01]
+    needs: [bench-wifi-ap, bench-wifi-ap-outage, bench-broker-outage, bench-mqtt-broker, nodo-io-montaje, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      el banco devuelve el AP y el broker: al volver a OPERATIVO llegan valvula/state = cerrada con bloqueo_fuga = true y fuga/3 = mojada, retained, sin intervención
+    status: not_run
+    xfail: {strict: true, reason: depende de la compra de fin de mes (agenda 2–5)}
+
+  # JRN-03 — OTA, reutilizando el recorrido ya probado en el piloto (JRN-02.* de clima)
+  - id: JRN-03.1
+    shape: workflow
+    kind: standard
+    wave: 3
+    phase: 3
+    tier: bench
+    verifies: [clima:T17, clima:T19, clima:FR-OTA-02, clima:FR-OTA-06, FR-PER-02]
+    needs: [bench-wifi-ap, bench-ap-internet, bench-mqtt-broker, github-test-releases, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      orden OTA (no retained) con la URL releases/download/ota-test-*/ de la versión B de este repo: status pasa por ota = en_curso y ota = ok, fw = B ≤ 120 s; los bloqueos de NVS siguen iguales tras el reinicio
+    status: not_run
+  - id: JRN-03.2
+    shape: workflow
+    kind: standard
+    wave: 3
+    phase: 3
+    tier: bench
+    verifies: [clima:FR-OTA-07, FR-OTA-A2]
+    needs: [bench-wifi-ap, bench-ap-internet, bench-mqtt-broker, github-test-releases, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      orden OTA con una pre-release ota-test-* que no alcanza OPERATIVO: boot: … img=pendiente, ota: rollback y vuelta a la versión B ≤ 300 s
+    status: not_run
+  - id: JRN-03.3
+    shape: workflow
+    kind: standard
+    wave: 3
+    phase: 3
+    tier: bench
+    verifies: [FR-OTA-A1]
+    needs: [bench-wifi-ap, bench-ap-internet, bench-mqtt-broker, bench-lazos-fuga, nodo-io-montaje, bench-driver, bench-serial-monitor, dut-board]
+    expect: >
+      con la sonda 1 mojada, una orden OTA se rechaza con ota = rechazado:ocupado y no empieza la descarga
+    status: not_run
+    xfail: {strict: true, reason: depende de la compra de fin de mes (agenda 2–5)}
   - id: TIER-HOST
     shape: unit
     kind: standard

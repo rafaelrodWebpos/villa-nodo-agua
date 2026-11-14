@@ -12,7 +12,7 @@ Repositorio: `rafaelrodWebpos/villa-nodo-agua`. Plan: `testing/test-plan.yaml`. 
 |---|---|---|---|
 | 1 | La puerta Load defined sigue abierta para la versión actual del FSD | `01-load-defined.md` | Sus comprobaciones mecánicas pasan |
 | 2 | El plan declara capacidades. Cada `bench-*` del banco en `yes` lleva un `reported_by` con el endpoint del banco que la respalda. Cada `bench-*` en `no` lleva su motivo y ninguna dice «banco pendiente». `bench-driver` es una instalación del proyecto, no del banco: está en `no` con su motivo, o en `yes` con `pinned` y con `installed_by.run` = un run verde de «devcontainer image builds» cuya comprobación importa TestbenchDriver y lee el commit fijado. Las del proyecto están en `unproven`, salvo `hosted-ci` (`yes`), `release-verification` (`no` con su motivo) y las que ya observó el commissioning: esas pueden estar en `yes` con un `observed:` que cita un commit, solo si la puerta 03 consta `OPEN` en `gate_verdicts`. Cada `exercised: no` dice qué fase lo ejerce | `testing/test-plan.yaml` → `capabilities`, `gate_verdicts`; `curl $TESTBENCH_URL/api/…`; `gh run view` | El endpoint de cada `reported_by` responde `ok` en vivo. El run de `installed_by.run` es `success` y su log contiene `TestbenchDriver OK` y el commit de `pinned`. Ninguna capacidad de proyecto tiene `observed:` sin commit, ni antes de que la puerta 03 conste `OPEN` |
-| 3 | El journey está sembrado: `JRN-01.0`…`JRN-01.7` (grabar el artefacto de la CI → portal → aprovisionar → Wi-Fi → broker/status → HA → dos medidas con ts → corte de alimentación) y `JRN-02.*` (OTA y rollback, bench+), cada uno con `verifies` (IDs que existen en el FSD), `needs` (capacidades declaradas), `expect`, `kind: standard`, `wave: 1` | `testing/test-plan.yaml` → `tests` | Pasos consecutivos. Ningún paso de OTA dentro de JRN-01 |
+| 3 | El journey está sembrado: `JRN-01.0`…`JRN-01.8` (grabar el artefacto de la CI → portal → aprovisionar → broker/Discovery → estado inicial → fuga → reapertura → bomba en seco → corte de 12 V y batería baja), `JRN-02.*` (protección sin red) y `JRN-03.*` (OTA, bench+), cada uno con `verifies` (IDs de este FSD o `clima:<ID>` del FSD del piloto 0.9.9), `needs` y `expect`; los pasos que dependen de la compra, en `xfail` | plan | Entradas `JRN-*` |
 | 4 | Existe la agenda de depuración y cada punto tiene «sin probar porque» y «se prueba con»; el testbench no figura como punto | `testing/debugging-agenda.md` | Tabla |
 | 5 | Existe el estándar de pruebas, en un solo fichero, con reglas de ejecución y procedimientos compartidos | `docs/Method/standards/testing.md` | Secciones «Reglas para cualquier ejecución» y `P-*` |
 | 6 | No hay código que el FSD no pida. Mientras la puerta 03 no conste `OPEN` en `gate_verdicts`, el firmware es un esqueleto: ningún módulo que el FSD no pida y ningún requisito implementado. Cuando la puerta 03 consta `OPEN`, cada componente de `components/` corresponde a requisitos del FSD con tests declarados en el plan: cita al menos un ID, todos los IDs que cita existen en el FSD y cada uno está en el `verifies` de algún test del plan | `main/`, `components/`, `testing/test-plan.yaml` → `gate_verdicts`, `tests` | Antes de la puerta 03: solo `main/main.c` con el log de versión, el marcador de banco y `Init complete`; sin `components/`. Después: ningún componente sin IDs, con un ID que no está en el FSD o con un ID sin test declarado |
@@ -47,16 +47,28 @@ python3 -c "import yaml; d=yaml.safe_load(open('testing/test-plan.yaml'))['capab
   printf '%s' "$log" | grep -q 'TestbenchDriver OK' && \
   printf '%s' "$log" | grep -q "$pin" && echo "bench-driver ok ($run)" || echo "FALLA bench-driver ($run)"; }
 # el log se lee por la API de jobs: «gh run view --log» sale vacío con gh 2.46
-grep -oP '(?<![A-Z])((FR|NFR|C)-[A-Z]+-[0-9]+|T[0-9]{2})(?![0-9])' testing/test-plan.yaml | sort -u | \
-  while read id; do grep -q -- "$id" docs/Functionality/FSD-nodo-agua.md || echo "ID no está en el FSD: $id"; done
+# IDs propios contra este FSD; clima:<ID> contra el FSD del piloto (0.9.9) en GitHub
+gh api repos/rafaelrodWebpos/villa-nodo-clima-piloto/contents/docs/Functionality/FSD-nodo-clima.md?ref=ddf80167e0ed1a0ef72e2783d02265e1eac7e5aa --jq .content | base64 -d > /tmp/fsd-clima.md
+grep -q 'fsd_version: 0.9.9' /tmp/fsd-clima.md || echo "FALLA: el commit fijado no es el FSD 0.9.9 del piloto"
+python3 - <<'PY'
+import yaml,re
+p=yaml.safe_load(open('testing/test-plan.yaml')); own=open('docs/Functionality/FSD-nodo-agua.md').read(); cl=open('/tmp/fsd-clima.md').read()
+mal=[]
+for t in p['tests']:
+    for v in t.get('verifies',[]):
+        if v.startswith('clima:'):
+            if v[6:] not in cl: mal.append((t['id'],v))
+        elif v not in own: mal.append((t['id'],v))
+print('IDs que no están en su FSD:',mal)
+PY
 set -a; . ./.env; set +a
 for e in /api/info /api/devices /api/udplog /api/wifi/ap_status /api/wifi/events /api/mqtt/status /api/human/status; do \
-  curl -s -m 5 "$TESTBENCH_URL$e" | grep -q '"ok": true' && echo "ok $e" || echo "FALLA $e"; done
+  curl -s -m 5 -H "X-Harness-Token: $TESTBENCH_TOKEN" "$TESTBENCH_URL$e" | grep -q '"ok": true' && echo "ok $e" || echo "FALLA $e"; done
 # fila 6: esqueleto antes de la puerta 03; después, cada componente con IDs del FSD y tests declarados
 python3 -c "import yaml,re,sys,pathlib; p=yaml.safe_load(open('testing/test-plan.yaml')); \
   g3=any(v['gate']=='03-dut-ready' and v['verdict']=='OPEN' for v in p.get('gate_verdicts',[])); \
   c=pathlib.Path('components'); \
-  sys.exit(0 if not c.exists() else 1) if not g3 else None; \
+  sys.exit(0 if not c.exists() or sorted(d.name for d in c.iterdir() if d.is_dir())==['udplog'] else 1) if not g3 else None; \
   fsd=open('docs/Functionality/FSD-nodo-agua.md').read(); ver={v for t in p['tests'] for v in t.get('verifies',[])}; \
   rx=re.compile(r'(?<![A-Z])((?:FR|NFR|C)-[A-Z]+-[0-9]+|T[0-9]{2})(?![0-9])'); mal=[]; \
   [mal.append((d.name, 'sin IDs' if not ids else sorted(i for i in ids if i not in fsd or i not in ver))) \
@@ -88,6 +100,9 @@ le falta es el hallazgo.
 - El log UDP activado en la configuración de producción (choca con C-LOG-01).
 - El patrón `build/` del `.gitignore` excluyendo `.claude/skills/build/` (ya pasó).
 - El job verify con un trigger de pull request (repositorio público + runner self-hosted).
+- Antes de la puerta 03 solo existe `components/udplog` (el log UDP heredado, «siempre» según el harness); cualquier otro componente es adopción silenciosa.
+- Secure Boot o cifrado de flash en `sdkconfig.defaults` o en la imagen (C-SEC-A3: las placas del banco nunca queman eFuses).
+- Una sesión de banco sin la coordinación con el piloto (`bench_coordination` del plan).
 
 ## Veredicto
 `OPEN` · `SHUT` + hallazgos.

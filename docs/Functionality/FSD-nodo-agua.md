@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.3.0
+fsd_version: 0.3.1
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
@@ -11,13 +11,15 @@ reviewers: []
 approval_status: D1–D18 y P1–P21 aceptadas por el propietario (2026-11-14; P14 con condición)
 created: 2026-11-14
 last_updated: 2026-11-14
-herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9
+herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9 (commit ddf8016)
 change_history:
   - 0.1.0 (2026-11-14): versión inicial a partir de /define (D1–D18 del propietario).
   - 0.2.0 (2026-11-14): P1–P20 aceptadas en bloque; P14 solo en la placa final de producción
     (S2/S4), nunca en placas del banco (C-SEC-A3, FR-SEC-A4); capacidades del banco
     CR-TB-16…22 (§3.1); P21 propuesta (lazo 4–20 mA a 24 V, C-HW-31).
   - 0.3.0 (2026-11-14): P21 aceptada (elevador MT3608); Fase 0 cerrada (Load defined).
+  - 0.3.1 (2026-11-14): editorial — tabla de particiones copiada en §2.2 para la CI; contratos
+    con los IDs completos (C-HW-20…29, FR-EJE-02, FR-CIC-01) y fila de C-BLD-01.
 ```
 
 ## Convenciones de este documento
@@ -163,7 +165,8 @@ prohibida de clima:C-HW-07.
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
-| C-HW-20…29 | Revisión del montaje contra la lista de materiales | Cada componente coincide con su restricción | Una válvula sin finales; una bomba conectada al contacto NA; alimentación sin batería | other (revisión) |
+| C-BLD-01 | `gen_esp32part.py` sobre la tabla de la imagen (CI, `scripts/ci/build_checks.py`) | Coincide fila a fila con la tabla de §2.2 | Tabla por defecto del toolchain | other (CI) |
+| C-HW-20, C-HW-21, C-HW-25, C-HW-26, C-HW-27, C-HW-28, C-HW-29 | Revisión del montaje contra la lista de materiales | Cada componente coincide con su restricción | Una válvula sin finales; una bomba conectada al contacto NA; alimentación sin batería | other (revisión) |
 | C-HW-22 | Firmware de prueba que pide abrir y cerrar a la vez | IN1 e IN2 nunca están en alto a la vez (osciloscopio o GPIO del banco) | Los dos en alto, aunque sea un instante | bench |
 | C-HW-23 | Nodo sin alimentación | La bomba recibe tensión a través del contacto NC | Bomba sin tensión con el nodo apagado | field (puesta en marcha) |
 | C-HW-24 | Arranque con los 3 ADS1115 conectados | Línea `i2c: scan … ack=0x48,0x49,0x4a` (§20) | Falta alguna dirección | target |
@@ -460,7 +463,7 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
 | FR-EJE-01 | Lógica pura con un reloj simulado | Dispara solo en la hora configurada y con los días cumplidos | Disparo sin hora válida, con bloqueo o con sonda mojada | host |
-| FR-EJE-01, -02 | `ejercicio_dias`=1, hora = ahora + 2 min; el banco responde a los finales con 3 s de retardo | Cierre y apertura; `t_cierre_ms` ≈ 3000 ± 300 | Quedarse cerrada sin fuga | bench |
+| FR-EJE-01, FR-EJE-02 | `ejercicio_dias`=1, hora = ahora + 2 min; el banco responde a los finales con 3 s de retardo | Cierre y apertura; `t_cierre_ms` ≈ 3000 ± 300 | Quedarse cerrada sin fuga | bench |
 | FR-EJE-03 | Durante CERRANDO del ejercicio, sonda 1 `mojada` | Termina CERRADA con `bloqueo_fuga`=1 | Reapertura | bench |
 | FR-EJE-04 | Orden `ejercicio` con todo seco | Ciclo completo | Rechazo sin motivo | bench |
 
@@ -561,7 +564,7 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
-| FR-CIC-01, -02 | Lógica pura: 6 arranques en 50 min; 5 en 60 min | Un evento en el primer caso; ninguno en el segundo | Evento con 5; dos eventos en la misma ventana | host |
+| FR-CIC-01, FR-CIC-02 | Lógica pura: 6 arranques en 50 min; 5 en 60 min | Un evento en el primer caso; ninguno en el segundo | Evento con 5; dos eventos en la misma ventana | host |
 | FR-CIC-02 | Banco: 6 arranques simulados con la válvula CERRADA | Evento con `valvula`=`cerrada` | Otro valor | bench |
 | FR-CIC-03 | Igual | Válvula y permiso sin cambios | Cambio | bench |
 

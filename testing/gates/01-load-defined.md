@@ -9,12 +9,12 @@ FSD: `docs/Functionality/FSD-nodo-agua.md`. IDs: `FR-<ÁREA>-nn`, `NFR-<ÁREA>-n
 | # | Debe ser cierto | Dónde mirar | Evidencia |
 |---|---|---|---|
 | 1 | Todo Must/Should tiene contrato con columna o campo «No debe ocurrir» / `prohibited_outcomes` | FSD, capítulo de cada requisito | La fila de la tabla de contratos o un bloque `id:` YAML con su ID |
-| 2 | Toda fila T01–T23 tiene estado, evento, siguiente, límite y «No debe ocurrir»; la matriz §6.4 no tiene celdas vacías | FSD §6.3, §6.4 | Tabla completa |
+| 2 | Toda fila V01–V20 (§5.3) y B01–B09 (§6.2) tiene desde, evento, guarda, hacia, acción y límite, y la regla de completitud de §5.3 está escrita. Las filas T01–T25 se heredan de clima §6.3 (FSD del piloto 0.9.9) | FSD §5.3, §6.2 | Tablas completas |
 | 3 | No queda ningún `(propuesto` sin decidir ni ningún `(assumed)` | FSD | grep |
 | 4 | No hay `{{parámetros}}` sin enlazar (salvo las plantillas `{{ value_json.* }}` de HA) | FSD | grep |
 | 5 | Cada fase de §3 se puede empezar con lo que entregan las anteriores | FSD §3 frente a los contratos | Los criterios de salida citan solo IDs cuyos contratos no usan capacidades de fases posteriores |
 | 6 | Existen los tres planos y `docs/00-Overview.md` | `docs/` | ficheros |
-| 7 | El perfil de amenazas (§19.1) precede a los requisitos de seguridad | FSD §19 | orden |
+| 7 | El perfil de amenazas (§21.1) precede a los requisitos de seguridad, y P14 dice «solo en producción, nunca en el banco» (C-SEC-A3, FR-SEC-A4) | FSD §21 | orden y texto |
 
 ## Comprobaciones mecánicas
 
@@ -40,14 +40,15 @@ PY
 
 ## Comprobaciones de juicio (cita lo que leíste)
 
-- Elige 5 contratos al azar, incluidos uno de §6.6 y uno de §7.4. ¿Podría alguien competente montar un rig a partir de cada uno sin leer el código? Cita el estímulo y la observación.
-- ¿Algún contrato de la Fase 1 depende de MQTT, de la OTA o de Home Assistant? Si es así, es un defecto de secuencia.
+- Elige 5 contratos al azar, incluidos uno de §5.5 (válvula) y uno de §6.4 (bomba). ¿Podría alguien competente montar un rig a partir de cada uno sin leer el código? Cita el estímulo y la observación.
+- ¿Algún contrato que §3.1 asigna a la Fase 1 depende de MQTT, de SNTP, de la OTA o de Home Assistant? Si es así, es un defecto de secuencia.
 - ¿Hay palabras vagas (adecuado, robusto, razonable, suficiente, funcionamiento normal…) en las líneas de requisito?
 
 ## Trampas de este proyecto
 
-- Contratos de la Fase 1 que observaban por MQTT (ya pasó una vez: FR-MED-01, FR-POR-06).
-- Valores marcados como propuestos que no estaban en la tabla de decisiones (pasó con D21/D22).
+- Contratos de la Fase 1 que observan por MQTT o por órdenes (ya pasó en 0.1.0: §3.1 tuvo que separarlos).
+- Contratos con IDs abreviados («C-HW-20…29», «FR-EJE-01, -02») que la comprobación mecánica no ve (pasó en 0.3.0).
+- Un valor `Pnn` usado en un requisito sin fila en §4.4.
 - Un ejemplo con datos reales de la vivienda (SSID, IP, zona) en un repositorio público.
 
 ## Veredicto
