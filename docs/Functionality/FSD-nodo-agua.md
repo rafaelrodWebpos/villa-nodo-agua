@@ -1,19 +1,22 @@
 # Nodo Agua — Especificación Funcional (FSD)
 
 ```yaml
-document_status: borrador — Load defined pendiente de aceptar los valores propuestos (§4.4)
-fsd_version: 0.1.0
+document_status: vigente — Load defined pendiente solo de P21 (§4.4)
+fsd_version: 0.2.0
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
 author: Rafael Rodriguez
 reviewers: []
-approval_status: decisiones D1–D18 aceptadas por el propietario (2026-11-14); P1–P20 propuestas
+approval_status: D1–D18 y P1–P20 aceptadas por el propietario (2026-11-14; P14 con condición); P21 propuesta
 created: 2026-11-14
 last_updated: 2026-11-14
 herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9
 change_history:
   - 0.1.0 (2026-11-14): versión inicial a partir de /define (D1–D18 del propietario).
+  - 0.2.0 (2026-11-14): P1–P20 aceptadas en bloque; P14 solo en la placa final de producción
+    (S2/S4), nunca en placas del banco (C-SEC-A3, FR-SEC-A4); capacidades del banco
+    CR-TB-16…22 (§3.1); P21 propuesta (lazo 4–20 mA a 24 V, C-HW-31).
 ```
 
 ## Convenciones de este documento
@@ -122,6 +125,7 @@ No se hereda clima:C-HW-04/05/06 (SHT41 y alimentación por USB). Las nuevas son
 | C-HW-28 [Must] | El sensor de presión de salida debe ser **ratiométrico de 0,5–4,5 V y 0–10 bar**, alimentado a 5 V y leído con un divisor 2:3 (P9). | [derived] · P9 |
 | C-HW-29 [Must] | El nodo debe ir en una **caja IP65**. | [user] D13 |
 | C-HW-30 [Must] | La asignación de pines debe ser exactamente la de la tabla siguiente (P1). | P1 |
+| C-HW-31 [Must] | El lazo 4–20 mA del transductor debe alimentarse a 24 V CC ± 5 % desde un elevador CC-CC alimentado por los 12 V (P21). | [derived] P21 |
 
 **Asignación de pines (P1, propuesta).** Ningún pin usado está en la lista
 prohibida de clima:C-HW-07.
@@ -149,6 +153,7 @@ prohibida de clima:C-HW-07.
 | C-HW-22 | Firmware de prueba que pide abrir y cerrar a la vez | IN1 e IN2 nunca están en alto a la vez (osciloscopio o GPIO del banco) | Los dos en alto, aunque sea un instante | bench |
 | C-HW-23 | Nodo sin alimentación | La bomba recibe tensión a través del contacto NC | Bomba sin tensión con el nodo apagado | field (puesta en marcha) |
 | C-HW-24 | Arranque con los 3 ADS1115 conectados | Línea `i2c: scan … ack=0x48,0x49,0x4a` (§20) | Falta alguna dirección | target |
+| C-HW-31 | Medir la tensión del lazo con el transductor conectado, a 4 y a 20 mA | 22,8–25,2 V a la salida del elevador; ≥ 12 V en bornes del transductor | < 12 V en bornes | bench + field |
 | C-HW-30 | Revisión del código + grep en la CI | Solo los pines de la tabla | Un pin fuera de la tabla o de la lista prohibida | other (CI) |
 
 ### 2.3 Arquitectura software
@@ -202,11 +207,20 @@ contratos cuyo estímulo o cuya observación es un mensaje MQTT (órdenes, `…/
 eventos, `config/set`) se cierran en la Fase 2, igual que §5.6 (el ejercicio necesita la hora SNTP). Los contratos de §15 y clima:FR-CON-*
 heredados, en verde.
 
-**Necesita del banco** (capacidades a declarar en `/harness`; el número CR-TB lo
-asigna el propietario): simular los 8 lazos (seca, mojada, abierta, corto), los dos
-finales de carrera, el flotador, la red presente, una fuente de 4–20 mA y una tensión
-para la presión, y observar IN1, IN2 y el relé. La pinza se prueba en el banco con
-una señal senoidal de 60 Hz de amplitud conocida.
+**Necesita del banco** (capacidades nuevas, numeradas por el propietario; se
+implementan en el fork del banco con la puerta S6). Se prueba con las mismas piezas
+que se instalarán cuando es posible (válvula, finales, flotador, ADS1115, resistencias
+de fin de línea, shunt, transductores y pinza reales):
+
+| CR-TB | Capacidad | Qué hace el banco |
+|---|---|---|
+| CR-TB-16 | `bench-lazos-fuga` | Pone cada uno de los 8 lazos en `seca`, `mojada`, `abierta` o `corto` |
+| CR-TB-17 | `bench-finales-valvula` | Con la válvula real: fuerza cada final como activo o lo corta (simula un final que no llega) |
+| CR-TB-18 | `bench-entradas-digitales` | Flotador (agua / sin agua), red presente, botón local (pulsación de duración dada) |
+| CR-TB-19 | `bench-fuente-4-20ma` | Inyecta una corriente programable de 0–25 mA en la entrada del nivel |
+| CR-TB-20 | `bench-tensiones` | Tensión programable de 0–5 V en la entrada de presión y tensión equivalente de Vbat |
+| CR-TB-21 | `bench-senal-pinza` | Senoide de 60 Hz de amplitud programable (0–1 V RMS) en la entrada de la pinza |
+| CR-TB-22 | `bench-salidas-dut` | Lee IN1, IN2, el relé de la bomba, el zumbador y los dos LED con marca de tiempo |
 
 ### 3.2 Fase 2 — Telemetría, órdenes y configuración
 
@@ -226,8 +240,9 @@ protecciones; §21). Un hallazgo crítico o alto bloquea la Fase 3.
 
 ### 3.4 Fase 3 — Actualización OTA
 
-**Entrega:** OTA heredada (§11) con sus adaptaciones, y la cadena de arranque seguro
-si se acepta P14.
+**Entrega:** OTA heredada (§11) con sus adaptaciones, y la variante de build de
+producción firmada (P14, §22). Esa variante **no se graba** en placas del banco (C-SEC-A3);
+la activación de Secure Boot y del cifrado ocurre solo en la placa final, al instalar (§3.5).
 
 **Salida:** contratos de §11 en verde; puerta **S3**.
 
@@ -290,26 +305,27 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | D16 | LED + zumbador; pulsación corta silencia, pulsación larga de 3 s rearma/abre; zumbador 5 min | aceptada [user] | §8 |
 | D17 | Parámetros por MQTT con rangos fijos en el firmware; ninguno apaga una protección | aceptada [user] | §16 |
 | D18 | La protección es local y no depende de la red | aceptada [user] | §2.1, §5, §6 |
-| P1 | Pines y direcciones de §2.2 | **propuesto** | C-HW-24, C-HW-30 |
-| P2 | Muestreo de sondas cada 250 ms; mojada **confirmada** tras 4 muestras seguidas (1 s); orden de cierre ≤ 500 ms después de confirmar (≤ 1,5 s desde el agua) | **propuesto** | FR-FUG-01/02 |
-| P3 | Tiempo máximo de carrera = `t_carrera_max_s`, 30 s de fábrica (rango 5–120 s) | **propuesto** | FR-VAL-04 |
-| P4 | Bandas del lazo (fracción de la referencia): corto < 0,05; mojada 0,05–0,40; seca 0,40–0,60; indeterminada 0,60–0,90; abierta > 0,90 | **propuesto** | FR-SON-01 |
-| P5 | Batería LiFePO4 4S: «baja» < 12,4 V, «crítica» < 12,0 V, histéresis 0,2 V; divisor 1:6 | **propuesto** | FR-ENE-* |
-| P6 | Bomba: `i_marcha_a` 0,5 A; `i_seco_a` sin valor de fábrica (detección por corriente inactiva hasta calibrar); `p_min_bar` 0,5; `t_seco_s` 10 s; rearme con nivel ≥ 30 % y flotador con agua durante 10 min; 3 intentos en 24 h; nivel crítico < 10 % | **propuesto** | §6 |
-| P7 | Ciclado: arranque = corriente ≥ `i_marcha_a` sostenida 2 s tras ≥ 2 s por debajo; aviso con ≥ 6 arranques en 60 min | **propuesto** | §6.6 |
-| P8 | Medidas cada 60 s; estados y eventos ≤ 1 s tras el cambio (en OPERATIVO) | **propuesto** | §13 |
-| P9 | Sensor de presión 0,5–4,5 V, 0–10 bar, divisor 2:3 | **propuesto** | C-HW-28 |
-| P10 | Pinza SCT-013-030; RMS sobre 10 ciclos de 60 Hz con ≥ 2000 muestras/s | **propuesto** | C-HW-25, FR-IO-04 |
-| P11 | La OTA se rechaza (`ocupado`) con la válvula en movimiento o con una sonda mojada | **propuesto** | FR-OTA-A1 |
-| P12 | Movimiento manual (palanca): el nodo no vuelve a mover el motor por su cuenta; publica `movimiento_manual` | **propuesto** | FR-VAL-10 |
-| P13 | Una sonda en falla (abierta, corto, indeterminada) cuenta como «no mojada» para la reapertura | **propuesto** | FR-VAL-07 |
-| P14 | Firma de imagen + Secure Boot v2 + cifrado de flash obligatorios antes de S2 (nodo crítico) | **propuesto** | §21, Fase 3 |
-| P15 | Órdenes y configuración: payload ≤ 256 bytes; una orden de válvula durante un movimiento se rechaza con `ocupado` | **propuesto** | §13 |
-| P16 | Cierre preventivo por batería crítica **y** red ausente; reapertura automática con red presente 5 min, Vbat ≥ 12,8 V y sin bloqueo | **propuesto** | FR-ENE-04/05 |
-| P17 | Patrones del LED y del zumbador de §8.2 | **propuesto** | §8 |
-| P18 | 4–20 mA sobre 150 Ω; falla < 3,8 mA o > 20,5 mA | **propuesto** | FR-NIV-02 |
-| P19 | Con el transductor en falla, el rearme automático queda inhibido (solo manual) | **propuesto** | FR-BOM-06 |
-| P20 | Bloqueo `bomba_bloqueada` también al rearmar en seco dentro de los 10 min siguientes a un rearme | **propuesto** | FR-BOM-07 |
+| P1 | Pines y direcciones de §2.2 | aceptado [user] | C-HW-24, C-HW-30 |
+| P2 | Muestreo de sondas cada 250 ms; mojada **confirmada** tras 4 muestras seguidas (1 s); orden de cierre ≤ 500 ms después de confirmar (≤ 1,5 s desde el agua) | aceptado [user] | FR-FUG-01/02 |
+| P3 | Tiempo máximo de carrera = `t_carrera_max_s`, 30 s de fábrica (rango 5–120 s) | aceptado [user] | FR-VAL-04 |
+| P4 | Bandas del lazo (fracción de la referencia): corto < 0,05; mojada 0,05–0,40; seca 0,40–0,60; indeterminada 0,60–0,90; abierta > 0,90 | aceptado [user] | FR-SON-01 |
+| P5 | Batería LiFePO4 4S: «baja» < 12,4 V, «crítica» < 12,0 V, histéresis 0,2 V; divisor 1:6 | aceptado [user] | FR-ENE-* |
+| P6 | Bomba: `i_marcha_a` 0,5 A; `i_seco_a` sin valor de fábrica (detección por corriente inactiva hasta calibrar); `p_min_bar` 0,5; `t_seco_s` 10 s; rearme con nivel ≥ 30 % y flotador con agua durante 10 min; 3 intentos en 24 h; nivel crítico < 10 % | aceptado [user] | §6 |
+| P7 | Ciclado: arranque = corriente ≥ `i_marcha_a` sostenida 2 s tras ≥ 2 s por debajo; aviso con ≥ 6 arranques en 60 min | aceptado [user] | §6.6 |
+| P8 | Medidas cada 60 s; estados y eventos ≤ 1 s tras el cambio (en OPERATIVO) | aceptado [user] | §13 |
+| P9 | Sensor de presión 0,5–4,5 V, 0–10 bar, divisor 2:3 | aceptado [user] | C-HW-28 |
+| P10 | Pinza SCT-013-030; RMS sobre 10 ciclos de 60 Hz con ≥ 2000 muestras/s | aceptado [user] | C-HW-25, FR-IO-04 |
+| P11 | La OTA se rechaza (`ocupado`) con la válvula en movimiento o con una sonda mojada | aceptado [user] | FR-OTA-A1 |
+| P12 | Movimiento manual (palanca): el nodo no vuelve a mover el motor por su cuenta; publica `movimiento_manual` | aceptado [user] | FR-VAL-10 |
+| P13 | Una sonda en falla (abierta, corto, indeterminada) cuenta como «no mojada» para la reapertura | aceptado [user] | FR-VAL-07 |
+| P14 | Firma de imagen + Secure Boot v2 + cifrado de flash **solo en la placa final de producción, al instalar** (puertas S2/S4); **nunca** en las placas de desarrollo del banco, porque los eFuses son irreversibles | aceptado con condición [user] | §21, Fase 3 |
+| P15 | Órdenes y configuración: payload ≤ 256 bytes; una orden de válvula durante un movimiento se rechaza con `ocupado` | aceptado [user] | §13 |
+| P16 | Cierre preventivo por batería crítica **y** red ausente; reapertura automática con red presente 5 min, Vbat ≥ 12,8 V y sin bloqueo | aceptado [user] | FR-ENE-04/05 |
+| P17 | Patrones del LED y del zumbador de §8.2 | aceptado [user] | §8 |
+| P18 | 4–20 mA sobre 150 Ω; falla < 3,8 mA o > 20,5 mA | aceptado [user] | FR-NIV-02 |
+| P19 | Con el transductor en falla, el rearme automático queda inhibido (solo manual) | aceptado [user] | FR-BOM-06 |
+| P21 | El lazo 4–20 mA del transductor se alimenta a **24 V CC** con un elevador CC-CC desde los 12 V: un transmisor de 12–36 V no funciona con 12 V menos los 3 V del shunt | **propuesto** | C-HW-31 |
+| P20 | Bloqueo `bomba_bloqueada` también al rearmar en seco dentro de los 10 min siguientes a un rearme | aceptado [user] | FR-BOM-07 |
 
 ---
 
@@ -861,7 +877,7 @@ Se hereda el perfil «LAN doméstica, repositorio público» de clima §19.1, co
 |---|---|
 | Nodo crítico | Sí (D14): S1–S4 |
 | Amenaza adicional (b′) | Alguien en la LAN con las credenciales del broker manda **abrir la válvula durante una fuga**, **permitir la bomba sin agua**, o configura umbrales para anular las protecciones |
-| Integridad del firmware | Heredada; P14 propone firma + Secure Boot v2 + cifrado de flash antes de S2 |
+| Integridad del firmware | Heredada en desarrollo. En la placa de producción: firma + Secure Boot v2 + cifrado de flash, activados al instalar (P14, FR-SEC-A4) |
 
 **Riesgos aceptados.** (b′) puede **cerrar** la válvula o **cortar** la bomba (deja la
 casa sin agua, un fallo seguro) y puede leer los estados. No puede abrir con una sonda
@@ -877,17 +893,28 @@ Se heredan NFR-SEC-01, NFR-SEC-02 y FR-SEC-03 de clima §19.2, con este reposito
   configuración fuera de §19.
 - **FR-SEC-A2** [Must] [derived] (auditoría, punto 1): el nodo solo deberá abrir
   conexiones hacia el broker, el servidor SNTP y los hosts OTA permitidos.
+- **C-SEC-A3** [Must] [user] P14: ninguna imagen de banco ni de desarrollo debe activar
+  Secure Boot ni el cifrado de flash, y ningún procedimiento del banco debe quemar eFuses
+  de seguridad. Los eFuses son irreversibles y las placas del banco deben seguir siendo
+  regrabables.
+- **FR-SEC-A4** [Must] [user] P14, D14: la placa final de producción deberá quedar, al
+  instalarse (puertas S2/S4), con Secure Boot v2, imágenes firmadas con la clave del
+  propietario (fuera del repositorio) y cifrado de flash en modo release.
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
 | FR-SEC-A1 | Fuzzing de `valvula/set`, `bomba/set` y `config/set` (≥ 10 000 mensajes aleatorios y mutados) con sonda 1 mojada y flotador sin agua | Válvula CERRADA, permiso cortado y config dentro de rango durante toda la prueba; sin reinicios | Cualquier violación o reinicio | bench + host (lógica de guardas) |
+| C-SEC-A3 | CI: `sdkconfig` de cada imagen de banco y de desarrollo; banco: `espefuse summary` de cada placa del banco antes y después de cada sesión | `CONFIG_SECURE_BOOT` y `CONFIG_FLASH_ENCRYPTION_ENABLED` sin activar; eFuses de Secure Boot y de cifrado en 0 | Cualquiera activado; un eFuse de seguridad quemado en una placa del banco | other (CI) + bench |
+| FR-SEC-A4 | Puerta S2: `espefuse summary` de la placa de producción tras el procedimiento de instalación; intentar grabar por USB una imagen sin firmar | Secure Boot v2 y cifrado de flash (modo release) activos; la imagen sin firmar no arranca | Placa de producción sin protección; arranque de una imagen sin firmar | field (S2) |
 | FR-SEC-A2 | Captura de tráfico del nodo durante 1 h con OTA (capacidad de captura del banco) | Solo los destinos listados | Cualquier otro destino | bench⁺ |
 
 ## 22. Build
 
 Heredado de clima §20 (ESP-IDF 6.x, CI en GitHub Actions, imagen de banco con
-`CONFIG_NODO_BENCH_BUILD`). Si se acepta P14, la cadena de firma y de Secure Boot se
-define en una enmienda antes de la Fase 3.
+`CONFIG_NODO_BENCH_BUILD`). Hay dos variantes de build (P14): **desarrollo/banco** (sin
+Secure Boot ni cifrado, C-SEC-A3) y **producción** (firmada, para FR-SEC-A4). La cadena de
+firma, la custodia de la clave y el procedimiento de quemado se definen en una enmienda
+antes de la Fase 3 (puerta S3).
 
 ---
 
