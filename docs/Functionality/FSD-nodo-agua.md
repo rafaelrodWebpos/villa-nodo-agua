@@ -1,14 +1,14 @@
 # Nodo Agua — Especificación Funcional (FSD)
 
 ```yaml
-document_status: vigente — Load defined pendiente solo de P21 (§4.4)
-fsd_version: 0.2.0
+document_status: vigente — Load defined (2026-11-14)
+fsd_version: 0.3.0
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
 author: Rafael Rodriguez
 reviewers: []
-approval_status: D1–D18 y P1–P20 aceptadas por el propietario (2026-11-14; P14 con condición); P21 propuesta
+approval_status: D1–D18 y P1–P21 aceptadas por el propietario (2026-11-14; P14 con condición)
 created: 2026-11-14
 last_updated: 2026-11-14
 herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9
@@ -17,6 +17,7 @@ change_history:
   - 0.2.0 (2026-11-14): P1–P20 aceptadas en bloque; P14 solo en la placa final de producción
     (S2/S4), nunca en placas del banco (C-SEC-A3, FR-SEC-A4); capacidades del banco
     CR-TB-16…22 (§3.1); P21 propuesta (lazo 4–20 mA a 24 V, C-HW-31).
+  - 0.3.0 (2026-11-14): P21 aceptada (elevador MT3608); Fase 0 cerrada (Load defined).
 ```
 
 ## Convenciones de este documento
@@ -324,7 +325,7 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | P17 | Patrones del LED y del zumbador de §8.2 | aceptado [user] | §8 |
 | P18 | 4–20 mA sobre 150 Ω; falla < 3,8 mA o > 20,5 mA | aceptado [user] | FR-NIV-02 |
 | P19 | Con el transductor en falla, el rearme automático queda inhibido (solo manual) | aceptado [user] | FR-BOM-06 |
-| P21 | El lazo 4–20 mA del transductor se alimenta a **24 V CC** con un elevador CC-CC desde los 12 V: un transmisor de 12–36 V no funciona con 12 V menos los 3 V del shunt | **propuesto** | C-HW-31 |
+| P21 | El lazo 4–20 mA del transductor se alimenta a **24 V CC** con un elevador CC-CC desde los 12 V: un transmisor de 12–36 V no funciona con 12 V menos los 3 V del shunt (elevador MT3608) | aceptado [user] | C-HW-31 |
 | P20 | Bloqueo `bomba_bloqueada` también al rearmar en seco dentro de los 10 min siguientes a un rearme | aceptado [user] | FR-BOM-07 |
 
 ---
