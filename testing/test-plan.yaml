@@ -114,7 +114,7 @@ capabilities:
     reason: runner instalado en la imagen pero sin registrar — el registro es una autorización del propietario (scripts/runner/register.sh)
 
   # --- equipo y pares del proyecto (unproven hasta verlos funcionar aquí) ---
-  dut-board:          {what: la Waveshare del DUT identificada como la unidad del FSD, available: unproven}
+  dut-board:          {what: la Waveshare del DUT identificada como la unidad del FSD, available: yes, observed: "2026-11-14 /commission: chip, flash y MAC (dut.identity) y ruta CI → flash → arranque (commissioning.forward_path)"}
   nodo-io-montaje:    {what: 3 ADS1115 (0x48/0x49/0x4A), puente H, relé, LED, zumbador y botón cableados según FSD §2.2, available: unproven}
   valvula-real:       {what: válvula de bola de 12 V con finales (C-HW-21) en el banco, available: unproven}
   sensores-reales:    {what: transductor 4–20 mA con lazo a 24 V, sensor de presión, pinza, flotador y sondas de fuga reales, available: unproven}
@@ -136,6 +136,7 @@ tests:
     needs: [hosted-ci, bench-flash, bench-driver, bench-serial-monitor, dut-board]
     expect: >
       se graba en SLOT2 la imagen construida por la CI sobre el commit que se prueba, con los offsets de su flash_args y la NVS borrada; tras el reset aparecen la versión, NODO-BENCH-IMAGE (imagen de banco) e «Init complete»
+    impl: tests/bench/test_jrn01.py::test_jrn_01_0_flash_ci_image
     status: not_run
   - id: JRN-01.1
     shape: workflow
@@ -147,6 +148,7 @@ tests:
     needs: [bench-portal-driver, bench-driver, bench-serial-monitor, dut-board]
     expect: >
       arranca sin configuración: el log muestra ARRANQUE -> PORTAL y el escaneo del banco ve el SSID abierto agua-xxxxxx (xxxxxx de la MAC) en ≤ 10 s
+    impl: tests/bench/test_jrn01.py::test_jrn_01_1_portal_without_config
     status: not_run
   - id: JRN-01.2
     shape: workflow
@@ -158,6 +160,7 @@ tests:
     needs: [bench-portal-driver, bench-wifi-ap, bench-driver, bench-serial-monitor, dut-board]
     expect: >
       el banco envía por el portal su AP, el broker y sitio1/zona1 (ficticios, NFR-SEC-01); el nodo reinicia y se une al AP del banco (con: CONECTANDO_WIFI -> CONECTANDO_BROKER)
+    impl: tests/bench/test_jrn01.py::test_jrn_01_2_provision
     status: not_run
   - id: JRN-01.3
     shape: workflow
@@ -169,6 +172,7 @@ tests:
     needs: [bench-wifi-ap, bench-mqtt-broker, bench-driver, bench-serial-monitor, dut-board]
     expect: >
       pasa a OPERATIVO; status retained con estado = online y las configuraciones de Discovery de §14 llegan retained, sin duplicados
+    impl: tests/bench/test_jrn01.py::test_jrn_01_3_broker_status_discovery
     status: not_run
   - id: JRN-01.4
     shape: workflow
@@ -314,9 +318,285 @@ tests:
     needs: [hosted-ci]
     expect: el nivel host compila, enlaza y ejecuta (tier_smoke); no verifica el FSD
     impl: tests/host/tier_smoke.c
+  # Host heredados del piloto (villa-nodo-clima-piloto @ ddf8016, FR-HER-01): mismos casos,
+  # con «agua-» en lugar de «clima-»; TC-MQTT-01 sin la parte de medidas y TC-HA-01 reescrito
+  # para las entidades de §14. Los ids son los del piloto; verifies con el prefijo clima:.
+  - id: TC-ID-01
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-ID-01]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      identidad_desde_mac(24:0A:C4:A1:B2:C3) = agua-a1b2c3; sin mayúsculas ni otro prefijo; solo los 3 últimos bytes, con ceros a la izquierda
+    impl: tests/host/test_identidad.c
+    status: not_run
+  - id: TC-CON-01
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:T01, clima:T02, clima:T03, clima:T04, clima:T05, clima:T06, clima:T07, clima:T08, clima:T09, clima:T10, clima:T11, clima:T12, clima:T13, clima:T14, clima:T15, clima:T16, clima:T17, clima:T18, clima:T19, clima:T20, clima:T21, clima:T22, clima:T23, clima:T24, clima:T25, clima:T26]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      por fila: desde el estado de origen y con el evento y la guarda, el estado siguiente y la acción de §6.3, y su «No debe ocurrir» (T01 no abre el AP; T02 no intenta el STA); nombres de estado y evento de la línea E0
+    impl: tests/host/test_conectividad.c
+    status: not_run
+  - id: TC-CON-13
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: S1
+    tier: host
+    verifies: [clima:FR-CON-07]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      con_sta_seguridad: con clave de 8, 21 y 63 caracteres, umbral WPA2-PSK, PMF capaz y no requerido; con clave vacía o NULL, umbral abierto (SEC-07)
+    impl: tests/host/test_conectividad_sta.c
+    status: not_run
+  - id: TC-POR-01
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-POR-03]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      el generador del formulario produce exactamente 8 <input> con los name de §17; wifi_pass y mqtt_pass son password y nunca llevan value aunque se les pase uno; mqtt_port = 1883 por defecto; POST a /; id y versión visibles; ningún recurso externo; valores escapados; 0 si no cabe (nunca truncado)
+    impl: tests/host/test_portal_form.c
+    status: not_run
+  - id: TC-POR-13
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: S1
+    tier: host
+    verifies: [clima:FR-POR-09]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      portal_lectura_paso: 2 esperas y datos → seguir y el contador vuelve a 0; 3 esperas seguidas → 408 a la tercera (nunca antes, nunca sin límite); «1 byte por espera» y esperas alternas con bytes sueltos → 408 a ≤ 20 s (corte a los 15 s + una espera de 5 s, FSD 0.9.9, H-85); cuerpo completo dentro del plazo nunca da 408; cierre del cliente o error de socket → cortar sin respuesta (SEC-05, D25). Sin fila de banco: el relé HTTP del banco no puede mandar un cuerpo a medias
+    impl: tests/host/test_portal_lectura.c
+    status: not_run
+  - id: TC-POR-14
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: S1
+    tier: host
+    verifies: [clima:FR-POR-10]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      portal_origen_permitido(local, remota): solo (192.168.4.1, cliente de 192.168.4.0/24); rechaza otra dirección local (la IP del STA, 0.0.0.0, otra de la red del AP, bytes invertidos), un cliente de fuera de 192.168.4.0/24 dirigido a 192.168.4.1 (el bypass de host débil de lwIP, H-85), la red, la difusión, el propio AP y NULL. Revisión: el socket DNS se liga a 192.168.4.1 y a la interfaz del AP (SO_BINDTODEVICE) y descarta orígenes de fuera; el HTTP cierra en open_fn toda conexión con otra dirección local o remota (SEC-06, FSD 0.9.9). Sin fila de banco: con una sola radio, el banco no puede hablar con el DUT por la IP del STA mientras está en VALIDANDO
+    impl: tests/host/test_portal_origen.c
+    status: not_run
+  - id: TC-POR-03
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-POR-04]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      el validador de §17 rechaza, nombrando solo ese campo, cada caso límite inválido (longitud 0 y máximo + 1 de cada campo; wifi_pass de 1–7 o no ASCII imprimible; mqtt_host fuera de [A-Za-z0-9.-] o IPv4 decimal inválida; mqtt_port fuera de 1–65535 o no numérico; sitio y zona con /, +, #, mayúsculas o espacio) y acepta el máximo; varios errores a la vez, cada uno en su campo
+    impl: tests/host/test_portal_validar.c
+    status: not_run
+  - id: TC-POR-04
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-POR-04]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      el cuerpo urlencoded se decodifica ('+', %XX; la primera aparición cuenta; %XX mal formado literal); con errores, el formulario lleva el aviso general y, debajo de cada campo inválido y solo de ellos, un id=err-<name>; conserva los valores no secretos y nunca los secretos; las páginas de estado llevan su marca (estado-probando con recarga a «/», estado-conectado sin ella) y el formulario puede llevar el aviso no-conecta (FR-POR-05) con los valores no secretos
+    impl: tests/host/test_portal_envio.c
+    status: not_run
+  - id: TC-POR-06
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-POR-02]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      toda ruta GET salvo «/» (incluidas /generate_204 y /hotspot-detect.html) se redirige a http://192.168.4.1/; una consulta DNS A (o ANY) de clase IN de cualquier nombre, con o sin EDNS, recibe una respuesta A con 192.168.4.1 (id y pregunta copiados, QR y RD, NOERROR); AAAA, NOERROR sin respuestas; las consultas inválidas o que no caben se descartan
+    impl: tests/host/test_portal_cautivo.c
+    status: not_run
+  - id: TC-POR-10
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-POR-06]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      valores válidos con los máximos de §17 → registro de configuración → valores: idénticos y siguen siendo válidos; un valor que no cabe o un puerto no numérico se rechaza (nunca se trunca)
+    impl: tests/host/test_portal_config.c
+    status: not_run
+  - id: TC-SEC-02
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-SEC-03]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      la ruta que escribe el log de páginas del portal se corta en el primer ? o #, sin consulta ni fragmento (nunca un dato del formulario), con los no imprimibles como _ y truncada a lo que cabe
+    impl: tests/host/test_log_ruta.c
+    status: not_run
+  - id: TC-LOG-02
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-LOG-02]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      el ensamblador del log UDP entrega cada línea una vez, completa y en orden, aunque llegue en trozos, sin \r\n y sin líneas vacías; una línea demasiado larga sale cortada con la marca « [cortada]» y lo que sobra no contamina la siguiente
+    impl: tests/host/test_udplog_lineas.c
+    status: not_run
+  - id: TC-CON-02
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-CON-02]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      10 fallos dan 1, 2, 4, 8, 16, 32, 60, 60, 60, 60 s; nunca más de 60 s (ni tras 1000 fallos); tras un éxito, 1 s
+    impl: tests/host/test_backoff.c
+    status: not_run
+  - id: TC-DIAG-01
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [clima:FR-MQTT-08]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      cada causa de reinicio tiene el nombre de §9.3 (FSD 0.9.4): poweron, ext, sw, panic, task_wdt, int_wdt, wdt, deepsleep, brownout, usb, jtag, otro; un valor fuera de la enumeración da «otro» (también en E1)
+    impl: tests/host/test_diag_reset.c
+    status: not_run
+  - id: TC-MQTT-01
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [clima:FR-MQTT-01]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      tópicos <sitio>/<zona>/<nodo>/<sufijo> (FSD §13.1), sin espacio → -1 y búfer vacío; Last Will {"estado":"offline"}
+    impl: tests/host/test_publicador.c
+    status: not_run
+  - id: TC-MQTT-02
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [clima:FR-MQTT-08]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      el serializador de status da los 9 campos de §9.3 en su orden y con sus tipos (estado online|offline, enteros sin comillas, hora_valida booleano), escapa las cadenas, nunca escribe (null) y nunca trunca
+    impl: tests/host/test_publicador.c
+    status: not_run
+  - id: TC-HA-01
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [clima:FR-HA-02, clima:FR-HA-03, FR-HA-A1]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      nodo agua-a1b2c3, sitio1, zona1, fw 0.3.0: una configuración por entidad de §14 (20; el % de batería pendiente de definir), tópicos homeassistant/<comp>/<nodo>/<obj>/config, JSON bien formado, unique_id = <nodo>_<obj> sin sitio ni zona y sin repetir, sw_version = fw, expire_after = 180 solo en los sensores de medida; la válvula, literal; sin espacio o entidad inexistente → -1 y búfer vacío
+    impl: tests/host/test_ha_discovery.c
+    status: not_run
+  - id: TC-LOG-05
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-LOG-02, clima:FR-LOG-03]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      dos escritores a la vez (H-55): con el prefijo «I (t) wifi:» de uno a medias y una línea entera del otro en medio, salen las dos líneas enteras, sin mezclar; dos a medias a la vez terminan cada una con lo suyo; una ranura solo se ocupa con una línea a medias; con la tabla llena, el trozo incompleto se descarta y se cuenta sin mezclarse; con dos hilos reales (uno en tres trozos por línea, 5000 líneas cada uno), cada línea sale una vez, entera y en el orden de su escritor. El núcleo nunca espera (el cerrojo solo cubre la búsqueda de ranura)
+    impl: tests/host/test_udplog_escritores.c
+    status: not_run
+  - id: TC-LOG-06
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [clima:FR-LOG-02, clima:FR-LOG-03]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      reintento del envío (H-57): un sendto fallido se reintenta hasta 3 veces con 20 ms entre intentos (1 + 3 intentos, 60 ms como mucho) sin adelantar la línea siguiente; si sale en un reintento cuenta como reintentada; si sigue fallando se descarta y cuenta como descartada. Las esperas son solo de la tarea de envío
+    impl: tests/host/test_udplog_envio.c
+    status: not_run
+  - id: TC-TIME-02
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [clima:FR-TIME-02]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      función de validez: (sincronizado = no, reloj = 2030), (sí, 1970), (sí, build − 1 s), (sí, build + 1 s) → no válida, no válida, no válida, válida; una fecha de build ilegible nunca da hora válida
+    impl: tests/host/test_hora.c (time02)
+    status: not_run
+  - id: TC-TIME-07
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [clima:FR-TIME-04, clima:FR-TIME-06]
+    needs: [hosted-ci]
+    origin: villa-nodo-clima-piloto@ddf8016
+    expect: >
+      planificador SNTP derivado de las constantes de hora.h (H-71; tick de 10 s): tick ≤ 15 s y divisor del intento de 30 s; sin hora, una petición por tick y «fallo» a los 30 s exactos sin dejar de pedir; con hora, nada hasta 1 h; a la hora, un intento que falla a los 30 s sin invalidar la hora y el siguiente 1 h después; un arranque nuevo empieza sin hora. Complementa las filas bench y bench⁺, que siguen siendo las del contrato
+    impl: tests/host/test_hora.c (time07)
+    status: not_run
 
 tier_checks:
-  host: ci.yml/host-tests (tier_smoke)
+  host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
   other: ci.yml/config-checks + build.yml/Verify build constraints (C-HW-01/02/03/08, C-BLD-01…04, C-SEC-A3)
 
 gate_verdicts:   # [{gate, verdict, date, commit}] — los escribe el checker
@@ -338,3 +618,11 @@ commissioning:
       «App version: 0.0.0-bench», «ELF file SHA256: d57da1614...» (igual al artefacto),
       «nodo: NODO-BENCH-IMAGE» y «nodo: Init complete»
     bench_coordination: candado ~/villa/banco.lock tomado; SLOT1 idle; el propietario confirmó que el piloto había terminado
+  gate_03: >
+    SHUT mientras las filas 2–5 de la agenda esperan la compra. Por condición del
+    propietario (2026-11-14, «avanza ya con todo lo que no depende de esa compra»)
+    /build avanza en paralelo con lo heredado del piloto que no necesita E/S
+    (portal, Wi-Fi, MQTT, Discovery, SNTP, log, watchdog) sobre la placa ya
+    commissioned (fila 1). El chequeo 02 «components/ solo udplog antes de la
+    puerta 03» queda excedido por esa autorización; los tests que necesitan E/S
+    siguen en xfail strict hasta cerrar la puerta 03.

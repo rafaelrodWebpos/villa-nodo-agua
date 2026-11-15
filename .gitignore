@@ -14,3 +14,4 @@
 # Cachés del nivel bench
 .pytest_cache/
 __pycache__/
+/build-*/
