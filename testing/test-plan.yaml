@@ -202,13 +202,11 @@ tests:
     expect: >
       pasa a OPERATIVO; status retained con estado = online y las configuraciones de Discovery de §14 llegan retained, sin duplicados
     impl: tests/bench/test_jrn01.py::test_jrn_01_3_broker_status_discovery
-    status: successful
-    commit: 46989e0
-    date: 2026-11-14
-    ci_run: 43670049284   # build.yml, workflow_dispatch variant=bench version=0.0.0-46989e0
-    evidence: test-results/20261115T025940Z-46989e0/
+    status: not_run
+    commit: 2b0be9b
+    date: 2026-11-15
     observed: >
-      T11; primer mensaje status online con los 9 campos, QoS 1, retenido; 20 de 20 configuraciones de Discovery retenidas, sin duplicados
+      repetir: FSD 0.4.0 añade estado_bateria (21 entidades). Último verde con 20 entidades en 7112486 (test-results/20261115T030348Z-9e6a43e/).
   - id: JRN-01.4
     shape: workflow
     kind: standard
@@ -1048,13 +1046,11 @@ tests:
     expect: >
       HA de prueba nuevo (scripts/ha/ha_prueba.py) con la integración MQTT al broker del banco: 1 dispositivo «Agua sitio1 zona1» con las 20 entidades de §14 (valve 1, switch 1, binary_sensor 10, sensor 5, button 2, event 1; el % de batería pendiente de definir), ninguna unavailable salvo los sensores de medida (expire_after, sin valor hasta tener E/S), tras conectar y tras cada uno de 3 reinicios del DUT, sin duplicados
     impl: tests/bench/test_ha.py::test_tc_ha_a1_home_assistant_entities
-    status: successful
-    commit: de0f8cd
+    status: not_run
+    commit: 2b0be9b
     date: 2026-11-15
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0
-    evidence: test-results/20261115T043833Z-de0f8cd/
     observed: >
-      HA 2026.10.4 de prueba: 1 dispositivo «Agua sitio1 zona1» con 20 entidades tras conectar y tras 3 reinicios, sin duplicados. Antes: failed sobre 04f5616 por un defecto del test (corregido)
+      repetir: FSD 0.4.0 añade estado_bateria (21 entidades). Último verde con 20 entidades en de0f8cd (test-results/20261115T043833Z-de0f8cd/).
   - id: TC-TIME-01
     shape: atomic
     kind: standard
@@ -1106,7 +1102,13 @@ tests:
     expect: >
       imagen de banco en OPERATIVO; «wdt-test» por el USB-Serial/JTAG (E13-USJ) → «wdt: bloqueando ciclo» y `boot: … reset=task_wdt` en ≤ 32 s; nunca colgado sin reinicio. La tarea vigilada es el ciclo hasta que exista la tarea de protección (NFR-WDT-A1, con la E/S)
     impl: tests/bench/test_e13.py::test_tc_wdt_02_task_watchdog
-    status: not_run
+    status: successful
+    commit: 26c3661
+    date: 2026-11-15
+    ci_run: 43709844065
+    evidence: test-results/20261115T114047Z-26c3661/
+    observed: >
+      SLOT2, imagen 0.0.0-26c3661-bench: «wdt-test» escrito por el USB-Serial/JTAG (E13-USJ) → «wdt: bloqueando ciclo» y boot: con reset=task_wdt.
   - id: TC-TIME-08
     shape: atomic
     kind: standard
@@ -1120,9 +1122,12 @@ tests:
       hora sincronizada; SNTP bloqueado y «reiniciar» por el USB-Serial/JTAG → `boot: … reset=sw`, hora_valida = false en ≥ 2 status tras el reinicio y ninguna «sntp: sincronizado»
     impl: tests/bench/test_e13.py::test_tc_time_08_reboot_without_sntp
     status: not_run
-tier_checks:
-  host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
-  other: ci.yml/config-checks + build.yml/Verify build constraints (C-HW-01/02/03/08, C-BLD-01…04, C-SEC-A3)
+    commit: 26c3661
+    date: 2026-11-15
+    ci_run: 43709844065
+    evidence: test-results/20261115T114519Z-26c3661/
+    observed: >
+      precondición del banco no cumplida (no es un fallo del DUT): 3 intentos (114047Z, 114359Z, 114519Z) se cortan antes del estímulo porque el suscriptor de la laptop no conecta al broker del banco (TCP 1883 sin respuesta, con el broker en marcha; la API y el SSH del banco sí responden). A las 02:46 funcionaba. Repetir cuando el banco vuelva a aceptar 1883 desde la LAN.
 
 gate_verdicts:   # [{gate, verdict, date, commit}] — los escribe el checker
   - {gate: 01-load-defined, verdict: OPEN, date: 2026-11-14, commit: c3e5053}
