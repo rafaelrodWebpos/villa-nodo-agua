@@ -1,0 +1,1464 @@
+I (20127) nodo: UDP logging -> 192.168.4.1:5555
+I (20127) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (20127) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5217) nodo: UDP logging -> 192.168.4.1:5555
+I (5217) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5217) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5217) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5227) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5237) nodo: mqtt: intento 1
+I (5317) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5717) nodo: sntp: inicio pool.ntp.org
+I (15727) nodo: sntp: inicio pool.ntp.org
+I (25727) nodo: sntp: inicio pool.ntp.org
+W (35727) nodo: sntp: fallo
+I (35727) nodo: sntp: inicio pool.ntp.org
+I (45727) nodo: sntp: inicio pool.ntp.org
+I (55727) nodo: sntp: inicio pool.ntp.org
+I (60547) nodo: med: T=29.9 HR=74.0 Td=24.8
+W (65727) nodo: sntp: fallo
+I (65727) nodo: sntp: inicio pool.ntp.org
+I (75727) nodo: sntp: inicio pool.ntp.org
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5263) nodo: mqtt: intento 1
+I (5363) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5743) nodo: sntp: inicio pool.ntp.org
+I (9523) nodo: ota: estado rechazado:payload
+I (9533) nodo: con: OPERATIVO -> OPERATIVO (cmd_ota)
+I (12793) nodo: ota: estado rechazado:host
+I (12803) nodo: con: OPERATIVO -> OPERATIVO (cmd_ota)
+I (15753) nodo: sntp: inicio pool.ntp.org
+I (16073) nodo: ota: estado rechazado:ruta
+I (16083) nodo: con: OPERATIVO -> OPERATIVO (cmd_ota)
+I (17403) nodo: UDP logging -> 192.168.4.1:5555
+I (17403) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (17403) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5253) nodo: UDP logging -> 192.168.4.1:5555
+I (5253) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5253) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5253) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5263) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5273) nodo: mqtt: intento 1
+I (5373) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5753) nodo: sntp: inicio pool.ntp.org
+I (19413) nodo: UDP logging -> 192.168.4.1:5555
+I (19413) nodo: udplog: descartadas=1 reintentadas=0 cola_llena=0
+I (19413) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (19413) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (19423) nodo: mqtt: intento 1
+I (19523) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (19583) nodo: ota: ignorado retained
+I (19913) nodo: sntp: inicio pool.ntp.org
+I (29923) nodo: sntp: inicio pool.ntp.org
+W (39923) nodo: sntp: fallo
+I (39923) nodo: sntp: inicio pool.ntp.org
+I (49923) nodo: sntp: inicio pool.ntp.org
+I (59923) nodo: sntp: inicio pool.ntp.org
+I (60573) nodo: med: T=30.4 HR=71.4 Td=24.7
+W (69923) nodo: sntp: fallo
+I (69923) nodo: sntp: inicio pool.ntp.org
+I (79923) nodo: sntp: inicio pool.ntp.org
+I (85933) nodo: ota: estado rechazado:payload
+I (85943) nodo: con: OPERATIVO -> OPERATIVO (cmd_ota)
+I (18683) nodo: UDP logging -> 192.168.4.1:5555
+I (18683) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18683) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5253) nodo: UDP logging -> 192.168.4.1:5555
+I (5253) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5253) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5253) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5263) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5273) nodo: mqtt: intento 1
+I (5353) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5753) nodo: sntp: inicio pool.ntp.org
+I (7563) nodo: sntp: sincronizado ts=1794654385
+I (8473) nodo: ota: estado en_curso
+I (8493) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (11813) esp-x509-crt-bundle: Certificate validated
+I (13433) nodo: ota: estado error:http
+I (13443) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (18143) nodo: UDP logging -> 192.168.4.1:5555
+I (18143) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5263) nodo: mqtt: intento 1
+I (5333) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5743) nodo: sntp: inicio pool.ntp.org
+I (10233) nodo: ota: estado en_curso
+I (10243) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+E (10283) esp-tls-mbedtls: mbedtls_ssl_handshake returned -0x2700
+E (10283) esp-tls: Failed to open new connection
+E (10293) transport_base: Failed to open a new connection
+E (10303) HTTP_CLIENT: Connection failed, sock < 0
+I (10313) nodo: ota: estado error:tls
+I (10323) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (17383) nodo: UDP logging -> 192.168.4.1:5555
+I (17383) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (17383) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (17393) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5263) nodo: mqtt: intento 1
+I (5343) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5743) nodo: sntp: inicio pool.ntp.org
+I (6463) nodo: sntp: sincronizado ts=1794655085
+I (60573) nodo: med: T=30.5 HR=72.3 Td=25.0
+I (18143) nodo: UDP logging -> 192.168.4.1:5555
+I (18143) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18143) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5263) nodo: mqtt: intento 1
+I (5743) nodo: sntp: inicio pool.ntp.org
+W (6553) mqtt_client: Connection refused, not authorized
+E (6553) mqtt_client: MQTT connect failed
+I (6563) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (7563) nodo: mqtt: intento 2
+I (7563) mqtt_client: Client force reconnect requested
+I (7563) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (7593) mqtt_client: Connection refused, not authorized
+E (7603) mqtt_client: MQTT connect failed
+I (7603) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (9603) nodo: mqtt: intento 3
+I (9603) mqtt_client: Client force reconnect requested
+I (9603) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (9643) mqtt_client: Connection refused, not authorized
+E (9643) mqtt_client: MQTT connect failed
+I (9643) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (13643) nodo: mqtt: intento 4
+I (13643) mqtt_client: Client force reconnect requested
+I (13643) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (13703) mqtt_client: Connection refused, not authorized
+E (13703) mqtt_client: MQTT connect failed
+I (13713) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (15753) nodo: sntp: inicio pool.ntp.org
+I (21713) nodo: mqtt: intento 5
+I (21713) mqtt_client: Client force reconnect requested
+I (21713) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (21743) mqtt_client: Connection refused, not authorized
+E (21743) mqtt_client: MQTT connect failed
+I (21753) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (25753) nodo: sntp: inicio pool.ntp.org
+W (35753) nodo: sntp: fallo
+I (35753) nodo: sntp: inicio pool.ntp.org
+I (37753) nodo: mqtt: intento 6
+I (37753) mqtt_client: Client force reconnect requested
+I (37753) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (37783) mqtt_client: Connection refused, not authorized
+E (37793) mqtt_client: MQTT connect failed
+I (37793) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (45753) nodo: sntp: inicio pool.ntp.org
+I (55753) nodo: sntp: inicio pool.ntp.org
+I (60563) nodo: udplog: descartadas=0 reintentadas=1 cola_llena=0
+I (60573) nodo: med: T=30.6 HR=71.7 Td=24.9
+W (65753) nodo: sntp: fallo
+I (65753) nodo: sntp: inicio pool.ntp.org
+I (69793) nodo: mqtt: intento 7
+I (69793) mqtt_client: Client force reconnect requested
+I (69793) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (69843) mqtt_client: Connection refused, not authorized
+E (69843) mqtt_client: MQTT connect failed
+I (69843) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (75753) nodo: sntp: inicio pool.ntp.org
+I (85753) nodo: sntp: inicio pool.ntp.org
+W (95763) nodo: sntp: fallo
+I (95763) nodo: sntp: inicio pool.ntp.org
+I (105763) nodo: sntp: inicio pool.ntp.org
+I (115763) nodo: sntp: inicio pool.ntp.org
+I (120573) nodo: med: T=30.6 HR=71.6 Td=24.9
+W (125763) nodo: sntp: fallo
+I (125763) nodo: sntp: inicio pool.ntp.org
+I (129843) nodo: mqtt: intento 8
+I (129843) mqtt_client: Client force reconnect requested
+I (129843) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+I (129933) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (135763) nodo: sntp: inicio pool.ntp.org
+I (18503) nodo: UDP logging -> 192.168.4.1:5555
+I (18503) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18503) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1822) nodo: UDP logging -> 192.168.4.1:5555
+I (1822) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1872) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1872) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1832) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1882) nodo: mqtt: intento 1
+I (1962) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2372) nodo: sntp: inicio pool.ntp.org
+I (5173) nodo: UDP logging -> 192.168.4.1:5555
+I (5173) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5223) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5223) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5183) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5233) nodo: mqtt: intento 1
+I (5323) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5723) nodo: sntp: inicio pool.ntp.org
+I (5133) nodo: UDP logging -> 192.168.4.1:5555
+I (5133) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5133) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5133) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5143) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5153) nodo: mqtt: intento 1
+I (5243) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5633) nodo: sntp: inicio pool.ntp.org
+I (15643) nodo: sntp: inicio pool.ntp.org
+I (25643) nodo: sntp: inicio pool.ntp.org
+W (35643) nodo: sntp: fallo
+I (35643) nodo: sntp: inicio pool.ntp.org
+I (45643) nodo: sntp: inicio pool.ntp.org
+I (55643) nodo: sntp: inicio pool.ntp.org
+I (60573) nodo: med: T=30.7 HR=71.6 Td=25.0
+W (65643) nodo: sntp: fallo
+I (65643) nodo: sntp: inicio pool.ntp.org
+I (75643) nodo: sntp: inicio pool.ntp.org
+I (85643) nodo: sntp: inicio pool.ntp.org
+W (95643) nodo: sntp: fallo
+I (95653) nodo: sntp: inicio pool.ntp.org
+I (105653) nodo: sntp: inicio pool.ntp.org
+I (115653) nodo: sntp: inicio pool.ntp.org
+I (120573) nodo: med: T=30.7 HR=71.7 Td=25.0
+W (125653) nodo: sntp: fallo
+I (125653) nodo: sntp: inicio pool.ntp.org
+I (135653) nodo: sntp: inicio pool.ntp.org
+I (145653) nodo: sntp: inicio pool.ntp.org
+W (155653) nodo: sntp: fallo
+I (155653) nodo: sntp: inicio pool.ntp.org
+I (165653) nodo: sntp: inicio pool.ntp.org
+I (175653) nodo: sntp: inicio pool.ntp.org
+I (180573) nodo: med: T=30.6 HR=71.7 Td=24.9
+W (185663) nodo: sntp: fallo
+I (185663) nodo: sntp: inicio pool.ntp.org
+I (195663) nodo: sntp: inicio pool.ntp.org
+I (205663) nodo: sntp: inicio pool.ntp.org
+W (215663) nodo: sntp: fallo
+I (215663) nodo: sntp: inicio pool.ntp.org
+I (225663) nodo: sntp: inicio pool.ntp.org
+I (17793) nodo: UDP logging -> 192.168.4.1:5555
+I (17793) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (17793) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (17803) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1832) nodo: UDP logging -> 192.168.4.1:5555
+I (1832) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1882) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1882) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1842) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1892) nodo: mqtt: intento 1
+I (1972) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2382) nodo: sntp: inicio pool.ntp.org
+I (5143) nodo: UDP logging -> 192.168.4.1:5555
+I (5143) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5193) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5193) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5153) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5203) nodo: mqtt: intento 1
+I (5313) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5693) nodo: sntp: inicio pool.ntp.org
+I (5143) nodo: UDP logging -> 192.168.4.1:5555
+I (5143) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5143) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5143) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5153) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5163) nodo: mqtt: intento 1
+I (5253) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5643) nodo: sntp: inicio pool.ntp.org
+I (15653) nodo: sntp: inicio pool.ntp.org
+I (25653) nodo: sntp: inicio pool.ntp.org
+W (35653) nodo: sntp: fallo
+I (35653) nodo: sntp: inicio pool.ntp.org
+I (45653) nodo: sntp: inicio pool.ntp.org
+I (55653) nodo: sntp: inicio pool.ntp.org
+I (60573) nodo: med: T=30.7 HR=71.5 Td=25.0
+W (65653) nodo: sntp: fallo
+I (65653) nodo: sntp: inicio pool.ntp.org
+I (75653) nodo: sntp: inicio pool.ntp.org
+I (85653) nodo: sntp: inicio pool.ntp.org
+W (95653) nodo: sntp: fallo
+I (95663) nodo: sntp: inicio pool.ntp.org
+I (105663) nodo: sntp: inicio pool.ntp.org
+I (115663) nodo: sntp: inicio pool.ntp.org
+I (120573) nodo: med: T=30.8 HR=71.5 Td=25.0
+W (125663) nodo: sntp: fallo
+I (125663) nodo: sntp: inicio pool.ntp.org
+I (135663) nodo: sntp: inicio pool.ntp.org
+I (145663) nodo: sntp: inicio pool.ntp.org
+W (155663) nodo: sntp: fallo
+I (155663) nodo: sntp: inicio pool.ntp.org
+I (165663) nodo: sntp: inicio pool.ntp.org
+I (175663) nodo: sntp: inicio pool.ntp.org
+I (180573) nodo: med: T=30.8 HR=71.4 Td=25.0
+W (185673) nodo: sntp: fallo
+I (185673) nodo: sntp: inicio pool.ntp.org
+I (195673) nodo: sntp: inicio pool.ntp.org
+I (205673) nodo: sntp: inicio pool.ntp.org
+W (215673) nodo: sntp: fallo
+I (215673) nodo: sntp: inicio pool.ntp.org
+I (225673) nodo: sntp: inicio pool.ntp.org
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5263) nodo: mqtt: intento 1
+I (5343) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5743) nodo: sntp: inicio pool.ntp.org
+W (6663) nodo: wdt: bloqueando medicion
+I (15753) nodo: sntp: inicio pool.ntp.org
+I (25753) nodo: sntp: inicio pool.ntp.org
+I (5233) nodo: UDP logging -> 192.168.4.1:5555
+I (5233) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5233) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5233) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5243) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5253) nodo: mqtt: intento 1
+I (5343) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5733) nodo: sntp: inicio pool.ntp.org
+I (7033) nodo: sntp: sincronizado ts=1794658942
+I (1832) nodo: UDP logging -> 192.168.4.1:5555
+I (1832) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1832) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1832) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1842) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1852) nodo: mqtt: intento 1
+I (1932) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2332) nodo: sntp: inicio pool.ntp.org
+I (12342) nodo: sntp: inicio pool.ntp.org
+I (22342) nodo: sntp: inicio pool.ntp.org
+W (32342) nodo: sntp: fallo
+I (32342) nodo: sntp: inicio pool.ntp.org
+I (42342) nodo: sntp: inicio pool.ntp.org
+I (52342) nodo: sntp: inicio pool.ntp.org
+I (60562) nodo: udplog: descartadas=0 reintentadas=1 cola_llena=0
+I (60572) nodo: med: T=31.0 HR=72.1 Td=25.4
+W (62342) nodo: sntp: fallo
+I (62342) nodo: sntp: inicio pool.ntp.org
+I (72342) nodo: sntp: inicio pool.ntp.org
+I (82342) nodo: sntp: inicio pool.ntp.org
+W (92342) nodo: sntp: fallo
+I (92342) nodo: sntp: inicio pool.ntp.org
+I (102352) nodo: sntp: inicio pool.ntp.org
+I (112352) nodo: sntp: inicio pool.ntp.org
+I (120572) nodo: med: T=31.0 HR=72.3 Td=25.4
+W (122352) nodo: sntp: fallo
+I (122352) nodo: sntp: inicio pool.ntp.org
+I (132352) nodo: sntp: inicio pool.ntp.org
+I (18923) nodo: UDP logging -> 192.168.4.1:5555
+I (18923) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18923) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (18933) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5263) nodo: UDP logging -> 192.168.4.1:5555
+I (5263) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5263) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5263) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5273) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5283) nodo: mqtt: intento 1
+I (5373) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5763) nodo: sntp: inicio pool.ntp.org
+I (7963) nodo: sntp: sincronizado ts=1794659387
+I (1812) nodo: UDP logging -> 192.168.4.1:5555
+I (1812) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1812) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1812) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1822) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1832) nodo: mqtt: intento 1
+I (1912) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2312) nodo: sntp: inicio pool.ntp.org
+I (12322) nodo: sntp: inicio pool.ntp.org
+I (22322) nodo: sntp: inicio pool.ntp.org
+W (32322) nodo: sntp: fallo
+I (32322) nodo: sntp: inicio pool.ntp.org
+I (42322) nodo: sntp: inicio pool.ntp.org
+I (52322) nodo: sntp: inicio pool.ntp.org
+I (60572) nodo: med: T=31.0 HR=73.0 Td=25.6
+W (62322) nodo: sntp: fallo
+I (62322) nodo: sntp: inicio pool.ntp.org
+I (72322) nodo: sntp: inicio pool.ntp.org
+I (82322) nodo: sntp: inicio pool.ntp.org
+W (92322) nodo: sntp: fallo
+I (92332) nodo: sntp: inicio pool.ntp.org
+I (102332) nodo: sntp: inicio pool.ntp.org
+I (112332) nodo: sntp: inicio pool.ntp.org
+I (120572) nodo: med: T=31.0 HR=73.1 Td=25.6
+W (122332) nodo: sntp: fallo
+I (122332) nodo: sntp: inicio pool.ntp.org
+I (132332) nodo: sntp: inicio pool.ntp.org
+I (18663) nodo: UDP logging -> 192.168.4.1:5555
+I (18663) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18663) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5323) nodo: UDP logging -> 192.168.4.1:5555
+I (5323) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5323) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5323) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5333) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5343) nodo: mqtt: intento 1
+I (5433) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5823) nodo: sntp: inicio pool.ntp.org
+I (9493) nodo: ota: estado en_curso
+I (9503) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (10523) nodo: sntp: sincronizado ts=1794660520
+I (12003) esp-x509-crt-bundle: Certificate validated
+I (13803) nodo: ota: estado rechazado:host
+I (13813) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (60573) nodo: med: T=30.5 HR=73.1 Td=25.1
+I (120573) nodo: med: T=30.5 HR=73.0 Td=25.1
+I (180573) nodo: med: T=30.5 HR=72.8 Td=25.1
+I (240573) nodo: med: T=30.5 HR=72.7 Td=25.0
+I (17253) nodo: UDP logging -> 192.168.4.1:5555
+I (17253) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (17253) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (17263) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) nodo: mqtt: intento 1
+I (5293) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5743) nodo: sntp: inicio pool.ntp.org
+I (6083) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (9503) nodo: ota: estado en_curso
+I (9513) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (10723) nodo: sntp: sincronizado ts=1794661090
+I (11873) esp-x509-crt-bundle: Certificate validated
+I (13813) nodo: ota: estado rechazado:host
+I (13813) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (60563) nodo: udplog: descartadas=0 reintentadas=1 cola_llena=0
+I (60573) nodo: med: T=30.5 HR=72.5 Td=25.0
+I (120573) nodo: med: T=30.5 HR=72.1 Td=24.9
+I (180573) nodo: med: T=30.5 HR=72.4 Td=24.9
+I (240573) nodo: med: T=30.4 HR=72.1 Td=24.8
+I (18253) nodo: UDP logging -> 192.168.4.1:5555
+I (18253) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18253) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5263) nodo: mqtt: intento 1
+I (5353) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5743) nodo: sntp: inicio pool.ntp.org
+I (8463) nodo: sntp: sincronizado ts=1794661715
+I (9493) nodo: ota: estado en_curso
+I (9503) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (11793) esp-x509-crt-bundle: Certificate validated
+I (13683) esp-x509-crt-bundle: Certificate validated
+I (14343) nodo: ota: estado error:http
+I (14343) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (60573) nodo: med: T=30.6 HR=71.6 Td=24.9
+I (120573) nodo: med: T=30.6 HR=71.3 Td=24.8
+I (180573) nodo: med: T=30.6 HR=71.2 Td=24.8
+I (240573) nodo: med: T=30.6 HR=71.2 Td=24.8
+I (18383) nodo: UDP logging -> 192.168.4.1:5555
+I (18383) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18383) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (18393) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (18403) nodo: nvs: config escrita
+I (5253) nodo: UDP logging -> 192.168.4.1:5555
+I (5253) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5253) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5253) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5263) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5273) nodo: mqtt: intento 1
+I (5353) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5753) nodo: sntp: inicio pool.ntp.org
+I (6223) nodo: sntp: sincronizado ts=1794662350
+I (9503) nodo: ota: estado en_curso
+I (9513) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (11873) esp-x509-crt-bundle: Certificate validated
+I (13953) esp-x509-crt-bundle: Certificate validated
+E (14503) HTTP_CLIENT: Out of buffer
+I (14503) nodo: ota: estado error:red
+I (14513) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (60573) nodo: med: T=30.9 HR=70.3 Td=24.8
+I (120573) nodo: med: T=30.9 HR=70.2 Td=24.8
+I (180573) nodo: med: T=30.9 HR=70.3 Td=24.8
+I (240573) nodo: med: T=30.8 HR=68.3 Td=24.3
+I (17383) nodo: UDP logging -> 192.168.4.1:5555
+I (17383) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (17383) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (17393) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5233) nodo: UDP logging -> 192.168.4.1:5555
+I (5233) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5233) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5233) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5243) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5253) nodo: mqtt: intento 1
+I (5333) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5733) nodo: sntp: inicio pool.ntp.org
+I (6843) nodo: sntp: sincronizado ts=1794662901
+I (8483) nodo: ota: estado en_curso
+I (8493) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (10793) esp-x509-crt-bundle: Certificate validated
+I (12963) esp-x509-crt-bundle: Certificate validated
+I (13923) esp-x509-crt-bundle: Certificate validated
+I (14533) esp_https_ota: Starting OTA...
+I (14543) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (14673) nodo: ota: 0 %
+I (16333) nodo: ota: 10 %
+I (18043) nodo: ota: 20 %
+I (19643) nodo: ota: 30 %
+I (21283) nodo: ota: 40 %
+I (23053) nodo: ota: 50 %
+I (25713) nodo: ota: 60 %
+I (27533) nodo: ota: 70 %
+I (29483) nodo: ota: 80 %
+I (31183) nodo: ota: 90 %
+I (32793) nodo: ota: 100 %
+I (32793) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (32843) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (32853) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (32853) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a70h (756336) map
+I (33003) esp_image: segment 4: paddr=00418a98 vaddr=40374950 size=14120h ( 82208) 
+I (33023) esp_image: segment 5: paddr=0042cbc0 vaddr=50000000 size=00024h (    36) 
+I (33033) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (33093) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (33093) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (33103) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a70h (756336) map
+I (33253) esp_image: segment 4: paddr=00418a98 vaddr=40374950 size=14120h ( 82208) 
+I (33273) esp_image: segment 5: paddr=0042cbc0 vaddr=50000000 size=00024h (    36) 
+I (33313) nodo: ota: estado ok
+I (33313) nodo: con: OTA_DESCARGA -> ARRANQUE (ota_ok)
+I (1847) nodo: UDP logging -> 192.168.4.1:5555
+I (1847) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1847) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1847) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1857) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1867) nodo: mqtt: intento 1
+I (1997) nodo: ota: imagen validada
+I (1997) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2347) nodo: sntp: inicio pool.ntp.org
+I (6777) nodo: sntp: sincronizado ts=1794662936
+I (60597) nodo: med: T=30.7 HR=65.2 Td=23.4
+I (120597) nodo: med: T=30.6 HR=64.4 Td=23.2
+I (180597) nodo: med: T=30.6 HR=63.8 Td=23.0
+I (5253) nodo: UDP logging -> 192.168.4.1:5555
+I (5253) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5253) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5253) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5263) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5273) nodo: mqtt: intento 1
+I (5353) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5753) nodo: sntp: inicio pool.ntp.org
+I (9523) nodo: ota: estado en_curso
+I (9533) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (10133) nodo: sntp: sincronizado ts=1794663425
+I (11903) esp-x509-crt-bundle: Certificate validated
+I (14163) esp-x509-crt-bundle: Certificate validated
+I (15213) esp-x509-crt-bundle: Certificate validated
+I (15853) esp_https_ota: Starting OTA...
+I (15853) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (16093) nodo: ota: 0 %
+I (19493) nodo: ota: 10 %
+I (22233) nodo: ota: 20 %
+I (24703) nodo: ota: 30 %
+I (26923) nodo: ota: 40 %
+I (29133) nodo: ota: 50 %
+I (31373) nodo: ota: 60 %
+I (33883) nodo: ota: 70 %
+I (36383) nodo: ota: 80 %
+I (38363) nodo: ota: 90 %
+I (40143) nodo: ota: 100 %
+I (40143) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (40193) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (40203) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (40203) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a70h (756336) map
+I (40353) esp_image: segment 4: paddr=00418a98 vaddr=40374950 size=14120h ( 82208) 
+I (40373) esp_image: segment 5: paddr=0042cbc0 vaddr=50000000 size=00024h (    36) 
+I (40383) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (40433) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (40443) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (40453) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a70h (756336) map
+I (40603) esp_image: segment 4: paddr=00418a98 vaddr=40374950 size=14120h ( 82208) 
+I (40623) esp_image: segment 5: paddr=0042cbc0 vaddr=50000000 size=00024h (    36) 
+I (40663) nodo: ota: estado ok
+I (40673) nodo: con: OTA_DESCARGA -> ARRANQUE (ota_ok)
+I (1837) nodo: UDP logging -> 192.168.4.1:5555
+I (1837) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1837) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1837) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1847) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1857) nodo: mqtt: intento 1
+I (2087) nodo: ota: imagen validada
+I (2087) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2337) nodo: sntp: inicio pool.ntp.org
+I (7227) nodo: sntp: sincronizado ts=1794663465
+I (60597) nodo: med: T=30.7 HR=63.1 Td=22.8
+I (120597) nodo: med: T=30.6 HR=63.5 Td=22.9
+I (180597) nodo: med: T=30.6 HR=63.1 Td=22.8
+I (240597) nodo: med: T=30.7 HR=63.2 Td=22.9
+I (300597) nodo: med: T=30.7 HR=62.8 Td=22.8
+I (312647) nodo: ota: estado en_curso
+I (312657) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (315547) esp-x509-crt-bundle: Certificate validated
+I (318657) nodo: ota: estado rechazado:host
+I (318667) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (360597) nodo: med: T=30.7 HR=63.3 Td=22.9
+I (420597) nodo: med: T=30.7 HR=63.1 Td=22.8
+I (19263) nodo: UDP logging -> 192.168.4.1:5555
+I (19263) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (19263) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (19273) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5233) nodo: UDP logging -> 192.168.4.1:5555
+I (5233) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5233) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5233) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5243) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5253) nodo: mqtt: intento 1
+I (5343) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5733) nodo: sntp: inicio pool.ntp.org
+I (8473) nodo: sntp: sincronizado ts=1794664589
+I (9603) nodo: ota: estado en_curso
+I (9613) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (11983) esp-x509-crt-bundle: Certificate validated
+I (13863) esp-x509-crt-bundle: Certificate validated
+I (14833) esp-x509-crt-bundle: Certificate validated
+I (15483) esp_https_ota: Starting OTA...
+I (15483) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (15533) nodo: ota: 0 %
+I (17693) nodo: ota: 10 %
+I (19853) nodo: ota: 20 %
+I (21973) nodo: ota: 30 %
+I (24423) nodo: ota: 40 %
+I (26483) nodo: ota: 50 %
+I (28893) nodo: ota: 60 %
+I (31263) nodo: ota: 70 %
+I (33323) nodo: ota: 80 %
+I (35393) nodo: ota: 90 %
+I (37263) nodo: ota: 100 %
+I (37273) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (37323) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (37333) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (37333) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a78h (756344) map
+I (37483) esp_image: segment 4: paddr=00418aa0 vaddr=40374950 size=14120h ( 82208) 
+I (37503) esp_image: segment 5: paddr=0042cbc8 vaddr=50000000 size=00024h (    36) 
+I (37513) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (37563) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (37573) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (37583) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a78h (756344) map
+I (37733) esp_image: segment 4: paddr=00418aa0 vaddr=40374950 size=14120h ( 82208) 
+I (37753) esp_image: segment 5: paddr=0042cbc8 vaddr=50000000 size=00024h (    36) 
+I (37793) nodo: ota: estado ok
+I (37803) nodo: con: OTA_DESCARGA -> ARRANQUE (ota_ok)
+I (1855) nodo: UDP logging -> 192.168.4.1:5555
+I (1855) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1855) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1855) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1865) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (2025) nodo: ota: imagen validada
+I (2025) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2355) nodo: sntp: inicio pool.ntp.org
+I (5315) nodo: sntp: sincronizado ts=1794664626
+I (60595) nodo: med: T=30.8 HR=63.2 Td=23.0
+I (120595) nodo: med: T=30.8 HR=64.2 Td=23.2
+I (180595) nodo: med: T=30.8 HR=69.0 Td=24.5
+I (240595) nodo: med: T=30.9 HR=69.4 Td=24.6
+I (300595) nodo: med: T=30.9 HR=72.1 Td=25.3
+I (312525) nodo: ota: estado en_curso
+I (312535) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (315015) esp-x509-crt-bundle: Certificate validated
+I (317195) esp-x509-crt-bundle: Certificate validated
+I (318185) esp-x509-crt-bundle: Certificate validated
+I (318815) esp_https_ota: Starting OTA...
+I (318815) esp_https_ota: Writing to <ota_0> partition at offset 0x20000
+I (318825) nodo: ota: estado rechazado:misma_version
+I (318835) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (319685) nodo: ota: estado en_curso
+I (319695) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (322005) esp-x509-crt-bundle: Certificate validated
+I (323995) esp-x509-crt-bundle: Certificate validated
+I (324975) esp-x509-crt-bundle: Certificate validated
+I (325625) esp_https_ota: Starting OTA...
+I (325625) esp_https_ota: Writing to <ota_0> partition at offset 0x20000
+I (325715) nodo: ota: 0 %
+I (327825) nodo: ota: 10 %
+I (330445) nodo: ota: 20 %
+I (332795) nodo: ota: 30 %
+I (335505) nodo: ota: 40 %
+I (337725) nodo: ota: 50 %
+I (340005) nodo: ota: 60 %
+I (342275) nodo: ota: 70 %
+I (344485) nodo: ota: 80 %
+I (346715) nodo: ota: 90 %
+I (348635) nodo: ota: 100 %
+I (348635) esp_image: segment 0: paddr=00020020 vaddr=3c0c0020 size=394dch (234716) map
+I (348685) esp_image: segment 1: paddr=00059504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (348695) esp_image: segment 2: paddr=0005f6c8 vaddr=40374000 size=00950h (  2384) 
+I (348695) esp_image: segment 3: paddr=00060020 vaddr=42000020 size=b8a78h (756344) map
+I (348845) esp_image: segment 4: paddr=00118aa0 vaddr=40374950 size=14120h ( 82208) 
+I (348865) esp_image: segment 5: paddr=0012cbc8 vaddr=50000000 size=00024h (    36) 
+I (348875) esp_image: segment 0: paddr=00020020 vaddr=3c0c0020 size=394dch (234716) map
+I (348925) esp_image: segment 1: paddr=00059504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (348935) esp_image: segment 2: paddr=0005f6c8 vaddr=40374000 size=00950h (  2384) 
+I (348935) esp_image: segment 3: paddr=00060020 vaddr=42000020 size=b8a78h (756344) map
+I (349085) esp_image: segment 4: paddr=00118aa0 vaddr=40374950 size=14120h ( 82208) 
+I (349115) esp_image: segment 5: paddr=0012cbc8 vaddr=50000000 size=00024h (    36) 
+I (349155) nodo: ota: estado ok
+I (349165) nodo: con: OTA_DESCARGA -> ARRANQUE (ota_ok)
+I (1840) nodo: UDP logging -> 192.168.4.1:5555
+I (1840) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1840) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1840) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1850) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1860) nodo: mqtt: intento 1
+I (2020) nodo: ota: imagen validada
+I (2020) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2340) nodo: sntp: inicio pool.ntp.org
+I (17053) nodo: UDP logging -> 192.168.4.1:5555
+I (17053) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (17053) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (17063) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5263) nodo: mqtt: intento 1
+I (5353) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5443) nodo: ota: estado en_curso
+I (5453) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (5743) nodo: sntp: inicio pool.ntp.org
+I (7273) nodo: sntp: sincronizado ts=1794665053
+I (7863) esp-x509-crt-bundle: Certificate validated
+I (9943) esp-x509-crt-bundle: Certificate validated
+I (11123) esp-x509-crt-bundle: Certificate validated
+I (11743) esp_https_ota: Starting OTA...
+I (11743) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (11753) nodo: ota: estado error:imagen
+I (11763) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (15683) nodo: ota: estado en_curso
+I (15693) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (17913) esp-x509-crt-bundle: Certificate validated
+I (20023) esp-x509-crt-bundle: Certificate validated
+I (20993) esp-x509-crt-bundle: Certificate validated
+I (21643) esp_https_ota: Starting OTA...
+I (21643) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (21703) nodo: ota: 0 %
+I (22763) nodo: ota: 10 %
+I (24013) nodo: ota: 20 %
+I (25273) nodo: ota: 30 %
+I (26303) nodo: ota: 40 %
+I (27393) nodo: ota: 50 %
+I (28683) nodo: ota: 60 %
+I (30013) nodo: ota: 70 %
+I (31123) nodo: ota: 80 %
+I (32403) nodo: ota: 90 %
+I (33343) nodo: ota: 100 %
+I (33343) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (33393) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (33403) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (33413) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a78h (756344) map
+I (33563) esp_image: segment 4: paddr=00418aa0 vaddr=40374950 size=14120h ( 82208) 
+I (33583) esp_image: segment 5: paddr=0042cbc8 vaddr=50000000 size=00024h (    36) 
+E (33583) esp_image: Checksum failed. Calculated 0xcb read 0x17
+E (33583) esp_ota_ops: New image failed verification
+I (33593) nodo: ota: estado error:imagen
+I (33603) nodo: con: OTA_DESCARGA -> OPERATIVO (ota_err)
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5423) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5743) nodo: sntp: inicio pool.ntp.org
+I (6433) nodo: ota: estado en_curso
+I (6443) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (8723) esp-x509-crt-bundle: Certificate validated
+I (9913) nodo: sntp: sincronizado ts=1794665166
+I (10813) esp-x509-crt-bundle: Certificate validated
+I (11793) esp-x509-crt-bundle: Certificate validated
+I (12403) esp_https_ota: Starting OTA...
+I (12403) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (12453) nodo: ota: 0 %
+I (14613) nodo: ota: 10 %
+I (16713) nodo: ota: 20 %
+I (18813) nodo: ota: 30 %
+I (61523) nodo: UDP logging -> 192.168.4.1:5555
+I (61523) nodo: udplog: descartadas=1 reintentadas=0 cola_llena=0
+I (61523) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (61523) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (61533) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (61543) nodo: mqtt: intento 1
+I (61673) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5143) nodo: UDP logging -> 192.168.4.1:5555
+I (5143) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5193) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5193) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5153) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5203) nodo: mqtt: intento 1
+I (5293) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5693) nodo: sntp: inicio pool.ntp.org
+I (7003) nodo: sntp: sincronizado ts=1794665231
+I (17113) nodo: UDP logging -> 192.168.4.1:5555
+I (17113) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (17113) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5263) nodo: UDP logging -> 192.168.4.1:5555
+I (5263) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5263) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5263) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5273) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5283) nodo: mqtt: intento 1
+I (5363) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5763) nodo: sntp: inicio pool.ntp.org
+I (6563) nodo: ota: estado en_curso
+I (6573) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (9123) esp-x509-crt-bundle: Certificate validated
+I (10723) nodo: sntp: sincronizado ts=1794665314
+I (10923) esp-x509-crt-bundle: Certificate validated
+I (11883) esp-x509-crt-bundle: Certificate validated
+I (12543) esp_https_ota: Starting OTA...
+I (12543) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (12703) nodo: ota: 0 %
+I (13563) nodo: ota: estado rechazado:ocupado
+I (13573) nodo: con: OTA_DESCARGA -> OTA_DESCARGA (cmd_ota)
+I (14803) nodo: ota: 10 %
+I (17163) nodo: ota: 20 %
+I (19323) nodo: ota: 30 %
+I (21473) nodo: ota: 40 %
+I (23553) nodo: ota: 50 %
+I (25653) nodo: ota: 60 %
+I (27783) nodo: ota: 70 %
+I (29933) nodo: ota: 80 %
+I (31853) nodo: ota: 90 %
+I (33613) nodo: ota: 100 %
+I (33613) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (33663) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (33673) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (33673) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a78h (756344) map
+I (33823) esp_image: segment 4: paddr=00418aa0 vaddr=40374950 size=14120h ( 82208) 
+I (33843) esp_image: segment 5: paddr=0042cbc8 vaddr=50000000 size=00024h (    36) 
+I (33853) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (33903) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (33913) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (33923) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a78h (756344) map
+I (34073) esp_image: segment 4: paddr=00418aa0 vaddr=40374950 size=14120h ( 82208) 
+I (34093) esp_image: segment 5: paddr=0042cbc8 vaddr=50000000 size=00024h (    36) 
+I (34133) nodo: ota: estado ok
+I (34143) nodo: con: OTA_DESCARGA -> ARRANQUE (ota_ok)
+I (1837) nodo: UDP logging -> 192.168.4.1:5555
+I (1837) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1837) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1847) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1857) nodo: mqtt: intento 1
+I (2337) nodo: sntp: inicio pool.ntp.org
+I (22743) nodo: UDP logging -> 192.168.4.1:5555
+I (5233) nodo: UDP logging -> 192.168.4.1:5555
+I (5233) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5233) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5233) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5243) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5253) nodo: mqtt: intento 1
+I (5333) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5733) nodo: sntp: inicio pool.ntp.org
+I (6413) nodo: ota: estado en_curso
+I (6423) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (6823) nodo: sntp: sincronizado ts=1794682562
+I (8743) esp-x509-crt-bundle: Certificate validated
+I (11013) esp-x509-crt-bundle: Certificate validated
+I (12033) esp-x509-crt-bundle: Certificate validated
+I (12703) esp_https_ota: Starting OTA...
+I (12703) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (12753) nodo: ota: 0 %
+I (15163) nodo: ota: 10 %
+I (17453) nodo: ota: 20 %
+I (19693) nodo: ota: 30 %
+I (22103) nodo: ota: 40 %
+I (24843) nodo: ota: 50 %
+I (27033) nodo: ota: 60 %
+I (29373) nodo: ota: 70 %
+I (31643) nodo: ota: 80 %
+I (33623) nodo: ota: 90 %
+I (35543) nodo: ota: 100 %
+I (35543) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=3951ch (234780) map
+I (35593) esp_image: segment 1: paddr=00359544 vaddr=3fc98b00 size=061bch ( 25020) 
+I (35603) esp_image: segment 2: paddr=0035f708 vaddr=40374000 size=00910h (  2320) 
+I (35603) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a84h (756356) map
+I (35753) esp_image: segment 4: paddr=00418aac vaddr=40374910 size=14160h ( 82272) 
+I (35773) esp_image: segment 5: paddr=0042cc14 vaddr=50000000 size=00024h (    36) 
+I (35783) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=3951ch (234780) map
+I (35833) esp_image: segment 1: paddr=00359544 vaddr=3fc98b00 size=061bch ( 25020) 
+I (35843) esp_image: segment 2: paddr=0035f708 vaddr=40374000 size=00910h (  2320) 
+I (35853) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a84h (756356) map
+I (36003) esp_image: segment 4: paddr=00418aac vaddr=40374910 size=14160h ( 82272) 
+I (36023) esp_image: segment 5: paddr=0042cc14 vaddr=50000000 size=00024h (    36) 
+I (36073) nodo: ota: estado ok
+I (36083) nodo: con: OTA_DESCARGA -> ARRANQUE (ota_ok)
+I (1839) nodo: UDP logging -> 192.168.4.1:5555
+I (1839) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1839) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+W (1839) nodo: mqtt: desactivado (imagen de prueba de FR-OTA-07)
+I (1849) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1849) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (2349) nodo: sntp: inicio pool.ntp.org
+I (7639) nodo: sntp: sincronizado ts=1794682601
+I (60599) nodo: med: T=31.2 HR=74.3 Td=26.1
+I (120599) nodo: med: T=31.2 HR=74.2 Td=26.1
+I (180599) nodo: med: T=31.2 HR=74.3 Td=26.1
+I (240599) nodo: med: T=31.3 HR=74.3 Td=26.1
+W (300549) nodo: ota: rollback
+I (300809) nodo: med: T=31.2 HR=74.3 Td=26.1
+I (1822) nodo: UDP logging -> 192.168.4.1:5555
+I (1822) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1822) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1822) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1832) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1842) nodo: mqtt: intento 1
+I (1912) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2322) nodo: sntp: inicio pool.ntp.org
+I (3772) nodo: sntp: sincronizado ts=1794682899
+I (60562) nodo: udplog: descartadas=0 reintentadas=1 cola_llena=0
+I (60572) nodo: med: T=31.3 HR=74.4 Td=26.1
+I (120572) nodo: med: T=31.3 HR=74.4 Td=26.2
+I (180572) nodo: med: T=31.3 HR=74.3 Td=26.1
+I (240572) nodo: med: T=31.3 HR=74.0 Td=26.1
+I (300572) nodo: med: T=31.2 HR=74.0 Td=26.1
+I (360572) nodo: med: T=31.3 HR=74.0 Td=26.1
+I (420572) nodo: med: T=31.3 HR=74.1 Td=26.1
+I (480572) nodo: med: T=31.2 HR=74.2 Td=26.1
+I (540572) nodo: med: T=31.2 HR=74.3 Td=26.1
+I (600572) nodo: med: T=31.2 HR=74.4 Td=26.1
+I (660572) nodo: med: T=31.2 HR=74.4 Td=26.1
+I (720572) nodo: med: T=31.2 HR=74.4 Td=26.1
+I (780572) nodo: med: T=31.2 HR=74.3 Td=26.1
+I (840572) nodo: med: T=31.2 HR=74.1 Td=26.1
+I (900572) nodo: med: T=31.2 HR=74.1 Td=26.1
+I (19063) nodo: UDP logging -> 192.168.4.1:5555
+I (19063) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (19063) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (19073) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5243) nodo: UDP logging -> 192.168.4.1:5555
+I (5243) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5243) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (5243) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5253) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5263) nodo: mqtt: intento 1
+I (5363) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5743) nodo: sntp: inicio pool.ntp.org
+I (7453) nodo: sntp: sincronizado ts=1794683878
+I (60573) nodo: med: T=31.2 HR=74.0 Td=26.0
+I (112133) nodo: ota: estado en_curso
+I (112133) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (114603) esp-x509-crt-bundle: Certificate validated
+I (116603) esp-x509-crt-bundle: Certificate validated
+I (117593) esp-x509-crt-bundle: Certificate validated
+I (118263) esp_https_ota: Starting OTA...
+I (118263) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (118323) nodo: ota: 0 %
+I (120333) nodo: ota: 10 %
+I (120593) nodo: med: T=31.2 HR=74.0 Td=26.0
+I (122483) nodo: ota: 20 %
+I (124613) nodo: ota: 30 %
+I (126813) nodo: ota: 40 %
+I (128903) nodo: ota: 50 %
+I (131233) nodo: ota: 60 %
+I (133563) nodo: ota: 70 %
+I (135683) nodo: ota: 80 %
+I (137673) nodo: ota: 90 %
+I (139403) nodo: ota: 100 %
+I (139413) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (139463) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (139463) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (139473) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a78h (756344) map
+I (139623) esp_image: segment 4: paddr=00418aa0 vaddr=40374950 size=14120h ( 82208) 
+I (139643) esp_image: segment 5: paddr=0042cbc8 vaddr=50000000 size=00024h (    36) 
+I (139653) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (139703) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (139713) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (139713) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a78h (756344) map
+I (139873) esp_image: segment 4: paddr=00418aa0 vaddr=40374950 size=14120h ( 82208) 
+I (139893) esp_image: segment 5: paddr=0042cbc8 vaddr=50000000 size=00024h (    36) 
+I (139933) nodo: ota: estado ok
+I (139943) nodo: con: OTA_DESCARGA -> ARRANQUE (ota_ok)
+I (1847) nodo: UDP logging -> 192.168.4.1:5555
+I (1847) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1847) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1847) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1857) nodo: mqtt: intento 1
+I (1887) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (2047) nodo: ota: imagen validada
+I (2047) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2347) nodo: sntp: inicio pool.ntp.org
+I (5847) nodo: sntp: sincronizado ts=1794684019
+I (60597) nodo: med: T=31.2 HR=74.0 Td=26.0
+I (112137) nodo: ota: estado en_curso
+I (112147) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (114507) esp-x509-crt-bundle: Certificate validated
+I (116597) esp-x509-crt-bundle: Certificate validated
+I (117627) esp-x509-crt-bundle: Certificate validated
+I (118247) esp_https_ota: Starting OTA...
+I (118247) esp_https_ota: Writing to <ota_0> partition at offset 0x20000
+I (118347) nodo: ota: 0 %
+I (120367) nodo: ota: 10 %
+I (120627) nodo: med: T=31.2 HR=74.0 Td=26.0
+I (122597) nodo: ota: 20 %
+I (124817) nodo: ota: 30 %
+I (127027) nodo: ota: 40 %
+I (129197) nodo: ota: 50 %
+I (131507) nodo: ota: 60 %
+I (133787) nodo: ota: 70 %
+I (135847) nodo: ota: 80 %
+I (137937) nodo: ota: 90 %
+I (139687) nodo: ota: 100 %
+I (139697) esp_image: segment 0: paddr=00020020 vaddr=3c0c0020 size=394dch (234716) map
+I (139747) esp_image: segment 1: paddr=00059504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (139757) esp_image: segment 2: paddr=0005f6c8 vaddr=40374000 size=00950h (  2384) 
+I (139757) esp_image: segment 3: paddr=00060020 vaddr=42000020 size=b8a78h (756344) map
+I (139907) esp_image: segment 4: paddr=00118aa0 vaddr=40374950 size=14120h ( 82208) 
+I (139927) esp_image: segment 5: paddr=0012cbc8 vaddr=50000000 size=00024h (    36) 
+I (139937) esp_image: segment 0: paddr=00020020 vaddr=3c0c0020 size=394dch (234716) map
+I (139987) esp_image: segment 1: paddr=00059504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (139997) esp_image: segment 2: paddr=0005f6c8 vaddr=40374000 size=00950h (  2384) 
+I (139997) esp_image: segment 3: paddr=00060020 vaddr=42000020 size=b8a78h (756344) map
+I (140147) esp_image: segment 4: paddr=00118aa0 vaddr=40374950 size=14120h ( 82208) 
+I (140167) esp_image: segment 5: paddr=0012cbc8 vaddr=50000000 size=00024h (    36) 
+I (140217) nodo: ota: estado ok
+I (140227) nodo: con: OTA_DESCARGA -> ARRANQUE (ota_ok)
+I (1837) nodo: UDP logging -> 192.168.4.1:5555
+I (1837) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1837) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1837) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1847) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1857) nodo: mqtt: intento 1
+I (1967) nodo: ota: imagen validada
+I (1967) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2337) nodo: sntp: inicio pool.ntp.org
+I (7447) nodo: sntp: sincronizado ts=1794684163
+I (60587) nodo: udplog: descartadas=0 reintentadas=1 cola_llena=0
+I (60597) nodo: med: T=31.2 HR=74.2 Td=26.1
+I (112107) nodo: ota: estado en_curso
+I (112117) nodo: con: OPERATIVO -> OTA_DESCARGA (cmd_ota)
+I (114477) esp-x509-crt-bundle: Certificate validated
+I (116427) esp-x509-crt-bundle: Certificate validated
+I (117367) esp-x509-crt-bundle: Certificate validated
+I (117977) esp_https_ota: Starting OTA...
+I (117977) esp_https_ota: Writing to <ota_1> partition at offset 0x320000
+I (118167) nodo: ota: 0 %
+I (120347) nodo: ota: 10 %
+I (120647) nodo: med: T=31.3 HR=74.2 Td=26.1
+I (122387) nodo: ota: 20 %
+I (124467) nodo: ota: 30 %
+I (126447) nodo: ota: 40 %
+I (128557) nodo: ota: 50 %
+I (130517) nodo: ota: 60 %
+I (132647) nodo: ota: 70 %
+I (134837) nodo: ota: 80 %
+I (136747) nodo: ota: 90 %
+I (138517) nodo: ota: 100 %
+I (138517) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (138567) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (138577) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (138577) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a78h (756344) map
+I (138727) esp_image: segment 4: paddr=00418aa0 vaddr=40374950 size=14120h ( 82208) 
+I (138747) esp_image: segment 5: paddr=0042cbc8 vaddr=50000000 size=00024h (    36) 
+I (138757) esp_image: segment 0: paddr=00320020 vaddr=3c0c0020 size=394dch (234716) map
+I (138807) esp_image: segment 1: paddr=00359504 vaddr=3fc98b00 size=061bch ( 25020) 
+I (138817) esp_image: segment 2: paddr=0035f6c8 vaddr=40374000 size=00950h (  2384) 
+I (138827) esp_image: segment 3: paddr=00360020 vaddr=42000020 size=b8a78h (756344) map
+I (138977) esp_image: segment 4: paddr=00418aa0 vaddr=40374950 size=14120h ( 82208) 
+I (138997) esp_image: segment 5: paddr=0042cbc8 vaddr=50000000 size=00024h (    36) 
+I (139037) nodo: ota: estado ok
+I (139047) nodo: con: OTA_DESCARGA -> ARRANQUE (ota_ok)
+I (1849) nodo: UDP logging -> 192.168.4.1:5555
+I (1849) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1849) esp_netif_handlers: sta ip: 192.168.4.11, mask: 255.255.255.0, gw: 192.168.4.1
+I (1849) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1859) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1869) nodo: mqtt: intento 1
+I (1989) nodo: ota: imagen validada
+I (1989) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (2349) nodo: sntp: inicio pool.ntp.org
+I (3439) nodo: sntp: sincronizado ts=1794684300
+I (18110) nodo: UDP logging -> 192.168.4.1:5555
+I (18110) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18110) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (1780) nodo: UDP logging -> 192.168.4.1:5555
+I (1780) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (1780) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (1780) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (1790) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (1800) nodo: mqtt: intento 1
+E (1810) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (1810) transport_base: Failed to open a new connection: 32772
+E (1820) mqtt_client: Error transport connect
+I (1820) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (2280) nodo: sntp: inicio pool.ntp.org
+I (5210) nodo: UDP logging -> 192.168.4.1:5555
+I (5210) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5210) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (5210) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5220) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5230) nodo: mqtt: intento 1
+I (5360) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5710) nodo: sntp: inicio pool.ntp.org
+I (15720) nodo: sntp: inicio pool.ntp.org
+I (19750) nodo: UDP logging -> 192.168.4.1:5555
+I (16080) nodo: UDP logging -> 192.168.4.1:5555
+I (16080) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (16080) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (16080) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (16090) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (16100) nodo: mqtt: intento 1
+I (16580) nodo: sntp: inicio pool.ntp.org
+I (15950) nodo: UDP logging -> 192.168.4.1:5555
+I (15950) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (15950) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (15960) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (18470) nodo: UDP logging -> 192.168.4.1:5555
+I (18470) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18470) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (18480) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (19490) nodo: UDP logging -> 192.168.4.1:5555
+I (19490) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (19490) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (19500) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5210) nodo: UDP logging -> 192.168.4.1:5555
+I (5210) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5210) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (5210) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5220) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5230) nodo: mqtt: intento 1
+I (5410) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5710) nodo: sntp: inicio pool.ntp.org
+E (11540) mqtt_client: esp_mqtt_handle_transport_read_error: transport_read(): EOF
+E (11540) mqtt_client: esp_mqtt_handle_transport_read_error: transport_read() error: errno=128
+E (11550) mqtt_client: mqtt_process_receive: mqtt_message_receive() returned -2
+I (11560) nodo: con: OPERATIVO -> CONECTANDO_BROKER (mqtt_down)
+I (12560) nodo: mqtt: intento 1
+I (12560) mqtt_client: Client force reconnect requested
+I (12560) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (12570) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (12580) transport_base: Failed to open a new connection: 32772
+E (12580) mqtt_client: Error transport connect
+I (12580) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (14580) nodo: mqtt: intento 2
+I (14580) mqtt_client: Client force reconnect requested
+I (14580) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (14600) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (14600) transport_base: Failed to open a new connection: 32772
+E (14600) mqtt_client: Error transport connect
+I (14610) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (15720) nodo: sntp: inicio pool.ntp.org
+I (18610) nodo: mqtt: intento 3
+I (18610) mqtt_client: Client force reconnect requested
+I (18610) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (18620) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (18620) transport_base: Failed to open a new connection: 32772
+E (18620) mqtt_client: Error transport connect
+I (18630) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (25720) nodo: sntp: inicio pool.ntp.org
+I (26630) nodo: mqtt: intento 4
+I (26630) mqtt_client: Client force reconnect requested
+I (26630) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (26640) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (26650) transport_base: Failed to open a new connection: 32772
+E (26650) mqtt_client: Error transport connect
+I (26650) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+W (35720) nodo: sntp: fallo
+I (35720) nodo: sntp: inicio pool.ntp.org
+I (42650) nodo: mqtt: intento 5
+I (42650) mqtt_client: Client force reconnect requested
+I (42650) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (42670) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (42670) transport_base: Failed to open a new connection: 32772
+E (42670) mqtt_client: Error transport connect
+I (42680) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (45720) nodo: sntp: inicio pool.ntp.org
+I (55720) nodo: sntp: inicio pool.ntp.org
+W (65720) nodo: sntp: fallo
+I (65720) nodo: sntp: inicio pool.ntp.org
+I (74680) nodo: mqtt: intento 6
+I (74680) mqtt_client: Client force reconnect requested
+I (74680) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (74690) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (74690) transport_base: Failed to open a new connection: 32772
+E (74700) mqtt_client: Error transport connect
+I (74700) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (75720) nodo: sntp: inicio pool.ntp.org
+I (85720) nodo: sntp: inicio pool.ntp.org
+W (95720) nodo: sntp: fallo
+I (95730) nodo: sntp: inicio pool.ntp.org
+I (105730) nodo: sntp: inicio pool.ntp.org
+I (115730) nodo: sntp: inicio pool.ntp.org
+W (125730) nodo: sntp: fallo
+I (125730) nodo: sntp: inicio pool.ntp.org
+I (134700) nodo: mqtt: intento 7
+I (134700) mqtt_client: Client force reconnect requested
+I (134700) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (134720) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (134720) transport_base: Failed to open a new connection: 32772
+E (134720) mqtt_client: Error transport connect
+I (134720) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (135730) nodo: sntp: inicio pool.ntp.org
+I (145730) nodo: sntp: inicio pool.ntp.org
+W (155730) nodo: sntp: fallo
+I (155730) nodo: sntp: inicio pool.ntp.org
+I (165730) nodo: sntp: inicio pool.ntp.org
+I (175730) nodo: sntp: inicio pool.ntp.org
+W (185740) nodo: sntp: fallo
+I (185740) nodo: sntp: inicio pool.ntp.org
+I (194720) nodo: mqtt: intento 8
+I (194720) mqtt_client: Client force reconnect requested
+I (194730) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (194740) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (194740) transport_base: Failed to open a new connection: 32772
+E (194740) mqtt_client: Error transport connect
+I (194750) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (195740) nodo: sntp: inicio pool.ntp.org
+I (205740) nodo: sntp: inicio pool.ntp.org
+W (215740) nodo: sntp: fallo
+I (215740) nodo: sntp: inicio pool.ntp.org
+I (225740) nodo: sntp: inicio pool.ntp.org
+I (235740) nodo: sntp: inicio pool.ntp.org
+W (245740) nodo: sntp: fallo
+I (245740) nodo: sntp: inicio pool.ntp.org
+I (254750) nodo: mqtt: intento 9
+I (254750) mqtt_client: Client force reconnect requested
+I (254750) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (254760) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (254760) transport_base: Failed to open a new connection: 32772
+E (254760) mqtt_client: Error transport connect
+I (254770) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (255740) nodo: sntp: inicio pool.ntp.org
+I (265750) nodo: sntp: inicio pool.ntp.org
+W (275750) nodo: sntp: fallo
+I (275750) nodo: sntp: inicio pool.ntp.org
+I (285750) nodo: sntp: inicio pool.ntp.org
+I (295750) nodo: sntp: inicio pool.ntp.org
+W (305750) nodo: sntp: fallo
+I (305750) nodo: sntp: inicio pool.ntp.org
+I (314770) nodo: mqtt: intento 10
+I (314770) mqtt_client: Client force reconnect requested
+I (314770) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (314780) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (314790) transport_base: Failed to open a new connection: 32772
+E (314790) mqtt_client: Error transport connect
+I (314790) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (315750) nodo: sntp: inicio pool.ntp.org
+I (325750) nodo: sntp: inicio pool.ntp.org
+W (335750) nodo: sntp: fallo
+I (335750) nodo: sntp: inicio pool.ntp.org
+I (345760) nodo: sntp: inicio pool.ntp.org
+I (355760) nodo: sntp: inicio pool.ntp.org
+W (365760) nodo: sntp: fallo
+I (365760) nodo: sntp: inicio pool.ntp.org
+I (374790) nodo: mqtt: intento 11
+I (374790) mqtt_client: Client force reconnect requested
+I (374790) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+I (375000) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (375760) nodo: sntp: inicio pool.ntp.org
+I (385760) nodo: sntp: inicio pool.ntp.org
+I (18310) nodo: UDP logging -> 192.168.4.1:5555
+I (18310) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (44890) nodo: UDP logging -> 192.168.4.1:5555
+I (44890) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (44890) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (44890) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (44900) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (44910) nodo: mqtt: intento 1
+E (44930) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (44930) transport_base: Failed to open a new connection: 32772
+E (44930) mqtt_client: Error transport connect
+I (44930) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (45390) nodo: sntp: inicio pool.ntp.org
+I (45930) nodo: mqtt: intento 2
+I (45930) mqtt_client: Client force reconnect requested
+I (45930) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (45950) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (45950) transport_base: Failed to open a new connection: 32772
+E (45950) mqtt_client: Error transport connect
+I (45960) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (18090) nodo: UDP logging -> 192.168.4.1:5555
+I (18090) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (18090) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (18100) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5200) nodo: UDP logging -> 192.168.4.1:5555
+I (5200) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5200) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (5200) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5210) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5220) nodo: mqtt: intento 1
+I (5430) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5700) nodo: sntp: inicio pool.ntp.org
+I (87780) nodo: UDP logging -> 192.168.4.1:5555
+I (87780) nodo: udplog: descartadas=1 reintentadas=0 cola_llena=0
+I (87780) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (87780) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (87790) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (87800) nodo: mqtt: intento 1
+I (88020) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+W (88280) nodo: sntp: fallo
+I (88280) nodo: sntp: inicio pool.ntp.org
+I (18400) nodo: UDP logging -> 192.168.4.1:5555
+I (5200) nodo: UDP logging -> 192.168.4.1:5555
+I (5200) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5200) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (5200) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5210) nodo: mqtt: intento 1
+I (5220) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+W (5570) mqtt_client: Connection refused, not authorized
+E (5570) mqtt_client: MQTT connect failed
+I (5580) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (5700) nodo: sntp: inicio pool.ntp.org
+I (6580) nodo: mqtt: intento 2
+I (6580) mqtt_client: Client force reconnect requested
+I (6580) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (6620) mqtt_client: Connection refused, not authorized
+E (6620) mqtt_client: MQTT connect failed
+I (6630) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (8630) nodo: mqtt: intento 3
+I (8630) mqtt_client: Client force reconnect requested
+I (8630) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (8680) mqtt_client: Connection refused, not authorized
+E (8680) mqtt_client: MQTT connect failed
+I (8680) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (12680) nodo: mqtt: intento 4
+I (12690) mqtt_client: Client force reconnect requested
+I (12690) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (12710) mqtt_client: Connection refused, not authorized
+E (12710) mqtt_client: MQTT connect failed
+I (12720) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (15700) nodo: sntp: inicio pool.ntp.org
+I (20720) nodo: mqtt: intento 5
+I (20720) mqtt_client: Client force reconnect requested
+I (20720) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (20750) mqtt_client: Connection refused, not authorized
+E (20750) mqtt_client: MQTT connect failed
+I (20750) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (25710) nodo: sntp: inicio pool.ntp.org
+W (35710) nodo: sntp: fallo
+I (35710) nodo: sntp: inicio pool.ntp.org
+I (36750) nodo: mqtt: intento 6
+I (36750) mqtt_client: Client force reconnect requested
+I (36760) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (36780) mqtt_client: Connection refused, not authorized
+E (36780) mqtt_client: MQTT connect failed
+I (36790) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (45710) nodo: sntp: inicio pool.ntp.org
+I (55710) nodo: sntp: inicio pool.ntp.org
+I (60530) nodo: udplog: descartadas=0 reintentadas=1 cola_llena=0
+W (65710) nodo: sntp: fallo
+I (65710) nodo: sntp: inicio pool.ntp.org
+I (68790) nodo: mqtt: intento 7
+I (68790) mqtt_client: Client force reconnect requested
+I (68790) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+W (68820) mqtt_client: Connection refused, not authorized
+E (68820) mqtt_client: MQTT connect failed
+I (68820) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (75710) nodo: sntp: inicio pool.ntp.org
+I (85710) nodo: sntp: inicio pool.ntp.org
+W (95710) nodo: sntp: fallo
+I (95720) nodo: sntp: inicio pool.ntp.org
+I (105720) nodo: sntp: inicio pool.ntp.org
+I (115720) nodo: sntp: inicio pool.ntp.org
+W (125720) nodo: sntp: fallo
+I (125720) nodo: sntp: inicio pool.ntp.org
+I (128820) nodo: mqtt: intento 8
+I (128830) mqtt_client: Client force reconnect requested
+I (128830) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+I (129020) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (135720) nodo: sntp: inicio pool.ntp.org
+I (17400) nodo: UDP logging -> 192.168.4.1:5555
+I (17400) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (17400) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (17410) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5200) nodo: UDP logging -> 192.168.4.1:5555
+I (5200) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5200) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (5200) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5210) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5220) nodo: mqtt: intento 1
+E (5230) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (5240) transport_base: Failed to open a new connection: 32772
+E (5240) mqtt_client: Error transport connect
+I (5240) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (5700) nodo: sntp: inicio pool.ntp.org
+I (6240) nodo: mqtt: intento 2
+I (6240) mqtt_client: Client force reconnect requested
+I (6240) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (6260) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (6260) transport_base: Failed to open a new connection: 32772
+E (6260) mqtt_client: Error transport connect
+I (6270) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (8270) nodo: mqtt: intento 3
+I (8270) mqtt_client: Client force reconnect requested
+I (8270) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (8280) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (8280) transport_base: Failed to open a new connection: 32772
+E (8290) mqtt_client: Error transport connect
+I (8290) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (12290) nodo: mqtt: intento 4
+I (12290) mqtt_client: Client force reconnect requested
+I (12290) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (12310) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (12310) transport_base: Failed to open a new connection: 32772
+E (12310) mqtt_client: Error transport connect
+I (12310) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (15710) nodo: sntp: inicio pool.ntp.org
+I (20310) nodo: mqtt: intento 5
+I (20320) mqtt_client: Client force reconnect requested
+I (20320) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (20330) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (20330) transport_base: Failed to open a new connection: 32772
+E (20340) mqtt_client: Error transport connect
+I (20340) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (25710) nodo: sntp: inicio pool.ntp.org
+W (35710) nodo: sntp: fallo
+I (35710) nodo: sntp: inicio pool.ntp.org
+I (36340) nodo: mqtt: intento 6
+I (36340) mqtt_client: Client force reconnect requested
+I (36340) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (36370) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (36370) transport_base: Failed to open a new connection: 32772
+E (36380) mqtt_client: Error transport connect
+I (36380) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (45710) nodo: sntp: inicio pool.ntp.org
+I (55710) nodo: sntp: inicio pool.ntp.org
+W (65710) nodo: sntp: fallo
+I (65710) nodo: sntp: inicio pool.ntp.org
+I (68380) nodo: mqtt: intento 7
+I (68380) mqtt_client: Client force reconnect requested
+I (68380) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (68400) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (68400) transport_base: Failed to open a new connection: 32772
+E (68400) mqtt_client: Error transport connect
+I (68400) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (75710) nodo: sntp: inicio pool.ntp.org
+I (85710) nodo: sntp: inicio pool.ntp.org
+W (95710) nodo: sntp: fallo
+I (95720) nodo: sntp: inicio pool.ntp.org
+I (105720) nodo: sntp: inicio pool.ntp.org
+I (115720) nodo: sntp: inicio pool.ntp.org
+W (125720) nodo: sntp: fallo
+I (125720) nodo: sntp: inicio pool.ntp.org
+I (128400) nodo: mqtt: intento 8
+I (128400) mqtt_client: Client force reconnect requested
+I (128410) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (128420) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (128420) transport_base: Failed to open a new connection: 32772
+E (128430) mqtt_client: Error transport connect
+I (128430) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)
+I (135720) nodo: sntp: inicio pool.ntp.org
+I (145720) nodo: sntp: inicio pool.ntp.org
+W (155720) nodo: sntp: fallo
+I (155720) nodo: sntp: inicio pool.ntp.org
+I (165720) nodo: sntp: inicio pool.ntp.org
+I (175720) nodo: sntp: inicio pool.ntp.org
+W (185730) nodo: sntp: fallo
+I (185730) nodo: sntp: inicio pool.ntp.org
+I (188430) nodo: mqtt: intento 9
+I (188430) mqtt_client: Client force reconnect requested
+I (188430) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (backoff)
+E (188450) esp-tls: [sock=55] delayed connect error: Connection reset by peer
+E (188450) transport_base: Failed to open a new connection: 32772
+E (188450) mqtt_client: Error transport connect
+I (188450) nodo: con: CONECTANDO_BROKER -> CONECTANDO_BROKER (mqtt_down)

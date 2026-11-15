@@ -920,7 +920,11 @@ tests:
     expect: >
       DUT configurado contra el AP desechable con clave; el banco levanta un AP abierto con el mismo SSID de prueba de la ejecución (nunca el de la casa, H-83) 180 s: ≥ 3 líneas wifi: intento (control positivo), ninguna T08 y la MAC del DUT no aparece entre las estaciones; después, con el AP con clave, T08 en ≤ 90 s
     impl: tests/bench/test_seguridad.py::test_tc_con_14_open_twin_rejected
-    status: not_run
+    status: successful
+    commit: 7112486
+    date: 2026-11-15
+    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
+    evidence: test-results/20261115T034828Z-7112486/
   - id: TC-POR-12
     shape: atomic
     kind: standard
@@ -933,7 +937,11 @@ tests:
     expect: >
       sin configuración (P-NVS-ERASE), reset: T02 y el AP agua-* visible; T24 («con: PORTAL -> ESPERA (portal_vence)») a 600 s ± 5 s de T02 en el reloj del DUT; «portal: dns detenido» (E14) a ≤ 5 s de T24 (N-01, FSD 0.9.9); el AP fuera en 3 escaneos seguidos; med: después del cierre; ninguna «nvs: config escrita» ni reinicio tras T02 (retroceso del reloj, consola.py); tras otro reset, el AP vuelve — «la medición sigue» (→ «la protección sigue», FR-HER-01) se comprueba con la línea A4 cuando haya E/S
     impl: tests/bench/test_seguridad.py::test_tc_por_12_portal_closes_after_10_min
-    status: not_run
+    status: successful
+    commit: 7112486
+    date: 2026-11-15
+    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
+    evidence: test-results/20261115T034828Z-7112486/
   - id: TC-TIME-06
     shape: atomic
     kind: standard
@@ -946,7 +954,11 @@ tests:
     expect: >
       AP del banco sin salida a Internet; DUT con IP durante 5 min: la primera «sntp: inicio <srv>» llega ≤ 15 s después de wifi_up y los intervalos entre líneas consecutivas (marcas del DUT) son ≤ 15 s, también tras un «sntp: fallo»
     impl: tests/bench/test_time.py::test_tc_time_06_sntp_retry_without_time
-    status: not_run
+    status: successful
+    commit: 7112486
+    date: 2026-11-15
+    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
+    evidence: test-results/20261115T034828Z-7112486/
   - id: TC-MQTT-05
     shape: atomic
     kind: standard
@@ -959,7 +971,11 @@ tests:
     expect: >
       DUT aprovisionado con usuario y clave MQTT; broker con autenticación que no acepta sus credenciales 90 s: ≥ 3 intentos con backoff creciente y ningún T11; broker con sus credenciales: T11; ninguna clave en la consola
     impl: tests/bench/test_red.py::test_tc_mqtt_05_broker_authentication
-    status: not_run
+    status: successful
+    commit: 7112486
+    date: 2026-11-15
+    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
+    evidence: test-results/20261115T034828Z-7112486/
   - id: TC-LOG-08
     shape: atomic
     kind: standard
@@ -972,7 +988,11 @@ tests:
     expect: >
       imagen de banco; captura del tráfico del DUT en el arranque y 3 ciclos: los datagramas al puerto 5555 van todos por unicast a 192.168.4.1 (control positivo: > 10); ninguno por broadcast ni a otro destino
     impl: tests/bench/test_red.py::test_tc_log_08_udp_log_unicast_only
-    status: not_run
+    status: successful
+    commit: 7112486
+    date: 2026-11-15
+    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
+    evidence: test-results/20261115T034828Z-7112486/
   - id: TC-LOG-04
     shape: atomic
     kind: standard
@@ -985,7 +1005,11 @@ tests:
     expect: >
       imagen de producción en OPERATIVO, arranque y 3 ciclos con el tráfico UDP capturado: solo DHCP, DNS y SNTP; ningún datagrama al 5555 ni a otro destino
     impl: tests/bench/test_red.py::test_tc_log_04_no_udp_log_in_production
-    status: not_run
+    status: successful
+    commit: 7112486
+    date: 2026-11-15
+    ci_run: 43673985317   # build.yml push, imagen de producción 0.0.0-7112486
+    evidence: test-results/20261115T042523Z-7112486/
   - id: TC-LOG-07
     shape: atomic
     kind: standard
@@ -997,7 +1021,11 @@ tests:
     expect: >
       imagen de banco con IP (AP del banco, sin broker): E11 «UDP logging -> host:port» en el receptor del banco y cada línea serie desde T08 con copia UDP en ≤ 1 s durante 3 ciclos (la fila de FR-LOG-02 que el piloto comprueba en su JRN-01.3)
     impl: tests/bench/test_red.py::test_tc_log_07_udp_copy
-    status: not_run
+    status: successful
+    commit: 7112486
+    date: 2026-11-15
+    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
+    evidence: test-results/20261115T034828Z-7112486/
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
