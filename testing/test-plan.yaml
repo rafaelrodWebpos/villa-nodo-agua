@@ -1026,6 +1026,23 @@ tests:
     date: 2026-11-15
     ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
     evidence: test-results/20261115T034828Z-7112486/
+  - id: TC-HA-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench
+    verifies: [FR-HA-A1, clima:FR-HA-01]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-portal-driver, bench-mqtt-broker, bench-serial-monitor, home-assistant-test, dut-board]
+    expect: >
+      HA de prueba nuevo (scripts/ha/ha_prueba.py) con la integración MQTT al broker del banco: 1 dispositivo «Agua sitio1 zona1» con las 20 entidades de §14 (valve 1, switch 1, binary_sensor 10, sensor 5, button 2, event 1; el % de batería pendiente de definir), ninguna unavailable salvo los sensores de medida (expire_after, sin valor hasta tener E/S), tras conectar y tras cada uno de 3 reinicios del DUT, sin duplicados
+    impl: tests/bench/test_ha.py::test_tc_ha_a1_home_assistant_entities
+    status: failed
+    commit: 04f5616
+    date: 2026-11-15
+    evidence: test-results/20261115T043143Z-04f5616/
+    observed: >
+      1 dispositivo y 20 entidades en las 4 fases; falló la comprobación extra de disponibilidad: los 5 sensores con expire_after quedan unavailable sin valor (defecto del test, no del firmware; corregido)
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
