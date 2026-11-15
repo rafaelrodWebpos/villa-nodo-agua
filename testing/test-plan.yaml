@@ -1234,7 +1234,13 @@ tests:
     expect: >
       tabla de §5.3 como prueba parametrizada: cada fila V01–V20 produce su estado, su acción (motor, rechazo, evento, marcas) y nada más; V07 solo al superar P3; completitud: en todas las combinaciones (estado × evento × finales × g_seco × marcas), o una fila admitida para ese par o el par se ignora sin ningún efecto; nunca IN1 e IN2 a la vez (el motor es un único valor)
     impl: tests/host/test_tablas.c (val)
-    status: not_run
+    status: successful
+    commit: af2e82d
+    date: 2026-11-15
+    ci_run: 43737945218
+    evidence: CI host-tests (ctest), log del run 43737945218
+    observed: >
+      31 casos de V01–V20 y 3920 combinaciones de completitud (2178 ignoradas sin efecto); un mutante (V18 quitada) da 73 fallos.
   - id: TC-EJE-A1
     shape: atomic
     kind: standard
@@ -1246,7 +1252,13 @@ tests:
     expect: >
       lógica pura con reloj simulado: dispara solo con hora válida, en ejercicio_hora y con ejercicio_dias cumplidos; nunca sin hora válida, con bloqueo_fuga o con sonda mojada; secuencia V13 → V06 → V14 → V12 con los tiempos de carrera
     impl: tests/host/test_tablas.c (eje)
-    status: not_run
+    status: successful
+    commit: af2e82d
+    date: 2026-11-15
+    ci_run: 43737945218
+    evidence: CI host-tests (ctest), log del run 43737945218
+    observed: >
+      10 disparos en 40 días simulados (días 30–39 a la hora 3); V13 → V06 → V14 → V12 con 3000/3200 ms.
   - id: TC-BOM-A1
     shape: atomic
     kind: standard
@@ -1258,7 +1270,13 @@ tests:
     expect: >
       tabla de §6.2 como prueba parametrizada: cada fila B01–B09 produce su estado y nada más; completitud en todas las combinaciones; ninguna orden a PERMITIDA sin agua (FR-BOM-08, parte host); rearme a los 600 s exactos y reinicio con una interrupción del flotador (FR-BOM-05, parte host); sin rearme con el transductor en falla (FR-BOM-06, parte host); 3 cortes por seco en 24 h → BLOQUEADA, que solo sale con rearmar (FR-BOM-07, parte host)
     impl: tests/host/test_tablas.c (bom)
-    status: not_run
+    status: successful
+    commit: af2e82d
+    date: 2026-11-15
+    ci_run: 43737945218
+    evidence: CI host-tests (ctest), log del run 43737945218
+    observed: >
+      18 casos de B01–B09 y 14112 combinaciones de completitud; rearme a 600 s y 901 s con interrupción; BLOQUEADA a los 3 cortes.
   - id: TC-BOM-A2
     shape: atomic
     kind: standard
@@ -1270,7 +1288,13 @@ tests:
     expect: >
       lógica pura con series de corriente y presión (i_marcha 0,5 A, i_seco 1,0 A, p_min 0,5 bar, t_seco 10 s): seco solo con las tres condiciones durante > 10 s; nunca con presión alta, con 1 s de menos, sin i_seco configurado, con la bomba parada ni tras una interrupción
     impl: tests/host/test_tablas.c (seco)
-    status: not_run
+    status: successful
+    commit: af2e82d
+    date: 2026-11-15
+    ci_run: 43737945218
+    evidence: CI host-tests (ctest), log del run 43737945218
+    observed: >
+      seco a los 10,1 s; ninguno en los 6 casos prohibidos.
   - id: TC-LOC-A1
     shape: atomic
     kind: standard
@@ -1282,7 +1306,13 @@ tests:
     expect: >
       las 256 combinaciones de condiciones de §8.2 dan el LED y el zumbador de la mayor prioridad
     impl: tests/host/test_tablas.c (loc)
-    status: not_run
+    status: successful
+    commit: af2e82d
+    date: 2026-11-15
+    ci_run: 43737945218
+    evidence: CI host-tests (ctest), log del run 43737945218
+    observed: >
+      256 combinaciones; un mutante de la prioridad 1 da 64 fallos.
   - id: TC-SON-A1
     shape: atomic
     kind: standard
@@ -1294,7 +1324,13 @@ tests:
     expect: >
       bandas de P4 (FSD 0.4.1, cada banda incluye su borde superior): 0,05 corto; 0,40 mojada; 0,60 seca; 0,90 indeterminada; justo por encima de cada borde, la banda siguiente
     impl: tests/host/test_tablas.c (son)
-    status: not_run
+    status: successful
+    commit: af2e82d
+    date: 2026-11-15
+    ci_run: 43737945218
+    evidence: CI host-tests (ctest), log del run 43737945218
+    observed: >
+      13 puntos (bandas y bordes); un mutante del borde 0,40 da 1 fallo.
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
