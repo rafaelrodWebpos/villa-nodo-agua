@@ -1383,12 +1383,12 @@ tests:
       drivers de E/S, parte pura: palabra del ADS1115 por canal (AINx–GND, ±4,096 V, 860 SPS); lazo de 10 kΩ / 3 kΩ / abierto / corto → seca / mojada / abierta / corto; 12 mA sobre 150 Ω → 250 cm; 2,5 V con divisor 2:3 → 5 bar; Vbat 1:6; el fondo de escala cubre todos los canales; rebotes de 30 ms sin cambio y cambio a los 50 ms; nunca IN1 e IN2 a la vez; senoide de 0,5 V RMS a 60 Hz → 15 A ± 1,5 con ≥ 2000 muestras/s durante 10 ciclos; pulsación de 0,5 s corta, 2,5 s nada, 3,5 s larga a los 3 s; 3 pitidos cada 10 min
     impl: tests/host/test_es.c
     status: successful
-    commit: b84c8c6
+    commit: 98310bd
     date: 2026-11-15
-    ci_run: 43740775581
-    evidence: CI host-tests (ctest), log del run 43740775581
+    ci_run: 43743225426
+    evidence: CI host-tests (ctest), log del run 43743225426
     observed: >
-      46/46 en ctest; RMS de la senoide dentro de 15 ± 1,5 A; cambio del antirrebote a los 150 ms (100 + 50).
+      FSD 0.6.0: 48/48 en ctest; referencia de los lazos medida o nominal según A3; un mutante (siempre la nominal) lo tumba.
   - id: TC-PROT-A1
     shape: workflow
     kind: standard
@@ -1401,12 +1401,12 @@ tests:
       el núcleo de protección cada 10 ms sobre una planta simulada (válvula de 3 s con finales, 8 lazos, 3 ADS1115, flotador, red, batería, presión, pinza, botón), 11 escenarios: arranque sin mover el motor; fuga confirmada en ≤ 1,25 s, IN1 ≤ 500 ms, motor parado ≤ 100 ms tras el final, bloqueo guardado, bomba igual, LED rojo y zumbador que la pulsación corta silencia; arranque con sonda mojada → CERRANDO ≤ 1,5 s; restauración de NVS con relé alto desde el primer paso y 0 escrituras sin cambios; ADS 0x49 caído → falla_adc y sondas 5–8 en falla ≤ 2 s sin cierre; lazo abierto 6 s → un falla_sonda a los 5 s, sonda inactiva sin eventos; seco a los 10 ± 1 s solo con presión baja e i_seco configurado; flotador sin agua → relé ≤ 1 s, rechazo y rearme con pulsación larga; cierre por batería y reapertura a los 5 min; pulsación de 2,5 s sin efecto y de 3,5 s que abre; ejercicio completo y fuga durante el ejercicio → CERRADA con bloqueo; FSD 0.6.0: flotador en falla (FR-BOM-10) a los 10 min con nivel 50 %, PERMITIDA protegida por seco, rearmar, y B02 otra vez con el transductor en falla, nunca con nivel 20 %; referencia de los lazos medida en A3 (un lazo en 0,42 con 3,0 V reales es seca) y aviso con la nominal. Es la parte host: los contratos de banco de esos requisitos van con la compra
     impl: tests/host/test_proteccion.c (13 escenarios)
     status: successful
-    commit: b84c8c6
+    commit: 98310bd
     date: 2026-11-15
-    ci_run: 43740775581
-    evidence: CI host-tests (ctest), log del run 43740775581
+    ci_run: 43743225426
+    evidence: CI host-tests (ctest), log del run 43743225426
     observed: >
-      11 escenarios en verde; tres mutantes (sin cierre por fuga, sin corte por flotador, relé siempre apagado) los tumban 3, 1 y 3 escenarios. Firmware compilado en la CI (Build Firmware 43740775550).
+      FSD 0.6.0: 13 escenarios en verde; flotador_falla a los 600 s y B02 otra vez con el transductor en falla; mutantes sin FR-BOM-10 y sin la referencia medida tumban su escenario. Firmware compilado en la CI (Build Firmware 43743225487).
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
