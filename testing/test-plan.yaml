@@ -11,6 +11,8 @@ fsd_version: 0.6.0
 fsd_inherits: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.9 @ ddf80167e0ed1a0ef72e2783d02265e1eac7e5aa   # clima:<ID>
 fsd_inherits_e13: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.10 @ 32027b0a8329e1eadfa57d99f377afbb9a1e0694   # solo clima:E13 (E13-USJ), FSD §20
 banco_con_la_compra:   # qué se prueba en el banco cuando llegue la compra (agenda 2–5); el firmware ya lo tiene (2026-11-15)
+  - paso: "0 · SLOT2 tras soldarle los pines (pendiente desde 2026-11-15)"
+    que: "el propietario soldó los pines de la placa del SLOT2 y apagó el Pi; al encenderlo: GET /api/devices ve el SLOT2 (SLOT1 sin tocar), POST /api/chip/info con la MAC de dut.identity, JRN-01.0 con la imagen de banco de 3e3ffe7 (CI 43754845133, ya en .fw-run, ignorado por git) y espefuse summary con los valores de dut.identity.efuses_observed (todo en 0). Intento del 2026-11-15: not done, banco apagado (connect refused en :8080)"
   - paso: "1 · regresión en el SLOT2 sin E/S"
     que: "repetir JRN-01.0–01.3, los 20 heredados, TC-HA-A1, TC-WDT-02 y TC-TIME-08 con la imagen que ya incluye los drivers y la tarea de protección (sin la E/S montada los ADS no responden y la protección queda en falla_adc, sin mover nada)"
   - paso: "2 · agenda fila 2 (montaje de E/S)"
@@ -20,7 +22,7 @@ banco_con_la_compra:   # qué se prueba en el banco cuando llegue la compra (age
   - paso: "4 · agenda fila 4 (simuladores CR-TB-16…22)"
     que: "los contratos de banco de §5–§9 y §12 (FR-FUG-02, FR-SON-01…03, FR-IO-04…06, FR-BOM-01…09, FR-NIV-01/02, FR-PRE-01, FR-ENE-01…05, FR-LOC-01…05, FR-PER-01…03, FR-EJE-01…04, FR-OBS-A1) y JRN-01.4–01.8, JRN-02.0–02.2; cada uno se declara en el plan al empezar esta fase"
   - paso: "5 · agenda fila 5 (sensores reales)"
-    que: "referencia real de los lazos (ES_VREF_SONDAS_V, hoy 3,3 V nominales), R(mojada) con agua de la villa (P4), lazo de 4–20 mA a 24 V (C-HW-31), presión y pinza con carga conocida"
+    que: "referencia de los lazos medida en A3 del 0x4A (FSD 0.6.0; cablear A3 a la tensión de las resistencias de 10 kΩ; fuera de 3,0–3,6 V usa 3,3 V nominales), R(mojada) con agua de la villa (P4), lazo de 4–20 mA a 24 V (C-HW-31), presión y pinza con carga conocida"
   - paso: "6 · revisar las interpretaciones"
     que: "INT-1…INT-6 con la E/S real"
 interpretaciones:   # confirmadas por el propietario 2026-11-15; revisarlas cuando llegue la compra (agenda 2–5)
