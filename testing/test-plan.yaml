@@ -20,6 +20,15 @@ interpretaciones:   # confirmadas por el propietario 2026-11-15; revisarlas cuan
   - id: INT-3
     texto: FR-PUB-02 y las partes de medida de las pruebas heredadas (p. ej. TC-POR-12) llegan con el trabajo de E/S
     revisar: con la E/S, añadir esas aserciones y volver a ejecutar las pruebas afectadas
+  - id: INT-4
+    texto: con los dos finales activos (V03b, V15) la válvula pasa a FALLA y publica el evento falla_valvula (confirmada por el propietario 2026-11-15; FSD 0.5.0)
+    revisar: con la válvula real, provocar los dos finales a la vez y ver falla_valvula
+  - id: INT-5
+    texto: V23 (reapertura por batería) exige también g_seco, como una apertura por orden (confirmada 2026-11-15; FSD 0.5.0)
+    revisar: con la E/S, reapertura por batería con una sonda mojada → sin reapertura
+  - id: INT-6
+    texto: V22 solo desde ABIERTA o DESCONOCIDA; el evento es de nivel y se repite cada ciclo, así que una válvula que se estaba abriendo se cierra al llegar a ABIERTA (confirmada 2026-11-15; FSD 0.5.0)
+    revisar: con la E/S, batería crítica sin red durante una apertura → cierre al llegar a abierta
 testing_standard: docs/Method/standards/testing.md
 debugging_agenda: testing/debugging-agenda.md
 gates_dir: testing/gates/
