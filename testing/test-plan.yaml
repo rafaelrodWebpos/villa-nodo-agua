@@ -1127,7 +1127,7 @@ tests:
     ci_run: 43709844065
     evidence: test-results/20261115T114519Z-26c3661/
     observed: >
-      precondición del banco no cumplida (no es un fallo del DUT): 3 intentos (114047Z, 114359Z, 114519Z) se cortan antes del estímulo porque el suscriptor de la laptop no conecta al broker del banco (TCP 1883 sin respuesta, con el broker en marcha; la API y el SSH del banco sí responden). A las 02:46 funcionaba. Repetir cuando el banco vuelva a aceptar 1883 desde la LAN.
+      precondición del entorno no cumplida (no es un fallo del DUT): 3 intentos (114047Z, 114359Z, 114519Z) se cortan antes del estímulo porque el suscriptor de la laptop no conecta al broker del banco (TCP 1883 sin respuesta, con el broker en marcha; la API y el SSH del banco sí responden). Causa (propietario, 2026-11-15): el router cambió la IP de la laptop y la regla del 1883 del banco solo permitía la anterior; ni el banco ni el DUT. Regla corregida; repetir.
 
 gate_verdicts:   # [{gate, verdict, date, commit}] — los escribe el checker
   - {gate: 01-load-defined, verdict: OPEN, date: 2026-11-14, commit: c3e5053}
