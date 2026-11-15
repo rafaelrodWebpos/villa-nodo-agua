@@ -47,6 +47,9 @@ static const had_def_t DEF[] = {
     {"sensor", "vbat", "Tensión de la batería",
      "\"state_topic\":\"~/bateria\",\"value_template\":\"" VJ("v") "\",\"unit_of_measurement\":\"V\","
      "\"device_class\":\"voltage\",\"state_class\":\"measurement\"", true},
+    {"sensor", "estado_bateria", "Estado de la batería",
+     "\"state_topic\":\"~/bateria\",\"value_template\":\"" VJ("estado") "\",\"device_class\":\"enum\","
+     "\"options\":[\"ok\",\"baja\",\"critica\"]", true},
     {"button", "rearmar_bomba", "Rearmar la bomba",
      "\"command_topic\":\"~/bomba/set\",\"payload_press\":\"{\\\"accion\\\":\\\"rearmar\\\"}\",\"qos\":1", false},
     {"button", "ejercicio", "Ejercitar la válvula",

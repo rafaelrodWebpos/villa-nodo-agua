@@ -1,7 +1,7 @@
 """TC-HA-A1 · FR-HA-A1 (bench) — con el Home Assistant de prueba (scripts/ha/ha_prueba.py,
 heredado del piloto: Docker de la laptop, instancia nueva, broker del banco), el nodo aparece
-como 1 dispositivo «Agua sitio1 zona1» con las 20 entidades de §14 (el % de batería queda
-pendiente de definir en el FSD), sin duplicados tras 3 reinicios del DUT. Atómico: graba la
+como 1 dispositivo «Agua sitio1 zona1» con las 21 entidades de §14 (FSD 0.4.0: sin entidad de %
+de batería), sin duplicados tras 3 reinicios del DUT. Atómico: graba la
 imagen de la CI y aprovisiona contra un AP desechable nuevo."""
 import re
 import time
@@ -13,7 +13,7 @@ from test_mqtt import _nodo, configurado
 T11 = re.escape("con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)")
 HA_ESPERA_S = 60
 REINICIOS = 3
-ENTIDADES = 20     # §14 menos el % de batería (pendiente del FSD)
+ENTIDADES = 21     # §14 (FSD 0.4.0)
 DOMINIOS = {"valve": 1, "switch": 1, "binary_sensor": 10, "sensor": 5, "button": 2, "event": 1}
 
 
@@ -48,7 +48,7 @@ def _esperar(ha, timeout):
 
 
 def test_tc_ha_a1_home_assistant_entities(testbench, dut_slot, dut_mac, firmware, run_dir, tmp_path):
-    """TC-HA-A1 · FR-HA-A1 — 1 dispositivo con las 20 entidades; sin duplicados tras 3 reinicios."""
+    """TC-HA-A1 · FR-HA-A1 — 1 dispositivo con las 21 entidades; sin duplicados tras 3 reinicios."""
     from ha_cliente import HomeAssistant
     tb = testbench
     nodo = _nodo(dut_mac)

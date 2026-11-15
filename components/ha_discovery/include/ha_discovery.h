@@ -8,9 +8,8 @@
  * tests/host. Las funciones devuelven la longitud escrita, o -1 si no cabe
  * (el búfer queda vacío) o si la entidad no existe.
  *
- * Pendiente (defecto del FSD, decisión del propietario): §14 pide el estado de
- * la batería como sensor `device_class: battery` en %, pero no define la
- * conversión de Vbat a %; esa entidad no se anuncia hasta que se defina. */
+ * Batería (FSD 0.4.0, §14): se anuncian la tensión y el estado ok/baja/critica
+ * (P5); no hay entidad de % (con LiFePO4 la tensión no da un % fiable). */
 #pragma once
 #include <stddef.h>
 

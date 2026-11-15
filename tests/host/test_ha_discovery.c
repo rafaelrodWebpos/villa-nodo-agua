@@ -31,6 +31,7 @@ static const char *const TOPICOS[] = {
     "homeassistant/sensor/agua-a1b2c3/presion/config",
     "homeassistant/sensor/agua-a1b2c3/corriente_bomba/config",
     "homeassistant/sensor/agua-a1b2c3/vbat/config",
+    "homeassistant/sensor/agua-a1b2c3/estado_bateria/config",
     "homeassistant/button/agua-a1b2c3/rearmar_bomba/config",
     "homeassistant/button/agua-a1b2c3/ejercicio/config",
     "homeassistant/event/agua-a1b2c3/evento/config",

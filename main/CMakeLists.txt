@@ -6,4 +6,4 @@ idf_component_register(SRCS "main.c"
                                      esp_event esp_netif esp_wifi nvs_flash
                                      identidad conectividad portal udplog diagnostico publicador ha_discovery hora
                                      esp_timer freertos lwip esp_driver_uart
-                                     espressif__mqtt)
+                                     esp_hal_usb espressif__mqtt)

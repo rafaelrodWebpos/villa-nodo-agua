@@ -248,10 +248,11 @@ def test_jrn_01_2_provision(testbench, dut_slot, dut_mac, run_dir):
 # --------------------------------------------------------------------------
 # JRN-01.3 · clima:T11, clima:FR-MQTT-08, FR-HA-A1, FR-PUB-02 (parte sin E/S)
 # --------------------------------------------------------------------------
-# Entidades de §14 (componente de HA, objeto); el % de batería queda pendiente de definir en el FSD
+# Entidades de §14 (componente de HA, objeto); FSD 0.4.0: sin entidad de % de batería
 ENTIDADES_14 = [("valve", "valvula"), ("switch", "bomba")] + [("binary_sensor", f"fuga_{n}") for n in range(1, 9)] + [
     ("binary_sensor", "flotador"), ("binary_sensor", "red"), ("sensor", "nivel"), ("sensor", "nivel_pct"),
-    ("sensor", "presion"), ("sensor", "corriente_bomba"), ("sensor", "vbat"), ("button", "rearmar_bomba"),
+    ("sensor", "presion"), ("sensor", "corriente_bomba"), ("sensor", "vbat"), ("sensor", "estado_bateria"),
+    ("button", "rearmar_bomba"),
     ("button", "ejercicio"), ("event", "evento")]
 T11_ESPERA_S = 60             # margen de observación desde el reset hasta OPERATIVO (no es un límite del FSD)
 TRAS_T11_S = 10               # tiempo de escucha tras OPERATIVO

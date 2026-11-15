@@ -7,8 +7,19 @@
 
 project: villa-nodo-agua
 fsd: docs/Functionality/FSD-nodo-agua.md
-fsd_version: 0.3.1
+fsd_version: 0.4.0
 fsd_inherits: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.9 @ ddf80167e0ed1a0ef72e2783d02265e1eac7e5aa   # clima:<ID>
+fsd_inherits_e13: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.10 @ 32027b0a8329e1eadfa57d99f377afbb9a1e0694   # solo clima:E13 (E13-USJ), FSD §20
+interpretaciones:   # confirmadas por el propietario 2026-11-15; revisarlas cuando llegue la compra (agenda 2–5)
+  - id: INT-1
+    texto: expire_after (180 s) solo en los sensores de medida periódica, no en binary_sensor, valve, switch, button ni event
+    revisar: con la E/S real, comprobar que las entidades sin expire_after reflejan bien la pérdida del nodo vía availability
+  - id: INT-2
+    texto: mientras no hay E/S, el «ciclo de medición» de clima:FR-CON-03/04 (FR-HER-01) se observa como el primer status online tras T11
+    revisar: con la E/S, sustituir el sustituto por la primera publicación de medidas (línea A4 y tópicos de §13.1)
+  - id: INT-3
+    texto: FR-PUB-02 y las partes de medida de las pruebas heredadas (p. ej. TC-POR-12) llegan con el trabajo de E/S
+    revisar: con la E/S, añadir esas aserciones y volver a ejecutar las pruebas afectadas
 testing_standard: docs/Method/standards/testing.md
 debugging_agenda: testing/debugging-agenda.md
 gates_dir: testing/gates/

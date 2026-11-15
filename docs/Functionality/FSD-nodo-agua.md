@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.3.1
+fsd_version: 0.4.0
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
@@ -10,7 +10,7 @@ author: Rafael Rodriguez
 reviewers: []
 approval_status: D1–D18 y P1–P21 aceptadas por el propietario (2026-11-14; P14 con condición)
 created: 2026-11-14
-last_updated: 2026-11-14
+last_updated: 2026-11-15
 herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9 (commit ddf8016)
 change_history:
   - 0.1.0 (2026-11-14): versión inicial a partir de /define (D1–D18 del propietario).
@@ -20,6 +20,10 @@ change_history:
   - 0.3.0 (2026-11-14): P21 aceptada (elevador MT3608); Fase 0 cerrada (Load defined).
   - 0.3.1 (2026-11-14): editorial — tabla de particiones copiada en §2.2 para la CI; contratos
     con los IDs completos (C-HW-20…29, FR-EJE-02, FR-CIC-01) y fila de C-BLD-01.
+  - 0.4.0 (2026-11-15): decisiones del propietario. §14: se quita la entidad de % de batería
+    (con LiFePO4 la tensión no da un % fiable); se anuncian la tensión y el estado
+    `ok`/`baja`/`critica` de P5, con sus avisos (FR-ENE-02/03). §20: clima:E13 se hereda en
+    la redacción de la 0.9.10 del piloto (E13-USJ), solo en la imagen de banco.
 ```
 
 ## Convenciones de este documento
@@ -765,8 +769,11 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 Se heredan clima:FR-HA-01…03 (esquema y tópicos de Discovery). Las entidades de este nodo son:
 `valve` (válvula: estados `open`/`closed`/`opening`/`closing`), `switch` (permiso de
 la bomba), `binary_sensor` × 8 (fugas, `device_class: moisture`), `binary_sensor`
-(flotador, red), `sensor` (nivel cm y %, presión, corriente, Vbat, estado de batería con
-`device_class: battery` en %), `button` (rearmar bomba, ejercicio) y `event` (§13.1).
+(flotador, red), `sensor` (nivel cm y %, presión, corriente, Vbat, y el estado de la
+batería `ok`/`baja`/`critica` de P5 con `device_class: enum`, ambos del tópico `bateria`),
+`button` (rearmar bomba, ejercicio) y `event` (§13.1; los avisos `bateria_baja` y
+`bateria_critica` de FR-ENE-03). No se anuncia un % de batería: con LiFePO4 la tensión
+no da un % fiable [user, 2026-11-15].
 
 - **FR-HA-A1** [Must] [derived]: cada entidad de la lista deberá anunciarse con un
   `unique_id` que incluya el identificador de §18.
@@ -865,7 +872,10 @@ Ningún rango permite apagar el cierre por fuga ni el corte por seco o por flota
 ## 20. Observabilidad
 
 Se hereda clima §18 (líneas E0–E3, log UDP solo en la imagen de banco, C-LOG-01/02,
-FR-LOG-01…03). Líneas nuevas y normativas [derived]:
+FR-LOG-01…03). Excepción a la regla de la 0.9.9: clima:E13 (comandos serie de la imagen
+de banco) se hereda en la redacción de la **0.9.10** del piloto [user, 2026-11-15]: el nodo
+lee los comandos por la consola primaria (UART0) y también por el USB-Serial/JTAG, porque
+el banco solo escribe por este último. La imagen de producción no cambia (C-LOG-02). Líneas nuevas y normativas [derived]:
 
 | Ref. | Línea | Cuándo |
 |---|---|---|
