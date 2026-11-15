@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.5.0
+fsd_version: 0.6.0
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
@@ -33,6 +33,12 @@ change_history:
     P16); una fuga confirmada siempre gana. §6: B05 sin límite de intentos para los cortes
     por nivel o flotador; B09 con el transductor en falla; filas nuevas B10 (`sin_agua`) y
     B11 (`nivel_bajo`); motivo `nivel_bajo` en FR-ORD-01.
+  - 0.6.0 (2026-11-15): decisiones del propietario. §2.2: A3 del 0x4A mide la referencia
+    de los lazos (fracción de P4 = V(lazo)/V(A3), con 3,3 V nominales si no es válida).
+    §19: hora local = UTC−4 sin horario de verano. §6: FR-BOM-10 (flotador en falla tras
+    10 min sin agua con nivel suficiente; evento `flotador_falla`), con excepciones en
+    FR-BOM-04/08. Confirmados: GPIO5 sin señal = red ausente; los cortes por seco de antes
+    de un reinicio cuentan como ocurridos al arrancar (FR-PER-02).
 ```
 
 ## Convenciones de este documento
@@ -163,10 +169,10 @@ prohibida de clima:C-HW-07.
 |---|---|---|
 | 8 / 9 | I²C SDA / SCL (3 × ADS1115) | bus |
 | 4 | Pinza de corriente (ADC1_CH3) | analógica |
-| 5 | Red presente (salida «AC OK» de la fuente u optoacoplador; nivel alto = red presente) | entrada |
+| 5 | Red presente (salida «AC OK» de la fuente u optoacoplador; nivel alto = red presente; con pull-down: sin señal = red ausente [user, 2026-11-15]) | entrada |
 | 6 | Final de carrera «abierta» (contacto a GND, pull-up; cerrado = activo) | entrada |
 | 7 | Final de carrera «cerrada» (contacto a GND, pull-up; cerrado = activo) | entrada |
-| 10 | Flotador de nivel mínimo (contacto cerrado = hay agua) | entrada |
+| 10 | Flotador de nivel mínimo (contacto a GND con pull-up; cerrado = hay agua; cable cortado = sin agua [user, 2026-11-15]) | entrada |
 | 11 | Botón local (a GND, pull-up) | entrada |
 | 12 / 13 | Puente H IN1 (cerrar) / IN2 (abrir) | salida |
 | 14 | Relé de permiso de la bomba (alto = relé energizado = **permiso cortado**) | salida |
@@ -174,7 +180,11 @@ prohibida de clima:C-HW-07.
 | 16 / 17 | LED de estado verde / rojo (externos) | salida |
 
 **Canales de los ADS1115 (P1).** 0x48: sondas 1–4; 0x49: sondas 5–8; 0x4A: A0 = nivel
-4–20 mA, A1 = presión, A2 = Vbat (divisor 1:6, P5), A3 = libre.
+4–20 mA, A1 = presión, A2 = Vbat (divisor 1:6, P5), A3 = referencia de polarización de
+los lazos (la misma tensión que alimenta las resistencias de 10 kΩ de C-HW-26)
+[user, 2026-11-15]. La fracción de P4 es V(lazo) / V(A3). Con A3 fuera de 3,0–3,6 V o
+el 0x4A sin responder, se usa la referencia nominal de 3,3 V y se registra
+`son: vref nominal`.
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
@@ -535,7 +545,8 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
   configurado, el criterio de corriente no se evalúa y el nodo deberá publicar
   `bomba/state.calibrada`=false.
 - **FR-BOM-04** [Must] [user] D8: el flotador sin agua deberá cortar el permiso (B02)
-  aunque el transductor esté en falla o indique otro nivel.
+  aunque el transductor esté en falla o indique otro nivel, salvo con el flotador en
+  falla (FR-BOM-10).
 - **FR-BOM-05** [Must] [user] D10 (P6): la condición de rearme automático es
   nivel ≥ `nivel_rearme_pct` **y** flotador con agua, sin interrupción, durante
   `t_rearme_min`.
@@ -545,9 +556,18 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
   seco en 24 h móviles, el permiso deberá pasar a BLOQUEADA y solo deberá salir por
   B07.
 - **FR-BOM-08** [Must] [user] D3: ninguna orden ni valor de configuración deberá
-  llevar el permiso a PERMITIDA con el flotador sin agua.
+  llevar el permiso a PERMITIDA con el flotador sin agua, salvo con el flotador en
+  falla (FR-BOM-10).
 - **FR-BOM-09** [Must] [user] D7: el estado de la válvula no deberá cambiar el permiso
   de la bomba.
+- **FR-BOM-10** [Must] [user, 2026-11-15]: con el transductor válido indicando nivel
+  ≥ `nivel_rearme_pct` y el flotador sin agua durante 10 min seguidos, el nodo deberá
+  declarar el **flotador en falla**: publicar una vez el evento `flotador_falla` y, mientras
+  dure, tratar el flotador como «con agua» en B02, B05, B07 y B09, de modo que la bomba
+  quede protegida por el transductor (B03) y la detección de seco (B01), el mismo
+  criterio que B09 con el transductor en falla. La falla termina cuando el flotador
+  vuelve a «con agua» o cuando el transductor deja de ser válido; en ese caso se aplica
+  B02 otra vez. El flotador sigue con pull-up: un cable cortado se lee «sin agua».
 
 ### 6.4 Contratos de verificación
 
@@ -564,6 +584,8 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
 | FR-BOM-07 | 3 cortes por seco en 24 h simuladas | BLOQUEADA; `bomba_bloqueada`; solo `rearmar` la saca | Rearme automático | host + bench |
 | FR-BOM-08 | Flotador sin agua; órdenes `permitir`, `rearmar`; configuración con cualquier valor dentro de rango | Rechazo `sin_agua`; GPIO14 en alto | GPIO14 en bajo | bench |
 | FR-BOM-09 | Válvula CERRADA y ABIERTA | Permiso sin cambio | Corte por la válvula | bench |
+| FR-BOM-10 | Lógica pura con planta simulada: nivel 50 % y flotador sin agua 10 min; después transductor en falla | B02 al empezar; `flotador_falla` a los 10 min y PERMITIDA; con el transductor en falla, CORTADA(flotador) otra vez | `flotador_falla` antes de 10 min o con nivel < `nivel_rearme_pct`; seguir permitida sin transductor | host |
+| FR-BOM-10 | Banco: flotador abierto, transductor a 12 mA durante 10 min | `flotador_falla` y relé en bajo | Relé alto tras el evento | bench |
 | B01–B11 | Tabla como prueba parametrizada | Cada fila produce su estado | Transición no listada | host |
 
 ### 6.5 Nivel y presión
@@ -665,7 +687,9 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
   deberán guardarse en NVS en cada cambio y solo en los cambios.
 - **FR-PER-02** [Must] [user] D15: tras cualquier reinicio (corte de alimentación,
   watchdog, pánico, OTA), los valores de FR-PER-01 deberán restaurarse; ningún reinicio
-  deberá poner `bloqueo_fuga` en 0 ni el permiso en PERMITIDA.
+  deberá poner `bloqueo_fuga` en 0 ni el permiso en PERMITIDA. Los cortes por seco
+  restaurados cuentan como ocurridos al arrancar (el reloj monótono empieza de cero)
+  [user, 2026-11-15].
 - **FR-PER-03** [Must] [user] D15: si al arrancar hay una sonda activa en `mojada`, la
   fuga deberá confirmarse y tratarse como en marcha (FR-FUG-01/02).
 
@@ -759,7 +783,7 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 | `flotador` | → | `{"estado":"agua"\|"sin_agua","ts":…}` | 1 | sí |
 | `red` | → | `{"estado":"presente"\|"ausente","ts":…}` | 1 | sí |
 | `bateria` | → | `{"v":12.9,"u":"V","estado":"ok"\|"baja"\|"critica","ts":…}` | 1 | sí |
-| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada",…,"ts":…}` | 1 | no |
+| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla",…,"ts":…}` | 1 | no |
 | `config/set`, `config/state` | ←, → | §16 | 1 | no, sí |
 | `status`, `cmd/ota` | →, ← | heredados (clima §9.3, §12) | 1 | sí, no |
 
@@ -879,7 +903,7 @@ Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; P-valores propuest
 | `sonda_activa[1..8]` | bool | true | — (FR-CFG-A3) | FR-SON-03 |
 | `t_carrera_max_s` | entero | 30 | 5–120 | P3 |
 | `ejercicio_dias` | entero | 30 | 7–90 | D12 |
-| `ejercicio_hora` | entero (hora local) | 3 | 0–23 | D12 |
+| `ejercicio_hora` | entero (hora local: UTC−4 sin horario de verano, TZ POSIX `AST4`) [user, 2026-11-15] | 3 | 0–23 | D12 |
 | `zumbador_activo` | bool | true | — | D16 |
 | `zumbador_min` | entero | 5 | 1–30 | D16 |
 | `rango_transductor_cm` | entero | 500 | 50–1000 | FR-NIV-01 |

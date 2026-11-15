@@ -14,6 +14,7 @@
  * cualquier estado y publica `status` en OPERATIVO (clima:FR-MQTT-08). La OTA
  * (§11) es de la Fase 3.
  */
+#include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
@@ -324,7 +325,7 @@ static bool hora_para_proteccion(int *hora_local, uint32_t *ahora_s)
     if (!hora_valida()) return false;
     time_t t = time(NULL);
     struct tm tm;
-    localtime_r(&t, &tm);                         /* zona horaria: pendiente en el FSD (UTC mientras tanto) */
+    localtime_r(&t, &tm);                         /* TZ = AST4 (§19), fijada al arrancar */
     *hora_local = tm.tm_hour;
     *ahora_s = (uint32_t)t;
     return true;
@@ -799,6 +800,8 @@ static void comandos_iniciar(void)
 void app_main(void)
 {
     es_hw_gpio_iniciar();                         /* FR-BOM-02: relé y motor en bajo desde el arranque */
+    setenv("TZ", "AST4", 1);                      /* §19: hora local = UTC−4 sin horario de verano */
+    tzset();
     const esp_app_desc_t *app = esp_app_get_description();
     uint8_t mac[6];
     ESP_ERROR_CHECK(esp_read_mac(mac, ESP_MAC_WIFI_STA));

@@ -14,7 +14,13 @@ uint16_t es_ads_config(int canal)
 
 float es_ads_voltios(int16_t c) { return (float)c * ES_ADS_FS_V / 32768.0f; }
 
-float es_sonda_fraccion(float v) { return v / ES_VREF_SONDAS_V; }
+float es_sonda_fraccion(float v, float vref) { return v / vref; }
+
+float es_vref(bool ads_ok, float v, bool *nominal)
+{
+    *nominal = !(ads_ok && v >= ES_VREF_MIN_V && v <= ES_VREF_MAX_V);
+    return *nominal ? ES_VREF_SONDAS_V : v;
+}
 float es_nivel_ma(float v) { return v / ES_SHUNT_OHM * 1000.0f; }
 float es_presion_sensor_v(float v) { return v * 1.5f; }
 float es_vbat_v(float v) { return v * 6.0f; }

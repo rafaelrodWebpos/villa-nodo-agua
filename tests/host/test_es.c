@@ -22,8 +22,14 @@ int main(void)
     const struct { float r; son_clase_t c; } L[] = { {10000, SON_SECA}, {3000, SON_MOJADA}, {1e12f, SON_ABIERTA}, {0, SON_CORTO} };
     for (int i = 0; i < 4; i++) {
         float v = ES_VREF_SONDAS_V * L[i].r / (L[i].r + 10000.0f);
-        OK(son_clasificar(es_sonda_fraccion(v)) == L[i].c, "lazo %.0f Ω → %s", L[i].r, son_nombre(son_clasificar(es_sonda_fraccion(v))));
+        OK(son_clasificar(es_sonda_fraccion(v, ES_VREF_SONDAS_V)) == L[i].c, "lazo %.0f Ω → %s", L[i].r, son_nombre(son_clasificar(es_sonda_fraccion(v, ES_VREF_SONDAS_V))));
     }
+    /* Referencia de los lazos (FSD 0.6.0): A3 válida entre 3,0 y 3,6 V; si no, 3,3 V nominales */
+    bool nom;
+    OK(es_vref(true, 3.1f, &nom) == 3.1f && !nom, "referencia medida");
+    OK(es_vref(true, 2.9f, &nom) == ES_VREF_SONDAS_V && nom, "A3 baja");
+    OK(es_vref(true, 3.7f, &nom) == ES_VREF_SONDAS_V && nom, "A3 alta");
+    OK(es_vref(false, 3.1f, &nom) == ES_VREF_SONDAS_V && nom, "0x4A caído");
     /* Nivel (C-HW-27): 12 mA sobre 150 Ω = 1,8 V → 250 cm de 500 */
     float cm, pct;
     OK(fabsf(es_nivel_ma(1.8f) - 12.0f) < 1e-3f && bom_nivel(es_nivel_ma(1.8f), 500, 400, &cm, &pct) && fabsf(cm - 250) < 0.1f, "12 mA");

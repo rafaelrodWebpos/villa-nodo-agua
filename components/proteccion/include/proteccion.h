@@ -15,6 +15,7 @@
 #define PROT_N_SONDAS 8
 #define PROT_PERIODO_MS 10u            /* paso de la tarea (FR-VAL-05: ≤ 100 ms con el antirrebote) */
 #define PROT_FALLA_SONDA_MS 5000u      /* FR-SON-02 */
+#define PROT_FLOTADOR_FALLA_S 600u     /* FR-BOM-10: 10 min */
 
 /* Valores de fábrica de §19 (la configuración por MQTT, §16, es de la Fase 2) */
 typedef struct {
@@ -51,7 +52,7 @@ typedef struct {
     bool hay_medidas;
     bool ads_ok[ES_N_ADS];
     float v_sonda[PROT_N_SONDAS];   /* V en el ADS */
-    float v_nivel, v_presion, v_bat;
+    float v_nivel, v_presion, v_bat, v_ref;   /* v_ref: A3 del 0x4A (FSD 0.6.0) */
     bool hay_corriente;
     float i_rms;
     /* hora (FR-EJE-01) y conectividad (LED, prioridad 4) */
@@ -74,6 +75,8 @@ typedef enum {
     PEV_BATERIA,         /* a = estado (ene_estado_t) */
     PEV_FALLA_ADC,       /* a = índice del ADS (0…2) */
     PEV_RECHAZO,         /* a = 1 válvula (fuga_activa) / 2 bomba (sin_agua) por pulsación larga */
+    PEV_FLOTADOR_FALLA,  /* a = 1 declarada (FR-BOM-10), 0 terminada */
+    PEV_VREF,            /* a = 1 se usa la referencia nominal, 0 vuelve la medida */
 } prot_ev_tipo_t;
 
 typedef struct { prot_ev_tipo_t tipo; int a, b, c, d; } prot_evento_t;
@@ -96,7 +99,11 @@ typedef struct {
     es_antirrebote_t ar_abierta, ar_cerrada, ar_flotador, ar_red, ar_boton;
     es_boton_t boton;
     uint8_t finales;
-    bool flotador_agua, red_presente;
+    bool flotador_agua, red_presente;   /* flotador_agua: el efectivo (con FR-BOM-10) */
+    bool flotador_real, flotador_falla, flot_en_curso;
+    uint32_t flot_desde_s;
+    bool vref_nominal;
+    float vref;
     /* sondas */
     fug_sonda_t fug[PROT_N_SONDAS];
     int clase[PROT_N_SONDAS];           /* son_clase_t o -1 (ADS en falla) */

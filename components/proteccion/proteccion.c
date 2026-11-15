@@ -86,6 +86,11 @@ static void medidas(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
         if (p->ads_ok[k] && !e->ads_ok[k]) emitir(s, PEV_FALLA_ADC, k, 0, 0, 0);
         p->ads_ok[k] = e->ads_ok[k];
     }
+    /* Referencia de los lazos: A3 del 0x4A o la nominal (FSD 0.6.0) */
+    bool nominal;
+    p->vref = es_vref(p->ads_ok[2], e->v_ref, &nominal);
+    if (nominal != p->vref_nominal) emitir(s, PEV_VREF, nominal, 0, 0, 0);
+    p->vref_nominal = nominal;
     /* Sondas: clase (FR-SON-01) y falla (FR-SON-02); las inactivas no cuentan (FR-SON-03) */
     for (int i = 0; i < PROT_N_SONDAS; i++) {
         if (!p->cfg.sonda_activa[i]) {
@@ -93,7 +98,7 @@ static void medidas(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
             p->fug[i].seguidas = 0;
             continue;
         }
-        int c = p->ads_ok[i / 4] ? (int)son_clasificar(es_sonda_fraccion(e->v_sonda[i])) : -1;
+        int c = p->ads_ok[i / 4] ? (int)son_clasificar(es_sonda_fraccion(e->v_sonda[i], p->vref)) : -1;
         if (c != p->clase[i]) emitir(s, PEV_SON, i + 1, c, 0, 0);
         p->clase[i] = c;
         p->mojada[i] = c == SON_MOJADA;                         /* P13: en falla cuenta como no mojada */
@@ -128,6 +133,18 @@ static void medidas(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
             p->bateria_conocida = true;
         }
     }
+    /* FR-BOM-10: flotador sin agua 10 min con el transductor válido y nivel suficiente → en falla */
+    bool cond = p->nivel_valido && p->nivel_pct >= (float)p->cfg.nivel_rearme_pct && !p->flotador_real;
+    if (p->flotador_falla && (p->flotador_real || !p->nivel_valido)) {
+        p->flotador_falla = false;
+        emitir(s, PEV_FLOTADOR_FALLA, 0, 0, 0, 0);
+    }
+    if (!cond) p->flot_en_curso = false;
+    else if (!p->flot_en_curso) { p->flot_en_curso = true; p->flot_desde_s = e->t_s; }
+    bool declarar = cond && !p->flotador_falla && e->t_s - p->flot_desde_s >= PROT_FLOTADOR_FALLA_S;
+    if (declarar) { p->flotador_falla = true; emitir(s, PEV_FLOTADOR_FALLA, 1, 0, 0, 0); }
+    p->flotador_agua = p->flotador_real || p->flotador_falla;
+    if (declarar) aplicar_bom(p, e, BEV_REARME_CUMPLIDO, s);   /* el nivel ya llevaba 10 min suficiente */
     aplicar_bom(p, e, BEV_NIVEL, s);                           /* B03 */
     if (rea_tick(&p->rearme, e->t_s, p->nivel_valido, p->nivel_pct, p->flotador_agua,
                  p->cfg.nivel_rearme_pct, p->cfg.t_rearme_s))
@@ -196,7 +213,8 @@ void prot_paso(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     /* Entradas digitales con antirrebote (FR-IO-05) */
     bool fa = es_antirrebote(&p->ar_abierta, e->t_ms, e->fin_abierta);
     bool fc = es_antirrebote(&p->ar_cerrada, e->t_ms, e->fin_cerrada);
-    p->flotador_agua = es_antirrebote(&p->ar_flotador, e->t_ms, e->flotador_agua);
+    p->flotador_real = es_antirrebote(&p->ar_flotador, e->t_ms, e->flotador_agua);
+    p->flotador_agua = p->flotador_real || p->flotador_falla;   /* FR-BOM-10 */
     p->red_presente = es_antirrebote(&p->ar_red, e->t_ms, e->red_presente);
     bool bt = es_antirrebote(&p->ar_boton, e->t_ms, e->boton);
     uint8_t f = (fa ? VFIN_ABIERTA : 0) | (fc ? VFIN_CERRADA : 0);

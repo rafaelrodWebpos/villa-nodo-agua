@@ -35,9 +35,14 @@ uint16_t es_ads_config(int canal);
 float es_ads_voltios(int16_t cuentas);
 
 /* ---- Conversiones de los canales (P4, P5, P9, P18) ---- */
-#define ES_VREF_SONDAS_V 3.3f     /* referencia de polarización de los lazos (pendiente en el FSD) */
+#define ES_VREF_SONDAS_V 3.3f     /* referencia nominal de los lazos (FSD 0.6.0, §2.2) */
+#define ES_VREF_MIN_V    3.0f     /* A3 del 0x4A fuera de 3,0–3,6 V: se usa la nominal */
+#define ES_VREF_MAX_V    3.6f
 #define ES_SHUNT_OHM     150.0f   /* C-HW-27 */
-float es_sonda_fraccion(float v);     /* V del lazo / referencia (P4) */
+float es_sonda_fraccion(float v, float vref);   /* V del lazo / referencia (P4) */
+/* Referencia medida en A3 del 0x4A si es válida (ADS bien y 3,0–3,6 V); si no, la nominal.
+ * *nominal = true cuando se usa la nominal. */
+float es_vref(bool ads_ok, float v_a3, bool *nominal);
 float es_nivel_ma(float v);           /* V sobre el shunt de 150 Ω → mA */
 float es_presion_sensor_v(float v);   /* divisor 2:3 → tensión del sensor */
 float es_vbat_v(float v);             /* divisor 1:6 → tensión de la batería */

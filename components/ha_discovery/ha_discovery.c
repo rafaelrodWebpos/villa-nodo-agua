@@ -59,7 +59,7 @@ static const had_def_t DEF[] = {
      "\"state_topic\":\"~/evento\",\"value_template\":\"{ \\\"event_type\\\": \\\"" VJ("tipo") "\\\" }\","
      "\"event_types\":[\"fuga\",\"falla_valvula\",\"movimiento_manual\",\"falla_sonda\",\"falla_adc\","
      "\"bomba_seco\",\"bomba_bloqueada\",\"ciclado_anormal\",\"bateria_baja\",\"bateria_critica\","
-     "\"orden_rechazada\"]", false},
+     "\"orden_rechazada\",\"flotador_falla\"]", false},
 };
 #define N_DEF ((int)(sizeof DEF / sizeof DEF[0]))
 

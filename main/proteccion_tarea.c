@@ -26,7 +26,7 @@ static const char *TAG = "nodo";
 static proteccion_ganchos_t s_g;
 static prot_t s_prot;
 static SemaphoreHandle_t s_mux;
-static struct { uint32_t seq; bool ads_ok[ES_N_ADS]; float v[11]; } s_med;   /* 8 sondas + nivel, presión, Vbat */
+static struct { uint32_t seq; bool ads_ok[ES_N_ADS]; float v[12]; } s_med;   /* 8 sondas + nivel, presión, Vbat, referencia */
 static struct { uint32_t seq; float i_rms; } s_pin;
 static uint32_t s_escrituras;
 
@@ -69,12 +69,12 @@ static void tarea_medidas(void *arg)
     uint32_t reintento[ES_N_ADS] = { 0 };
     TickType_t ultimo = xTaskGetTickCount();
     for (;;) {
-        float v[11] = { 0 };
+        float v[12] = { 0 };
         uint32_t t = ms();
         for (int k = 0; k < ES_N_ADS; k++) {
             if (!ok[k] && t - reintento[k] < ADS_REINTENTO_MS) continue;
             bool bien = true;
-            int canales = k < 2 ? 4 : 3;
+            const int canales = 4;
             for (int c = 0; c < canales && bien; c++) {
                 int16_t cu;
                 bien = es_hw_ads_leer(k, c, &cu);
@@ -135,6 +135,10 @@ static void registrar(const prot_evento_t *e)
     case PEV_BATERIA: ESP_LOGW(TAG, "evento: bateria_%s", NOMBRE_BAT[e->a]); break;
     case PEV_FALLA_ADC: ESP_LOGW(TAG, "evento: falla_adc 0x%02x", 0x48 + e->a); break;
     case PEV_RECHAZO: ESP_LOGW(TAG, "evento: pulsacion_larga rechazada (%s)", e->a == 1 ? "fuga_activa" : "sin_agua"); break;
+    case PEV_FLOTADOR_FALLA:
+        if (e->a) ESP_LOGW(TAG, "evento: flotador_falla"); else ESP_LOGI(TAG, "bom: flotador sin falla");
+        break;
+    case PEV_VREF: ESP_LOGW(TAG, "son: vref %s", e->a ? "nominal" : "medida"); break;
     }
 }
 
@@ -168,7 +172,7 @@ static void tarea_proteccion(void *arg)
             e.hay_medidas = true;
             memcpy(e.ads_ok, s_med.ads_ok, sizeof e.ads_ok);
             memcpy(e.v_sonda, s_med.v, sizeof e.v_sonda);
-            e.v_nivel = s_med.v[8]; e.v_presion = s_med.v[9]; e.v_bat = s_med.v[10];
+            e.v_nivel = s_med.v[8]; e.v_presion = s_med.v[9]; e.v_bat = s_med.v[10]; e.v_ref = s_med.v[11];
         }
         if (s_pin.seq != seq_pin) { seq_pin = s_pin.seq; e.hay_corriente = true; e.i_rms = s_pin.i_rms; }
         xSemaphoreGive(s_mux);

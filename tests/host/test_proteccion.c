@@ -10,7 +10,7 @@ static int fallos;
 #define OK(c, ...) do { if (!(c)) { fallos++; printf("FALLO %s:%d: ", __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); } } while (0)
 
 /* ---- Planta ---- */
-enum { SECA, MOJADA, ABIERTA, CORTO };
+enum { SECA, MOJADA, ABIERTA, CORTO, LIMITE };   /* LIMITE: 0,42, seca por poco */
 typedef struct {
     double pos;                 /* 0 = cerrada, 1 = abierta */
     double carrera_ms;
@@ -18,11 +18,13 @@ typedef struct {
     bool ads_ok[3];
     float nivel_pct_real;       /* sobre altura útil de fábrica: 200 cm de 500 */
     float presion_bar, vbat, i_a;
+    float vref_real, v_a3;      /* referencia real de los lazos y lo que lee A3 */
+    bool transductor_ok;
     bool flotador_agua, red, boton;
     bool hora_valida; int hora_local; uint32_t ahora_s;
 } planta_t;
 
-static const float V_SONDA[] = { 1.65f, 0.60f, 3.30f, 0.0f };
+static const float F_SONDA[] = { 0.5f, 0.18f, 1.0f, 0.0f, 0.42f };   /* fracción del lazo (C-HW-26) */
 
 typedef struct {
     prot_t p;
@@ -44,7 +46,8 @@ static void sim_iniciar(sim_t *x, const prot_persistente_t *nvs, double pos)
     prot_config_fabrica(&c);
     prot_iniciar(&x->p, &c, nvs, 0);
     x->pl = (planta_t){ .pos = pos, .carrera_ms = 3000, .ads_ok = { true, true, true }, .nivel_pct_real = 50,
-                        .presion_bar = 3.0f, .vbat = 13.2f, .flotador_agua = true, .red = true };
+                        .presion_bar = 3.0f, .vbat = 13.2f, .flotador_agua = true, .red = true,
+                        .vref_real = 3.3f, .v_a3 = 3.3f, .transductor_ok = true };
 }
 
 static void paso(sim_t *x)
@@ -57,9 +60,10 @@ static void paso(sim_t *x)
     if (x->t % 250 == 0) {
         e.hay_medidas = true;
         for (int k = 0; k < 3; k++) e.ads_ok[k] = pl->ads_ok[k];
-        for (int i = 0; i < 8; i++) e.v_sonda[i] = V_SONDA[pl->sonda[i]];
+        for (int i = 0; i < 8; i++) e.v_sonda[i] = F_SONDA[pl->sonda[i]] * pl->vref_real;
+        e.v_ref = pl->v_a3;
         float cm = pl->nivel_pct_real / 100.0f * 200.0f;                /* altura útil 200 cm */
-        e.v_nivel = (4.0f + cm / 500.0f * 16.0f) * 150.0f / 1000.0f;   /* rango 500 cm, shunt 150 Ω */
+        e.v_nivel = pl->transductor_ok ? (4.0f + cm / 500.0f * 16.0f) * 150.0f / 1000.0f : 0.3f;   /* 2 mA si falla */
         e.v_presion = (0.5f + pl->presion_bar / 10.0f * 4.0f) * 2.0f / 3.0f;
         e.v_bat = pl->vbat / 6.0f;
     }
@@ -283,6 +287,59 @@ static void ejercicio(void)
        val_nombre_estado(x.p.val.estado), x.p.val.bloqueo_fuga);
 }
 
+/* FR-BOM-10: nivel 50 % y flotador sin agua → B02 enseguida; flotador_falla a los 10 min y PERMITIDA;
+ * transductor en falla → CORTADA(flotador) otra vez. Con nivel 20 % (< 30 %), nunca falla. */
+static void flotador_falla(void)
+{
+    static sim_t x; sim_iniciar(&x, &LIMPIO, 1.0);
+    correr(&x, 3000);
+    x.pl.flotador_agua = false;
+    uint32_t t0 = x.t;
+    correr(&x, t0 + 1000);
+    OK(x.s.rele && x.p.bom.motivo == BMOT_FLOTADOR, "B02 al empezar");
+    correr(&x, t0 + 590000);
+    OK(x.s.rele && cuantos(&x, PEV_FLOTADOR_FALLA, 1) == 0, "flotador_falla antes de 10 min");
+    correr(&x, t0 + 602000);
+    uint32_t t = cuando(&x, PEV_FLOTADOR_FALLA, 1, t0);
+    OK(t != UINT32_MAX && t - t0 >= 600000 && t - t0 <= 601000, "flotador_falla a los %u ms", t - t0);
+    OK(!x.s.rele && x.p.bom.estado == BOM_PERMITIDA, "PERMITIDA con el flotador en falla");
+    correr(&x, t0 + 900000);
+    OK(cuantos(&x, PEV_FLOTADOR_FALLA, 1) == 1 && !x.s.rele, "un solo aviso y sigue permitida");
+    x.pl.i_a = 0.8f; x.pl.presion_bar = 0.2f; x.p.cfg.i_seco_a = 1.0f;   /* la detección de seco sigue protegiendo */
+    correr(&x, x.t + 13000);
+    OK(x.s.rele && x.p.bom.motivo == BMOT_SECO, "seco con el flotador en falla: motivo %d", x.p.bom.motivo);
+    x.pl.i_a = 0; x.pl.presion_bar = 3.0f;
+    x.pl.boton = true; correr(&x, x.t + 3200); x.pl.boton = false; correr(&x, x.t + 200);   /* B07 con el flotador en falla */
+    OK(!x.s.rele, "rearmar con el flotador en falla");
+    x.pl.transductor_ok = false;                                          /* sin transductor: B02 otra vez */
+    uint32_t t1 = x.t, t_rele = 0;
+    while (x.t < t1 + 3000) { paso(&x); if (x.s.rele && !t_rele) t_rele = x.t; }
+    OK(t_rele && t_rele - t1 <= 1000 && x.p.bom.motivo == BMOT_FLOTADOR && !x.p.flotador_falla && cuantos(&x, PEV_FLOTADOR_FALLA, 0) == 1,
+       "transductor en falla: relé a los %u ms, motivo %d", t_rele - t1, x.p.bom.motivo);
+    static sim_t y; sim_iniciar(&y, &LIMPIO, 1.0);
+    y.pl.nivel_pct_real = 20;
+    correr(&y, 3000);
+    y.pl.flotador_agua = false;
+    correr(&y, 20 * 60 * 1000);
+    OK(cuantos(&y, PEV_FLOTADOR_FALLA, -1) == 0 && y.s.rele, "flotador_falla con nivel 20 %%");
+}
+
+/* Referencia de los lazos (FSD 0.6.0): con 3,0 V reales, un lazo en 0,42 es seca si se mide A3;
+ * con A3 inválida se usa 3,3 V y se avisa (son: vref nominal) */
+static void vref(void)
+{
+    static sim_t x; sim_iniciar(&x, &LIMPIO, 1.0);
+    x.pl.vref_real = 3.0f; x.pl.v_a3 = 3.0f;
+    for (int i = 0; i < 8; i++) x.pl.sonda[i] = LIMITE;
+    correr(&x, 5000);
+    OK(cuantos(&x, PEV_FUGA, -1) == 0 && x.p.clase[0] == SON_SECA && cuantos(&x, PEV_VREF, -1) == 0, "con A3: clase %d", x.p.clase[0]);
+    x.pl.v_a3 = 0.0f;                                   /* A3 sin cablear */
+    correr(&x, x.t + 2000);
+    OK(cuantos(&x, PEV_VREF, 1) == 1 && x.p.vref == ES_VREF_SONDAS_V, "aviso de referencia nominal");
+    x.pl.v_a3 = 3.0f; correr(&x, x.t + 1000);
+    OK(cuantos(&x, PEV_VREF, 0) == 1 && x.p.vref == 3.0f, "vuelve la medida");
+}
+
 int main(int argc, char **argv)
 {
     const char *c = argc > 1 ? argv[1] : "";
@@ -297,6 +354,8 @@ int main(int argc, char **argv)
     else if (!strcmp(c, "bateria")) bateria();
     else if (!strcmp(c, "boton")) boton();
     else if (!strcmp(c, "ejercicio")) ejercicio();
+    else if (!strcmp(c, "flotador_falla")) flotador_falla();
+    else if (!strcmp(c, "vref")) vref();
     else { printf("caso desconocido: %s\n", c); return 2; }
     printf("%s: %d fallos\n", c, fallos);
     return fallos != 0;
