@@ -16,7 +16,7 @@ la prueba.
 
 | # | Parte | No probada porque | Se prueba con | Depende de la compra | Estado |
 |---|---|---|---|---|---|
-| 1 | Placa DUT: segunda Waveshare ESP32-S3-DEV-KIT-N8R8 del SLOT2 | Nunca se ha usado como DUT de este proyecto; estuvo `absent` el 2026-11-01 | `chip-info` (chip, 8 MB, MAC) + grabar el esqueleto de la CI y ver `Init complete` y `NODO-BENCH-IMAGE` (JRN-01.0) | no | pendiente |
+| 1 | Placa DUT: segunda Waveshare ESP32-S3-DEV-KIT-N8R8 del SLOT2 | Nunca se ha usado como DUT de este proyecto; estuvo `absent` el 2026-11-01 | `chip-info` (chip, 8 MB, MAC) + grabar el esqueleto de la CI y ver `Init complete` y `NODO-BENCH-IMAGE` (JRN-01.0) | no | **hecho 2026-11-14**: chip v0.2, 8 MB, MAC en `dut.identity`, eFuses en 0; CI 43668818077 → flash → `NODO-BENCH-IMAGE` + `Init complete` (`commissioning.forward_path`) |
 | 2 | Montaje de E/S del nodo (3 ADS1115 en 0x48/0x49/0x4A, puente H, relé, LED, zumbador, botón) | No se ha armado nunca | Línea `i2c: scan … ack=0x48,0x49,0x4a` (A7) + firmware de prueba que conmuta cada salida, vista por `bench-salidas-dut` | sí | bloqueado por la compra |
 | 3 | Válvula real (sentido de giro, finales, tiempo de carrera) | Pieza nueva | Abrir y cerrar con IN1/IN2 y ver GPIO6/7; medir el tiempo de carrera | sí | bloqueado por la compra |
 | 4 | Cableado de los simuladores CR-TB-16…22 hasta los pines del DUT | El fork del banco es del banco; el cableado hacia este DUT es nuestro | Cada estímulo del banco aparece en la línea de log correspondiente (A3, A4, `val:`, `bom:`) | sí | bloqueado por la compra |

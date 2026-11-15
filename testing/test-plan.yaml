@@ -17,14 +17,31 @@ dut:
   board: Waveshare ESP32-S3-DEV-KIT-N8R8, módulo ESP32-S3-WROOM-1 N8R8 (clima:C-HW-01) + E/S de FSD §2.2
   target: esp32s3
   flash: 8MB (clima:C-HW-02)
-  slot: SLOT2   # GET /api/devices 2026-11-14: SLOT2 absent — conectarla es la fila 1 de la agenda; segunda Waveshare del banco; solo de banco: nunca se instala ni se le queman eFuses (propietario, 2026-11-14)
-  identity: por leer en /commission (la MAC no se publica salvo que la placa sea unidad permanente del banco, NFR-SEC-01)
+  slot: SLOT2   # segunda Waveshare del banco; solo de banco: nunca se instala ni se le queman eFuses (propietario, 2026-11-14)
+  identity:   # observado por /commission el 2026-11-14 (agenda, fila 1)
+    recorded_in: 645f35e   # firmware observado: commissioning.forward_path
+    chip: ESP32-S3 (QFN56), revisión v0.2
+    features: Wi-Fi, BT 5 (LE), Dual Core + LP Core, 240MHz, Embedded PSRAM 8MB (AP_3v3)
+    flash: 8MB detectados (fabricante 20, dispositivo 4017; quad por eFuse, 3,3 V)
+    usb: USB-Serial/JTAG (ttyACM del slot en el Pi)
+    mac: b8:f8:62:7f:9a:f8
+    read_by: POST /api/chip/info SLOT2 (esptool v5.6.0 en el Pi), returncode 0
+    matches: clima:C-HW-01, clima:C-HW-02 (la PSRAM existe pero el firmware no la requiere, clima:C-HW-03)
+    efuses_observed: >
+      2026-11-14, espefuse summary por RFC2217 desde nodo-clima-piloto-dev (IDF 6.0):
+      SECURE_BOOT_EN=0, SPI_BOOT_CRYPT_CNT=0b000, KEY_PURPOSE_0..5=USER (0x0),
+      DIS_DOWNLOAD_MODE=0, ENABLE_SECURITY_DOWNLOAD=0, SECURE_VERSION=0, RD_DIS=0
+    publication: >
+      la MAC se publica: la placa es unidad permanente del banco y nunca se
+      instala (propietario, 2026-11-14; mismo criterio que el piloto, H-20 /
+      NFR-SEC-01). Las unidades que se instalen no aparecen en el repo público
   boot_marker: "Init complete"            # última línea de app_main (contrato del testbench)
   bench_image_marker: NODO-BENCH-IMAGE    # solo en la imagen de banco (C-LOG-01)
   efuses: nunca se queman en una placa del banco (C-SEC-A3)
 
 testbench:
   status: montado (compartido con villa-nodo-clima-piloto)
+  hostname: testbench-b99c   # GET /api/info 2026-11-14; 4 slots configurados, 2 corriendo (SLOT1, SLOT2). La IP no se versiona (.env)
   address: no se versiona — el repo es público; se lee de .env (ignorado por git)
   reported: 2026-11-14   # GET /api/info: ok, build b5623c4, capabilities [bench-ap-internet, bench-sntp-block, bench-dns-override, bench-mqtt-auth, bench-traffic-capture, bench-serial-write]
   note: >
@@ -305,3 +322,19 @@ tier_checks:
 gate_verdicts:   # [{gate, verdict, date, commit}] — los escribe el checker
   - {gate: 01-load-defined, verdict: OPEN, date: 2026-11-14, commit: c3e5053}
   - {gate: 02-ai-harnessed, verdict: OPEN, date: 2026-11-14, commit: c3e5053, note: "observación menor: JRN-03.* a bench+ (corregido después)"}
+
+commissioning:
+  forward_path:
+    status: successful
+    date: 2026-11-14
+    commit: 645f35e
+    ci_run: 43668818077   # build.yml, workflow_dispatch variant=bench version=0.0.0, ref main
+    artifact: firmware-v0.0.0-bench   # ELF SHA256 d57da1614df8…
+    flash_offsets_from: coldflash/flash_args del artefacto
+    flash_offsets: {bootloader.bin: "0x0", partition-table.bin: "0x8000", ota_data_initial.bin: "0xf000", nodo_agua.bin: "0x20000"}
+    flash: POST /api/flash SLOT2 esp32s3 460800 — ok, hash verificado en las cuatro imágenes
+    observed: >
+      POST /api/serial/reset SLOT2 (P-BOOT-CAPTURE): tras «rst:0x15 (USB_UART_CHIP_RESET)»,
+      «App version: 0.0.0-bench», «ELF file SHA256: d57da1614...» (igual al artefacto),
+      «nodo: NODO-BENCH-IMAGE» y «nodo: Init complete»
+    bench_coordination: candado ~/villa/banco.lock tomado; SLOT1 idle; el propietario confirmó que el piloto había terminado
