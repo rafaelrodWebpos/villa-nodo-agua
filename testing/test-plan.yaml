@@ -81,6 +81,14 @@ testbench:
     Las capacidades del banco se copian de lo que el banco reporta (y de la
     declaración del piloto en el mismo banco) y se declaran yes sin prueba
     propia. Lo que el banco no tiene queda en no con su motivo y su CR-TB.
+  grabado: >
+    2026-11-15, portado del piloto (36fcf48): POST /api/flash del banco recorta los
+    blancos finales de cada binario (bytes.strip() en el fork hasta b5623c4, el build
+    fijado aquí; arreglado en villa-2 f50858b) y el bootloader rechaza la imagen
+    («Image hash failed»). Defensas para cualquier versión: tests/bench/grabado.py
+    (fixture testbench) graba con 4 bytes 0xFF detrás si la imagen termina en un blanco
+    y revisa «Wrote N bytes»; JRN-01.0 falla nombrando el grabado si el arranque dice
+    «Image hash failed». tests/host/test_grabado.py en ci.yml (host-tests)
 
 bench_coordination:   # condición del propietario (2026-11-14): el piloto tiene prioridad
   rule: no usar el banco mientras villa-nodo-clima-piloto tenga pruebas en curso
