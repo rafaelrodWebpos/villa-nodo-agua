@@ -1,0 +1,105 @@
+I (480) nodo: boot: agua-7f9af8 fw=0.0.0-46989e0-bench reset=usb part=ota_0 img=valida
+I (480) nodo: nodo_agua 0.0.0-46989e0-bench
+I (490) nodo: NODO-BENCH-IMAGE
+I (520) nodo: cfg: sitio=sitio1 zona=zona1
+I (530) pp: pp rom version: e7ae62f
+I (530) net80211: net80211 rom version: e7ae62f
+I (540) wifi:wifi driver task: 3fcafd80, prio:23, stack:6656, core=0
+I (550) wifi:wifi firmware version: 00ad238
+I (550) wifi:wifi certification version: v7.0
+I (550) wifi:config NVS flash: enabled
+I (550) wifi:config nano formatting: disabled
+I (560) wifi:Init data frame dynamic rx buffer num: 32
+I (560) wifi:Init static rx mgmt buffer num: 5
+I (570) wifi:Init management short buffer num: 32
+I (570) wifi:Init dynamic tx buffer num: 32
+I (570) wifi:Init static tx FG buffer num: 2
+I (580) wifi:Init static rx buffer size: 1600
+I (580) wifi:Init static rx buffer num: 10
+I (590) wifi:Init dynamic rx buffer num: 32
+I (590) wifi_init: rx ba win: 6
+I (590) wifi_init: accept mbox: 6
+I (600) wifi_init: tcpip mbox: 32
+I (600) wifi_init: udp mbox: 6
+I (600) wifi_init: tcp mbox: 6
+I (600) wifi_init: tcp tx win: 5760
+I (610) wifi_init: tcp rx win: 5760
+I (610) wifi_init: tcp mss: 1440
+I (610) wifi_init: WiFi IRAM OP enabled
+I (620) wifi_init: WiFi RX IRAM OP enabled
+I (620) phy_init: phy_version 712,87e8c20e,Apr 13 2026,18:51:10
+I (670) wifi:mode : sta (b8:f8:62:7f:9a:f8)
+I (670) wifi:enable tsf
+I (670) nodo: wifi: intento 1
+I (670) nodo: con: ARRANQUE -> CONECTANDO_WIFI (fin_arranque)
+I (680) nodo: Init complete
+I (680) main_task: Returned from app_main()
+I (3090) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (4090) nodo: wifi: intento 2
+I (4090) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (4100) wifi:state: init -> auth (0xb0)
+I (4110) wifi:state: auth -> assoc (0x0)
+I (4120) wifi:state: assoc -> run (0x10)
+I (4140) wifi:connected with <ssid-de-prueba>, aid = 1, channel 1, BW20, bssid = <mac>
+I (4140) wifi:security: WPA2-PSK, phy: bgn, rssi: -35, cipher(pairwise:0x3, group:0x3), pmf:0
+I (4150) wifi:pm start, type: 1
+I (4150) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us
+I (4160) wifi:set rx beacon pti, rx_bcn_pti: 0, bcn_timeout: 25000, mt_pti: 0, mt_time: 10000
+I (4170) wifi:dp: 2, bi: 102400, li: 4, scale listen interval from 307200 us to 409600 us
+I (4170) wifi:AP's beacon interval = 102400 us, DTIM period = 2
+I (4190) wifi:<ba-add>idx:0 (ifx:0, <mac>), tid:7, ssn:0, winSize:64
+I (5200) nodo: UDP logging -> 192.168.4.1:5555
+I (5200) nodo: udplog: descartadas=0 reintentadas=0 cola_llena=0
+I (5200) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (5200) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (5210) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (5220) nodo: mqtt: intento 1
+I (5430) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+I (5700) nodo: sntp: inicio pool.ntp.org
+I (11520) wifi:state: run -> init (0x3c0)
+I (11540) wifi:pm stop, total sleep time: 6292451 us / 7386542 us
+I (11540) wifi:<ba-del>idx:1, tid:0
+I (11540) wifi:<ba-del>idx:0, tid:7
+E (11540) transport_base: poll_write select error 113, errno = Software caused connection abort, fd = 55
+W (11550) transport_base: Poll timeout or error, errno=Success, fd=55, timeout_ms=10000
+E (11560) mqtt_client: Writing failed: errno=0
+E (11560) mqtt_client: Error sending disconnect message
+I (11570) nodo: con: OPERATIVO -> CONECTANDO_WIFI (wifi_down)
+I (12570) nodo: wifi: intento 1
+I (12570) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (14990) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (16990) nodo: wifi: intento 2
+I (16990) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (19410) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (23410) nodo: wifi: intento 3
+I (23410) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (25830) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (33830) nodo: wifi: intento 4
+I (33830) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (36250) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (52250) nodo: wifi: intento 5
+I (52250) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (54670) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (60530) nodo: udplog: descartadas=1 reintentadas=0 cola_llena=0
+I (86670) nodo: wifi: intento 6
+I (86670) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (86680) wifi:state: init -> auth (0xb0)
+I (86690) wifi:state: auth -> assoc (0x0)
+I (86700) wifi:state: assoc -> run (0x10)
+I (86720) wifi:connected with <ssid-de-prueba>, aid = 1, channel 1, BW20, bssid = <mac>
+I (86730) wifi:security: WPA2-PSK, phy: bgn, rssi: -31, cipher(pairwise:0x3, group:0x3), pmf:0
+I (86730) wifi:pm start, type: 1
+I (86730) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us
+I (86740) wifi:set rx beacon pti, rx_bcn_pti: 0, bcn_timeout: 25000, mt_pti: 0, mt_time: 10000
+I (86760) wifi:<ba-add>idx:0 (ifx:0, <mac>), tid:7, ssn:0, winSize:64
+I (86770) wifi:dp: 2, bi: 102400, li: 4, scale listen interval from 307200 us to 409600 us
+I (86770) wifi:AP's beacon interval = 102400 us, DTIM period = 2
+I (87780) nodo: UDP logging -> 192.168.4.1:5555
+I (87780) nodo: udplog: descartadas=1 reintentadas=0 cola_llena=0
+I (87780) esp_netif_handlers: sta ip: 192.168.4.5, mask: 255.255.255.0, gw: 192.168.4.1
+I (87780) nodo: con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)
+I (87790) wifi:<ba-add>idx:1 (ifx:0, <mac>), tid:0, ssn:2, winSize:64
+I (87800) nodo: mqtt: intento 1
+I (88020) nodo: con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)
+W (88280) nodo: sntp: fallo
+I (88280) nodo: sntp: inicio pool.ntp.org
