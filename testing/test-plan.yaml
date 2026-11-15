@@ -7,7 +7,7 @@
 
 project: villa-nodo-agua
 fsd: docs/Functionality/FSD-nodo-agua.md
-fsd_version: 0.4.1
+fsd_version: 0.5.0
 fsd_inherits: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.9 @ ddf80167e0ed1a0ef72e2783d02265e1eac7e5aa   # clima:<ID>
 fsd_inherits_e13: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.10 @ 32027b0a8329e1eadfa57d99f377afbb9a1e0694   # solo clima:E13 (E13-USJ), FSD §20
 interpretaciones:   # confirmadas por el propietario 2026-11-15; revisarlas cuando llegue la compra (agenda 2–5)
@@ -1229,10 +1229,10 @@ tests:
     wave: 1
     phase: 1
     tier: host
-    verifies: [V01, V02, V03, V04, V05, V06, V07, V08, V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, FR-VAL-06, FR-VAL-11]
+    verifies: [V01, V02, V03, V04, V05, V06, V07, V08, V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, FR-VAL-06, FR-VAL-11, FR-EJE-03]
     needs: [hosted-ci]
     expect: >
-      tabla de §5.3 como prueba parametrizada: cada fila V01–V20 produce su estado, su acción (motor, rechazo, evento, marcas) y nada más; V07 solo al superar P3; completitud: en todas las combinaciones (estado × evento × finales × g_seco × marcas), o una fila admitida para ese par o el par se ignora sin ningún efecto; nunca IN1 e IN2 a la vez (el motor es un único valor)
+      tabla de §5.3 (FSD 0.5.0) como prueba parametrizada: cada fila V01–V23 (con V03b) produce su estado, su acción (motor, rechazo, evento, marcas) y nada más; V07 solo al superar P3; completitud: en todas las combinaciones (estado × evento × finales × g_seco × marcas), o una fila admitida para ese par o el par se ignora sin ningún efecto; nunca IN1 e IN2 a la vez (el motor es un único valor); la fuga siempre gana: desde cualquier estado salvo ARRANQUE (imposible por construcción), fuga y final «cerrada» dejan CERRADA con bloqueo_fuga = 1 y cerrada_por = fuga, y nada sin g_seco la reabre (FR-EJE-03, parte host)
     impl: tests/host/test_tablas.c (val)
     status: successful
     commit: af2e82d
@@ -1265,10 +1265,10 @@ tests:
     wave: 1
     phase: 1
     tier: host
-    verifies: [B01, B02, B03, B04, B05, B06, B07, B08, B09, FR-BOM-05, FR-BOM-06, FR-BOM-07]
+    verifies: [B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11, FR-BOM-05, FR-BOM-06, FR-BOM-07]
     needs: [hosted-ci]
     expect: >
-      tabla de §6.2 como prueba parametrizada: cada fila B01–B09 produce su estado y nada más; completitud en todas las combinaciones; ninguna orden a PERMITIDA sin agua (FR-BOM-08, parte host); rearme a los 600 s exactos y reinicio con una interrupción del flotador (FR-BOM-05, parte host); sin rearme con el transductor en falla (FR-BOM-06, parte host); 3 cortes por seco en 24 h → BLOQUEADA, que solo sale con rearmar (FR-BOM-07, parte host)
+      tabla de §6.2 (FSD 0.5.0) como prueba parametrizada: cada fila B01–B11 produce su estado y su rechazo (sin_agua, nivel_bajo) y nada más; los cortes por nivel o flotador rearman sin límite y solo los de seco cuentan como intentos; completitud en todas las combinaciones; ninguna orden a PERMITIDA sin agua (FR-BOM-08, parte host); rearme a los 600 s exactos y reinicio con una interrupción del flotador (FR-BOM-05, parte host); sin rearme con el transductor en falla (FR-BOM-06, parte host); 3 cortes por seco en 24 h → BLOQUEADA, que solo sale con rearmar (FR-BOM-07, parte host)
     impl: tests/host/test_tablas.c (bom)
     status: successful
     commit: af2e82d
@@ -1331,6 +1331,18 @@ tests:
     evidence: CI host-tests (ctest), log del run 43737945218
     observed: >
       13 puntos (bandas y bordes); un mutante del borde 0,40 da 1 fallo.
+  - id: TC-ENE-A2
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-ENE-04, FR-ENE-05]
+    needs: [hosted-ci]
+    expect: >
+      lógica pura (P16): condición de cierre solo con batería crítica y red ausente; reapertura con red presente y Vbat ≥ 12,8 V durante 300 s exactos, reiniciada por un corte de red, nunca con 12,79 V; secuencia V22 → V06 → V23 → V12 en la válvula (la parte de banco va con la compra)
+    impl: tests/host/test_tablas.c (bat)
+    status: not_run
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"

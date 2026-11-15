@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.4.1
+fsd_version: 0.5.0
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
@@ -27,6 +27,12 @@ change_history:
   - 0.4.1 (2026-11-15): aclaraciones del propietario. P4: cada banda incluye su borde
     superior (≤ 0,05 corto … > 0,90 abierta). FR-CIC-02: «una vez por ventana» = como mucho
     un aviso cada `ciclado_ventana_min`, contados desde el aviso.
+  - 0.5.0 (2026-11-15): decisiones del propietario sobre las tablas. §5: los dos finales
+    activos = FALLA (V03b, V15), ninguno = DESCONOCIDA; V20 pone `cerrada_por`=`fuga`;
+    filas nuevas V21 (fuga durante CERRANDO), V22 y V23 (cierre y reapertura por batería,
+    P16); una fuga confirmada siempre gana. §6: B05 sin límite de intentos para los cortes
+    por nivel o flotador; B09 con el transductor en falla; filas nuevas B10 (`sin_agua`) y
+    B11 (`nivel_bajo`); motivo `nivel_bajo` en FR-ORD-01.
 ```
 
 ## Convenciones de este documento
@@ -367,11 +373,11 @@ los finales de carrera.
 
 | Estado | Significado | Persistente |
 |---|---|---|
-| DESCONOCIDA | Arranque, o los dos finales activos a la vez | No |
+| DESCONOCIDA | Ningún final activo (sin movimiento en curso) | No |
 | ABIERTA | Final «abierta» activo, motor parado | Derivado de los finales |
 | CERRADA | Final «cerrada» activo, motor parado | Derivado de los finales |
 | CERRANDO / ABRIENDO | Motor en marcha hacia ese sentido | No |
-| FALLA | Movimiento sin confirmar a tiempo, o los dos finales activos | No (se reevalúa al arrancar) |
+| FALLA | Movimiento sin confirmar a tiempo, o los dos finales activos a la vez [user, 2026-11-15] | No (se reevalúa al arrancar) |
 
 **Marcas persistentes** (NVS, §9): `bloqueo_fuga` (cierre por sonda cableada) y
 `cerrada_por` ∈ {`ninguno`, `fuga`, `orden`, `bateria`, `ejercicio`}.
@@ -387,7 +393,8 @@ Todas las filas son [Must]. Procedencia: [user] D1, D5, D12, D18; [derived] el r
 |---|---|---|---|---|---|---|
 | V01 | ARRANQUE | fin de lectura de finales | solo «abierta» | ABIERTA | ninguna (no mueve el motor) | — |
 | V02 | ARRANQUE | fin de lectura de finales | solo «cerrada» | CERRADA | ninguna | — |
-| V03 | ARRANQUE | fin de lectura de finales | ninguno o los dos | DESCONOCIDA | publicar | — |
+| V03 | ARRANQUE | fin de lectura de finales | ninguno | DESCONOCIDA | publicar | — |
+| V03b | ARRANQUE | fin de lectura de finales | los dos | FALLA | publicar; evento `falla_valvula` | — |
 | V04 | ABIERTA, ABRIENDO, DESCONOCIDA | fuga confirmada | — | CERRANDO | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | orden ≤ P2 |
 | V05 | ABIERTA, DESCONOCIDA | orden `cerrar` válida | — | CERRANDO | `cerrada_por`=`orden` | ≤ 500 ms |
 | V06 | CERRANDO | final «cerrada» | — | CERRADA | parar el motor | ≤ P3 |
@@ -399,7 +406,7 @@ Todas las filas son [Must]. Procedencia: [user] D1, D5, D12, D18; [derived] el r
 | V12 | ABRIENDO | final «abierta» | — | ABIERTA | parar el motor | ≤ P3 |
 | V13 | ABIERTA | ejercicio vencido | `g_seco`, `bloqueo_fuga`=0 | CERRANDO | `cerrada_por`=`ejercicio` | — |
 | V14 | CERRADA | final «cerrada» confirmado | `cerrada_por`=`ejercicio` y `g_seco` | ABRIENDO | registrar tiempo de carrera | — |
-| V15 | ABIERTA / CERRADA | cambia un final sin orden | — | ABIERTA / CERRADA según los finales | evento `movimiento_manual` (P12) | — |
+| V15 | ABIERTA / CERRADA | cambia un final sin orden | — | solo «abierta» → ABIERTA; solo «cerrada» → CERRADA; ninguno → DESCONOCIDA; los dos → FALLA | evento `movimiento_manual` (P12); con los dos, `falla_valvula` | — |
 | V16 | FALLA | orden `cerrar` u `abrir` válida, o pulsación larga | según V05/V08/V10 | CERRANDO / ABRIENDO | un reintento por orden | P3 |
 | V17 | CERRADA | fuga confirmada | — | CERRADA | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | — |
 | V18 | ABRIENDO | fuga confirmada | — | CERRANDO | como V04 | ≤ P2 |
@@ -411,7 +418,18 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 
 | Fila | Desde | Evento | Guarda | Hacia | Acción | Límite |
 |---|---|---|---|---|---|---|
-| V20 | FALLA | fuga confirmada | — | CERRANDO | `bloqueo_fuga`=1; un reintento | P3 |
+| V20 | FALLA | fuga confirmada | — | CERRANDO | `bloqueo_fuga`=1, `cerrada_por`=`fuga`; un reintento | P3 |
+| V21 | CERRANDO | fuga confirmada | — | CERRANDO (sigue cerrando) | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | — |
+| V22 | ABIERTA, DESCONOCIDA | batería `critica` y red `ausente` (FR-ENE-04) | — | CERRANDO | `cerrada_por`=`bateria` | ≤ 500 ms |
+| V23 | CERRADA | reapertura por batería cumplida (FR-ENE-05) | `cerrada_por`=`bateria`, `bloqueo_fuga`=0 y `g_seco` | ABRIENDO | `cerrada_por`=`ninguno` | ≤ 500 ms |
+
+Filas V20–V23 [user, 2026-11-15]. **Una fuga confirmada siempre gana:** en ABIERTA,
+DESCONOCIDA, ABRIENDO, CERRANDO, FALLA y CERRADA (V04, V18, V21, V20, V17) la válvula
+termina CERRADA con `bloqueo_fuga`=1 y `cerrada_por`=`fuga`. El par (ARRANQUE × fuga
+confirmada) es imposible por construcción: ARRANQUE dura la primera lectura de los
+finales (antirrebote de 50 ms, FR-IO-05) y una confirmación necesita 4 muestras cada
+250 ms (FR-FUG-01). Los eventos de V22 y V23 son de nivel: la tarea de protección los
+envía en cada ciclo mientras se cumple su condición. V14 deja `cerrada_por`=`ninguno`.
 
 ### 5.4 Requisitos
 
@@ -452,7 +470,7 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 | FR-VAL-09 | CERRADA con fuga activa: pulsación de 3 s; luego seca: pulsación de 3 s | 1.º: patrón de rechazo, sin movimiento. 2.º: ABRIENDO | Abrir con fuga | bench |
 | FR-VAL-10 | CERRADA con `bloqueo_fuga`; el banco simula la palanca (final «abierta» activo, «cerrada» inactivo) | Evento `movimiento_manual`; IN1 = IN2 = 0 durante 60 s | Intento de cierre por el motor | bench |
 | FR-VAL-11 | Lógica pura: todas las filas de §5.3 y combinaciones de eventos simultáneos | Nunca IN1 = IN2 = 1 | Cualquier caso con los dos en alto | host + bench |
-| V01–V20 | Tabla de transiciones como prueba parametrizada | Cada fila produce su estado y su acción | Una transición no listada | host |
+| V01–V23 | Tabla de transiciones como prueba parametrizada | Cada fila produce su estado y su acción | Una transición no listada | host |
 
 ### 5.6 Ejercicio periódico (D12)
 
@@ -492,11 +510,18 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 | B02 | PERMITIDA | flotador sin agua | — | CORTADA(flotador) | — |
 | B03 | PERMITIDA | nivel < `nivel_critico_pct` con transductor válido | — | CORTADA(nivel) | — |
 | B04 | PERMITIDA | orden `cortar` | — | CORTADA(orden) | — |
-| B05 | CORTADA(seco\|nivel\|flotador) | condición de rearme cumplida (FR-BOM-05) | intentos_24h < `intentos_max` | PERMITIDA | — |
+| B05 | CORTADA(seco\|nivel\|flotador) | condición de rearme cumplida (FR-BOM-05) | motivo `nivel` o `flotador`; o motivo `seco` con intentos_24h < `intentos_max` | PERMITIDA | — |
 | B06 | CORTADA(seco) | condición de rearme cumplida | intentos_24h ≥ `intentos_max` | BLOQUEADA | evento `bomba_bloqueada` |
 | B07 | CORTADA(any), BLOQUEADA | orden `rearmar` o pulsación larga | flotador con agua | PERMITIDA | intentos_24h = 0 |
 | B08 | CORTADA(any), BLOQUEADA | orden `rearmar` o pulsación larga | flotador sin agua | sin cambio | rechazar `sin_agua` |
-| B09 | CORTADA(orden) | orden `permitir` | flotador con agua y nivel ≥ crítico | PERMITIDA | — |
+| B09 | CORTADA(orden) | orden `permitir` | flotador con agua y (nivel ≥ crítico o transductor en falla) | PERMITIDA | — |
+| B10 | CORTADA(orden) | orden `permitir` | flotador sin agua | sin cambio | rechazar `sin_agua` |
+| B11 | CORTADA(orden) | orden `permitir` | flotador con agua, transductor válido y nivel < crítico | sin cambio | rechazar `nivel_bajo` |
+
+Filas B05, B09–B11 [user, 2026-11-15]: solo los cortes por seco cuentan como intentos y
+para el bloqueo de 3 en 24 h; los cortes por nivel o flotador se rearman solos al
+recuperarse. Con el transductor en falla, la bomba sigue protegida por el flotador y
+la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
 
 ### 6.3 Requisitos
 
@@ -539,7 +564,7 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 | FR-BOM-07 | 3 cortes por seco en 24 h simuladas | BLOQUEADA; `bomba_bloqueada`; solo `rearmar` la saca | Rearme automático | host + bench |
 | FR-BOM-08 | Flotador sin agua; órdenes `permitir`, `rearmar`; configuración con cualquier valor dentro de rango | Rechazo `sin_agua`; GPIO14 en alto | GPIO14 en bajo | bench |
 | FR-BOM-09 | Válvula CERRADA y ABIERTA | Permiso sin cambio | Corte por la válvula | bench |
-| B01–B09 | Tabla como prueba parametrizada | Cada fila produce su estado | Transición no listada | host |
+| B01–B11 | Tabla como prueba parametrizada | Cada fila produce su estado | Transición no listada | host |
 
 ### 6.5 Nivel y presión
 
@@ -749,7 +774,7 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 - **FR-PUB-03** [Must] [user] (P8): las medidas deberán publicarse cada 60 s.
 - **FR-ORD-01** [Must] [user] regla de confirmación: cada orden de válvula o bomba deberá
   responderse con su `…/state` final o con un evento `orden_rechazada` que incluya el
-  motivo (`fuga_activa`, `sin_agua`, `ocupado`, `payload`, `accion`).
+  motivo (`fuga_activa`, `sin_agua`, `nivel_bajo`, `ocupado`, `payload`, `accion`).
 - **FR-ORD-02** [Must] [derived] (P15): un payload > 256 bytes, JSON no válido, una
   acción desconocida o un campo de tipo incorrecto deberán rechazarse con
   `orden_rechazada` (`payload` o `accion`), sin efecto y sin reinicio.

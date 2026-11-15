@@ -90,11 +90,11 @@ bom_accion_t bom_evento(bom_t *b, const bom_entrada_t *e)
     switch (e->evento) {
     case BEV_REARME_CUMPLIDO:
         if (b->estado != BOM_CORTADA || b->motivo == BMOT_ORDEN) return ignorar;
-        if (bom_intentos_24h(b, e->t_s) < b->intentos_max) {
+        /* B05: los cortes por nivel o flotador no cuentan como intentos y rearman siempre */
+        if (b->motivo != BMOT_SECO || bom_intentos_24h(b, e->t_s) < b->intentos_max) {
             b->estado = BOM_PERMITIDA; b->motivo = BMOT_NINGUNO;
             return (bom_accion_t){ .fila = 5 };
         }
-        if (b->motivo != BMOT_SECO) return ignorar;
         b->estado = BOM_BLOQUEADA; b->motivo = BMOT_NINGUNO;
         return (bom_accion_t){ .fila = 6, .evento_bloqueada = true };
     case BEV_REARMAR:
@@ -104,8 +104,9 @@ bom_accion_t bom_evento(bom_t *b, const bom_entrada_t *e)
         return (bom_accion_t){ .fila = 7 };
     case BEV_PERMITIR:
         if (b->estado != BOM_CORTADA || b->motivo != BMOT_ORDEN) return ignorar;
-        if (!e->flotador_agua) return (bom_accion_t){ .fila = 9, .rechazo = BRECH_SIN_AGUA };   /* FR-BOM-08 */
-        if (!e->nivel_valido || e->nivel_pct < (float)b->nivel_critico_pct) return ignorar;
+        if (!e->flotador_agua) return (bom_accion_t){ .fila = 10, .rechazo = BRECH_SIN_AGUA };  /* B10, FR-BOM-08 */
+        if (e->nivel_valido && e->nivel_pct < (float)b->nivel_critico_pct)
+            return (bom_accion_t){ .fila = 11, .rechazo = BRECH_NIVEL_BAJO };                   /* B11 */
         b->estado = BOM_PERMITIDA; b->motivo = BMOT_NINGUNO;
         return (bom_accion_t){ .fila = 9 };
     default:

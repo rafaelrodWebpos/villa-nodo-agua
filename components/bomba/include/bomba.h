@@ -25,7 +25,7 @@ typedef struct {
  * con los arranques en la ventana. */
 bool cic_arranque(cic_t *c, uint32_t t_s, uint32_t ventana_s, int max, int *n);
 
-/* ---- Permiso de la bomba (FSD §6.1–§6.2, B01–B09) ------------------------------------ */
+/* ---- Permiso de la bomba (FSD §6.1–§6.2, B01–B11) ------------------------------------ */
 typedef enum { BOM_PERMITIDA, BOM_CORTADA, BOM_BLOQUEADA } bom_estado_t;
 typedef enum { BMOT_NINGUNO, BMOT_SECO, BMOT_NIVEL, BMOT_FLOTADOR, BMOT_ORDEN } bom_motivo_t;
 typedef enum {
@@ -57,9 +57,9 @@ typedef struct {
     int nivel_critico_pct;          /* P6 */
 } bom_t;
 
-typedef enum { BRECH_NINGUNO, BRECH_SIN_AGUA } bom_rechazo_t;
+typedef enum { BRECH_NINGUNO, BRECH_SIN_AGUA, BRECH_NIVEL_BAJO } bom_rechazo_t;
 typedef struct {
-    int fila;                       /* 1…9 = B01…B09; 0 = par ignorado */
+    int fila;                       /* 1…11 = B01…B11 (FSD 0.5.0); 0 = par ignorado */
     bom_rechazo_t rechazo;
     bool evento_bloqueada;          /* B06: publicar `bomba_bloqueada` */
 } bom_accion_t;

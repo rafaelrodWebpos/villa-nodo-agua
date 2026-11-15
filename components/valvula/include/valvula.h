@@ -1,5 +1,5 @@
 /* L2 valvula — máquina de estados de la válvula general (FSD §5.2–§5.3, V01–V20).
- * Núcleo puro, sin ESP-IDF; lo compila tests/host. La tarea de protección le pasa un
+ * FSD 0.5.0 (V01–V23; V03b = fila 3 con los dos finales). Núcleo puro, sin ESP-IDF; lo compila tests/host. La tarea de protección le pasa un
  * evento cada vez y aplica la acción que devuelve (motor, rechazo, evento publicado). */
 #pragma once
 #include <stdbool.h>
@@ -21,6 +21,8 @@ typedef enum {
     VEV_PULSACION_LARGA,   /* pulsación ≥ 3 s (FR-LOC-03) */
     VEV_EJERCICIO,         /* ejercicio vencido (FR-EJE-01) */
     VEV_TICK,              /* paso del tiempo: vigila el tiempo de carrera (P3) */
+    VEV_BATERIA_CIERRE,    /* batería `critica` y red `ausente` (FR-ENE-04, V22); de nivel: en cada ciclo */
+    VEV_BATERIA_REAPERTURA,/* reapertura por batería cumplida (FR-ENE-05, V23); de nivel: en cada ciclo */
     VEV_N_EVENTOS
 } val_evento_t;
 
@@ -39,7 +41,7 @@ typedef enum { VRECH_NINGUNO, VRECH_FUGA_ACTIVA, VRECH_OCUPADO } val_rechazo_t;
 typedef enum { VPUB_NINGUNO, VPUB_FALLA_VALVULA, VPUB_MOVIMIENTO_MANUAL } val_publicar_t;
 
 typedef struct {
-    int fila;              /* 1…20 = V01…V20; 0 = par ignorado (`val: ignorado <estado> <evento>`) */
+    int fila;              /* 1…23 = V01…V23 (V03b = 3); 0 = par ignorado (`val: ignorado <estado> <evento>`) */
     val_motor_t motor;
     val_rechazo_t rechazo;
     val_publicar_t evento;

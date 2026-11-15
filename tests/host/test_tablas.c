@@ -1,7 +1,8 @@
 /* Tablas normativas y núcleos de §5, §6 y §8 en host:
- *   val  · TC-VAL-A1 · V01–V20 (tabla parametrizada + completitud de §5.3)
+ *   val  · TC-VAL-A1 · V01–V23 (tabla parametrizada + completitud de §5.3; la fuga siempre gana)
  *   eje  · TC-EJE-A1 · FR-EJE-01 (reloj simulado) y la secuencia V13 → V06 → V14 → V12
- *   bom  · TC-BOM-A1 · B01–B09 (tabla parametrizada + completitud), FR-BOM-05 y FR-BOM-07 (parte host)
+ *   bom  · TC-BOM-A1 · B01–B11 (tabla parametrizada + completitud), FR-BOM-05 y FR-BOM-07 (parte host)
+ *   bat  · TC-ENE-A2 · FR-ENE-04/05 (condiciones de cierre y de reapertura, parte host)
  *   seco · TC-BOM-A2 · FR-BOM-03 (series de corriente y presión)
  *   loc  · TC-LOC-A1 · FR-LOC-04 (todas las combinaciones de §8.2)
  *   son  · TC-SON-A1 · FR-SON-01 (bandas de P4 y sus bordes, FSD 0.4.1)
@@ -9,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "bomba.h"
+#include "energia.h"
 #include "fugas.h"
 #include "interfaz.h"
 #include "valvula.h"
@@ -32,7 +34,7 @@ static const vcaso_t VC[] = {
     { 1, VAL_ARRANQUE,    false, VCP_NINGUNO,   VEV_FINALES,         A,  true, 0,       VAL_ABIERTA,    VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_NINGUNO, false, false, VCP_NINGUNO },
     { 2, VAL_ARRANQUE,    true,  VCP_FUGA,      VEV_FINALES,         C,  true, 0,       VAL_CERRADA,    VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_NINGUNO, false, true,  VCP_FUGA },
     { 3, VAL_ARRANQUE,    false, VCP_NINGUNO,   VEV_FINALES,         N0, true, 0,       VAL_DESCONOCIDA,VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_NINGUNO, false, false, VCP_NINGUNO },
-    { 3, VAL_ARRANQUE,    false, VCP_NINGUNO,   VEV_FINALES,         AC, true, 0,       VAL_DESCONOCIDA,VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_NINGUNO, false, false, VCP_NINGUNO },
+    { 3, VAL_ARRANQUE,    false, VCP_NINGUNO,   VEV_FINALES,         AC, true, 0,       VAL_FALLA,      VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_FALLA_VALVULA, false, false, VCP_NINGUNO },  /* V03b */
     { 4, VAL_ABIERTA,     false, VCP_NINGUNO,   VEV_FUGA,            A,  false,0,       VAL_CERRANDO,   VMOT_CERRAR,  VRECH_NINGUNO,    VPUB_NINGUNO, false, true,  VCP_FUGA },
     { 4, VAL_DESCONOCIDA, false, VCP_NINGUNO,   VEV_FUGA,            N0, false,0,       VAL_CERRANDO,   VMOT_CERRAR,  VRECH_NINGUNO,    VPUB_NINGUNO, false, true,  VCP_FUGA },
     { 5, VAL_ABIERTA,     false, VCP_NINGUNO,   VEV_CERRAR,          A,  true, 0,       VAL_CERRANDO,   VMOT_CERRAR,  VRECH_NINGUNO,    VPUB_NINGUNO, false, false, VCP_ORDEN },
@@ -50,6 +52,7 @@ static const vcaso_t VC[] = {
     {15, VAL_ABIERTA,     false, VCP_NINGUNO,   VEV_FINALES,         C,  true, 0,       VAL_CERRADA,    VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_MOVIMIENTO_MANUAL, false, false, VCP_NINGUNO },
     {15, VAL_CERRADA,     false, VCP_ORDEN,     VEV_FINALES,         A,  true, 0,       VAL_ABIERTA,    VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_MOVIMIENTO_MANUAL, false, false, VCP_ORDEN },
     {15, VAL_ABIERTA,     false, VCP_NINGUNO,   VEV_FINALES,         N0, true, 0,       VAL_DESCONOCIDA,VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_MOVIMIENTO_MANUAL, false, false, VCP_NINGUNO },
+    {15, VAL_CERRADA,     false, VCP_ORDEN,     VEV_FINALES,         AC, true, 0,       VAL_FALLA,      VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_FALLA_VALVULA, false, false, VCP_ORDEN },
     {16, VAL_FALLA,       false, VCP_NINGUNO,   VEV_CERRAR,          N0, true, 0,       VAL_CERRANDO,   VMOT_CERRAR,  VRECH_NINGUNO,    VPUB_NINGUNO, false, false, VCP_ORDEN },
     {16, VAL_FALLA,       true,  VCP_FUGA,      VEV_ABRIR,           N0, true, 0,       VAL_ABRIENDO,   VMOT_ABRIR,   VRECH_NINGUNO,    VPUB_NINGUNO, false, false, VCP_NINGUNO },
     {16, VAL_FALLA,       true,  VCP_FUGA,      VEV_ABRIR,           N0, false,0,       VAL_FALLA,      VMOT_SIN_CAMBIO, VRECH_FUGA_ACTIVA, VPUB_NINGUNO, false, true, VCP_FUGA },
@@ -59,21 +62,28 @@ static const vcaso_t VC[] = {
     {18, VAL_ABRIENDO,    false, VCP_NINGUNO,   VEV_FUGA,            N0, false,0,       VAL_CERRANDO,   VMOT_CERRAR,  VRECH_NINGUNO,    VPUB_NINGUNO, false, true,  VCP_FUGA },
     {19, VAL_CERRANDO,    false, VCP_ORDEN,     VEV_ABRIR,           N0, true, 0,       VAL_CERRANDO,   VMOT_SIN_CAMBIO, VRECH_OCUPADO, VPUB_NINGUNO, false, false, VCP_ORDEN },
     {19, VAL_ABRIENDO,    false, VCP_NINGUNO,   VEV_CERRAR,          N0, true, 0,       VAL_ABRIENDO,   VMOT_SIN_CAMBIO, VRECH_OCUPADO, VPUB_NINGUNO, false, false, VCP_NINGUNO },
-    {20, VAL_FALLA,       false, VCP_ORDEN,     VEV_FUGA,            N0, false,0,       VAL_CERRANDO,   VMOT_CERRAR,  VRECH_NINGUNO,    VPUB_NINGUNO, false, true,  VCP_ORDEN },
+    {20, VAL_FALLA,       false, VCP_ORDEN,     VEV_FUGA,            N0, false,0,       VAL_CERRANDO,   VMOT_CERRAR,  VRECH_NINGUNO,    VPUB_NINGUNO, false, true,  VCP_FUGA },
+    {21, VAL_CERRANDO,    false, VCP_EJERCICIO, VEV_FUGA,            N0, false,0,       VAL_CERRANDO,   VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_NINGUNO, false, true,  VCP_FUGA },
+    {22, VAL_ABIERTA,     false, VCP_NINGUNO,   VEV_BATERIA_CIERRE,  A,  true, 0,       VAL_CERRANDO,   VMOT_CERRAR,  VRECH_NINGUNO,    VPUB_NINGUNO, false, false, VCP_BATERIA },
+    {22, VAL_DESCONOCIDA, false, VCP_NINGUNO,   VEV_BATERIA_CIERRE,  N0, true, 0,       VAL_CERRANDO,   VMOT_CERRAR,  VRECH_NINGUNO,    VPUB_NINGUNO, false, false, VCP_BATERIA },
+    {23, VAL_CERRADA,     false, VCP_BATERIA,   VEV_BATERIA_REAPERTURA, C, true, 0,     VAL_ABRIENDO,   VMOT_ABRIR,   VRECH_NINGUNO,    VPUB_NINGUNO, false, false, VCP_NINGUNO },
+    { 0, VAL_CERRADA,     true,  VCP_BATERIA,   VEV_BATERIA_REAPERTURA, C, true, 0,     VAL_CERRADA,    VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_NINGUNO, false, true,  VCP_BATERIA },  /* con bloqueo */
+    { 0, VAL_CERRADA,     false, VCP_BATERIA,   VEV_BATERIA_REAPERTURA, C, false,0,     VAL_CERRADA,    VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_NINGUNO, false, false, VCP_BATERIA },  /* sin g_seco */
+    { 0, VAL_CERRADA,     false, VCP_ORDEN,     VEV_BATERIA_REAPERTURA, C, true, 0,     VAL_CERRADA,    VMOT_SIN_CAMBIO, VRECH_NINGUNO, VPUB_NINGUNO, false, false, VCP_ORDEN },    /* no la cerró la batería */
 };
 
 /* Filas que la tabla de §5.3 admite para cada (estado × evento); 0 = no listado */
 static bool val_admitida(val_estado_t s, val_evento_t e, int fila)
 {
     static const int M[VAL_N_ESTADOS][VEV_N_EVENTOS][3] = {
-        /*              finales      fuga       cerrar     abrir      larga      ejercicio  tick */
-        [VAL_ARRANQUE]    = {{1,2,3}, {0},       {0},       {0},       {0},       {0},       {0}},
-        [VAL_DESCONOCIDA] = {{0},     {4},       {5},       {0},       {0},       {0},       {0}},
-        [VAL_ABIERTA]     = {{15},    {4},       {5},       {0},       {0},       {13},      {0}},
-        [VAL_CERRADA]     = {{14,15}, {17},      {0},       {8,9},     {10,11},   {0},       {0}},
-        [VAL_CERRANDO]    = {{6},     {0},       {19},      {19},      {0},       {0},       {7}},
-        [VAL_ABRIENDO]    = {{12},    {18},      {19},      {19},      {0},       {0},       {7}},
-        [VAL_FALLA]       = {{0},     {20},      {16},      {16},      {16},      {0},       {0}},
+        /*              finales      fuga       cerrar     abrir      larga      ejercicio  tick  bat_cierre bat_reap */
+        [VAL_ARRANQUE]    = {{1,2,3}, {0},       {0},       {0},       {0},       {0},       {0},  {0},       {0}},
+        [VAL_DESCONOCIDA] = {{0},     {4},       {5},       {0},       {0},       {0},       {0},  {22},      {0}},
+        [VAL_ABIERTA]     = {{15},    {4},       {5},       {0},       {0},       {13},      {0},  {22},      {0}},
+        [VAL_CERRADA]     = {{14,15}, {17},      {0},       {8,9},     {10,11},   {0},       {0},  {0},       {23}},
+        [VAL_CERRANDO]    = {{6},     {21},      {19},      {19},      {0},       {0},       {7},  {0},       {0}},
+        [VAL_ABRIENDO]    = {{12},    {18},      {19},      {19},      {0},       {0},       {7},  {0},       {0}},
+        [VAL_FALLA]       = {{0},     {20},      {16},      {16},      {16},      {0},       {0},  {0},       {0}},
     };
     for (int i = 0; i < 3; i++) if (M[s][e][i] == fila && fila) return true;
     return false;
@@ -122,6 +132,27 @@ static void val(void)
         }
     }
     printf("val: %zu filas, %d combinaciones (%d ignoradas)\n", sizeof VC / sizeof VC[0], pares, ignorados);
+
+    /* La fuga siempre gana: desde cualquier estado salvo ARRANQUE (imposible por construcción),
+     * con cualquier marca y cualquier g_seco, una fuga confirmada y después el final «cerrada»
+     * dejan la válvula CERRADA con bloqueo_fuga = 1 y cerrada_por = fuga; ninguna orden ni
+     * evento posterior sin g_seco la reabre. */
+    for (int s = VAL_DESCONOCIDA; s < VAL_N_ESTADOS; s++) for (int cp = 0; cp <= VCP_EJERCICIO; cp++) for (int bl = 0; bl < 2; bl++) {
+        val_iniciar(&v, bl, (val_cerrada_por_t)cp, T_MAX_S);
+        v.estado = (val_estado_t)s; v.t_inicio_ms = 0;
+        val_entrada_t fu = { VEV_FUGA, s == VAL_CERRADA ? C : s == VAL_ABIERTA ? A : N0, false, 100 };
+        val_evento(&v, &fu);
+        val_entrada_t ce = { VEV_FINALES, C, false, 2000 };
+        if (v.estado != VAL_CERRADA) val_evento(&v, &ce);
+        val_evento(&v, &ce);                                  /* confirmación (V14 no debe reabrir) */
+        for (int ev = 0; ev < VEV_N_EVENTOS; ev++) {          /* nada sin g_seco la reabre */
+            val_entrada_t x = { (val_evento_t)ev, C, false, 2500 };
+            if (ev != VEV_FINALES && ev != VEV_TICK && ev != VEV_FUGA) val_evento(&v, &x);   /* sin otra fuga */
+        }
+        OK(v.estado == VAL_CERRADA && v.bloqueo_fuga && v.cerrada_por == VCP_FUGA,
+           "fuga desde %s (cp %d, bloqueo %d): termina %s, bloqueo %d, cerrada_por %d",
+           val_nombre_estado(s), cp, bl, val_nombre_estado(v.estado), v.bloqueo_fuga, v.cerrada_por);
+    }
 }
 
 /* ======================= Ejercicio ======================= */
@@ -175,8 +206,12 @@ static const bcaso_t BC[] = {
     { 7, BOM_BLOQUEADA, BMOT_NINGUNO,  3, BEV_REARMAR,            true,  true,  50, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
     { 8, BOM_BLOQUEADA, BMOT_NINGUNO,  3, BEV_REARMAR,            false, true,  50, BOM_BLOQUEADA, BMOT_NINGUNO,  BRECH_SIN_AGUA, false, 3 },
     { 8, BOM_CORTADA,   BMOT_SECO,     1, BEV_REARMAR,            false, true,  50, BOM_CORTADA,   BMOT_SECO,     BRECH_SIN_AGUA, false, 1 },
+    { 5, BOM_CORTADA,   BMOT_NIVEL,    3, BEV_REARME_CUMPLIDO,    true,  true,  35, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 3 },  /* nivel: sin límite de intentos */
+    { 5, BOM_CORTADA,   BMOT_FLOTADOR, 3, BEV_REARME_CUMPLIDO,    true,  true,  35, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 3 },
     { 9, BOM_CORTADA,   BMOT_ORDEN,    0, BEV_PERMITIR,           true,  true,  10, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
-    { 9, BOM_CORTADA,   BMOT_ORDEN,    0, BEV_PERMITIR,           false, true,  50, BOM_CORTADA,   BMOT_ORDEN,    BRECH_SIN_AGUA, false, 0 },  /* FR-BOM-08 */
+    { 9, BOM_CORTADA,   BMOT_ORDEN,    0, BEV_PERMITIR,           true,  false,  0, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },  /* transductor en falla */
+    {10, BOM_CORTADA,   BMOT_ORDEN,    0, BEV_PERMITIR,           false, true,  50, BOM_CORTADA,   BMOT_ORDEN,    BRECH_SIN_AGUA, false, 0 },  /* FR-BOM-08 */
+    {11, BOM_CORTADA,   BMOT_ORDEN,    0, BEV_PERMITIR,           true,  true,   9, BOM_CORTADA,   BMOT_ORDEN,    BRECH_NIVEL_BAJO, false, 0 },
     { 0, BOM_CORTADA,   BMOT_SECO,     0, BEV_PERMITIR,           true,  true,  50, BOM_CORTADA,   BMOT_SECO,     BRECH_NINGUNO, false, 0 },
 };
 
@@ -186,7 +221,7 @@ static bool bom_admitida(bom_estado_t s, bom_motivo_t m, bom_evento_t e, int fil
                                    (e == BEV_NIVEL && fila == 3) || (e == BEV_CORTAR && fila == 4);
     if (e == BEV_REARMAR) return fila == 7 || fila == 8;
     if (s == BOM_CORTADA && e == BEV_REARME_CUMPLIDO && m != BMOT_ORDEN) return fila == 5 || (fila == 6 && m == BMOT_SECO);
-    if (s == BOM_CORTADA && m == BMOT_ORDEN && e == BEV_PERMITIR) return fila == 9;
+    if (s == BOM_CORTADA && m == BMOT_ORDEN && e == BEV_PERMITIR) return fila == 9 || fila == 10 || fila == 11;
     return false;
 }
 
@@ -225,6 +260,18 @@ static void bom(void)
     }
     printf("bom: %zu filas, %d combinaciones\n", sizeof BC / sizeof BC[0], pares);
 
+    /* solo los cortes por seco cuentan como intentos */
+    {
+        bom_t b2; bom_iniciar(&b2, 3, 10);
+        const bom_evento_t cortes[] = { BEV_FLOTADOR_SIN_AGUA, BEV_NIVEL, BEV_CORTAR };
+        for (int k = 0; k < 3; k++) {
+            bom_entrada_t c1 = { cortes[k], false, true, 5, (uint32_t)(1000 + k) };
+            bom_evento(&b2, &c1);
+            bom_entrada_t r1 = { k == 2 ? BEV_REARMAR : BEV_REARME_CUMPLIDO, true, true, 50, (uint32_t)(2000 + k) };
+            bom_evento(&b2, &r1);
+        }
+        OK(bom_intentos_24h(&b2, 3000) == 0, "cortes por nivel, flotador u orden cuentan como intentos");
+    }
     /* FR-BOM-05 (host): 35 %, flotador con agua 10 min → rearme a los 600 s; una interrupción del flotador a los 5 min reinicia */
     rea_t r = {0}; int a_los = -1;
     for (uint32_t t = 0; t <= 700 && a_los < 0; t++) if (rea_tick(&r, t, true, 35, true, 30, 600)) a_los = (int)t;
@@ -312,6 +359,29 @@ static void son(void)
         OK(son_clasificar(K[i].x) == K[i].c, "%.4f → %s (esperado %s)", K[i].x, son_nombre(son_clasificar(K[i].x)), son_nombre(K[i].c));
 }
 
+/* FR-ENE-04/05 (host): condición de cierre y de reapertura (P16) */
+static void bat(void)
+{
+    OK(ene_cierre(ENE_CRITICA, false) && !ene_cierre(ENE_CRITICA, true) && !ene_cierre(ENE_BAJA, false) && !ene_cierre(ENE_OK, false),
+       "cierre solo con crítica y red ausente");
+    ene_reap_t r = {0}; int desde = -1;
+    for (uint32_t t = 0; t <= 400 && desde < 0; t++) if (ene_reapertura(&r, t, true, 12.8f)) desde = (int)t;
+    OK(desde == 300, "reapertura a los %d s con 12,8 V y red (esperado 300)", desde);
+    memset(&r, 0, sizeof r); int n = 0;
+    for (uint32_t t = 0; t <= 900; t++) n += ene_reapertura(&r, t, true, 12.79f);
+    OK(n == 0, "reapertura con 12,79 V");
+    memset(&r, 0, sizeof r); desde = -1;
+    for (uint32_t t = 0; t <= 900 && desde < 0; t++) if (ene_reapertura(&r, t, t != 200, 13.0f)) desde = (int)t;
+    OK(desde == 501, "con un corte de red a los 200 s: reapertura a los %d s (esperado 501)", desde);
+    /* secuencia completa en la válvula: V22 → V06 → V23 → V12 */
+    val_t v; val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_ABIERTA;
+    val_entrada_t s[4] = { { VEV_BATERIA_CIERRE, A, true, 0 }, { VEV_FINALES, C, true, 3000 },
+                           { VEV_BATERIA_REAPERTURA, C, true, 400000 }, { VEV_FINALES, A, true, 403000 } };
+    int f[4]; for (int i = 0; i < 4; i++) f[i] = val_evento(&v, &s[i]).fila;
+    OK(f[0] == 22 && f[1] == 6 && f[2] == 23 && f[3] == 12 && v.estado == VAL_ABIERTA && v.cerrada_por == VCP_NINGUNO,
+       "batería: filas %d %d %d %d", f[0], f[1], f[2], f[3]);
+}
+
 int main(int argc, char **argv)
 {
     const char *c = argc > 1 ? argv[1] : "";
@@ -321,6 +391,7 @@ int main(int argc, char **argv)
     else if (!strcmp(c, "seco")) seco();
     else if (!strcmp(c, "loc")) loc();
     else if (!strcmp(c, "son")) son();
+    else if (!strcmp(c, "bat")) bat();
     else { printf("caso desconocido: %s\n", c); return 2; }
     printf("%s: %d fallos\n", c, fallos);
     return fallos != 0;
