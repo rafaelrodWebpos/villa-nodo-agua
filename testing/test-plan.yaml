@@ -149,12 +149,12 @@ tests:
       se graba en SLOT2 la imagen construida por la CI sobre el commit que se prueba, con los offsets de su flash_args y la NVS borrada; tras el reset aparecen la versión, NODO-BENCH-IMAGE (imagen de banco) e «Init complete»
     impl: tests/bench/test_jrn01.py::test_jrn_01_0_flash_ci_image
     status: successful
-    commit: 46989e0
-    date: 2026-11-14
-    ci_run: 43670049284   # build.yml, workflow_dispatch variant=bench version=0.0.0-46989e0
-    evidence: test-results/20261115T025940Z-46989e0/
+    commit: 44d29c2
+    date: 2026-11-15
+    ci_run: 43709844065
+    evidence: test-results/20261115T162357Z-44d29c2/
     observed: >
-      imagen 0.0.0-46989e0-bench grabada en SLOT2 con la NVS en blanco; NODO-BENCH-IMAGE e Init complete tras el reset
+      repetido con FSD 0.4.0. SLOT2, imagen 0.0.0-26c3661-bench.
   - id: JRN-01.1
     shape: workflow
     kind: standard
@@ -167,12 +167,12 @@ tests:
       arranca sin configuración: el log muestra ARRANQUE -> PORTAL y el escaneo del banco ve el SSID abierto agua-xxxxxx (xxxxxx de la MAC) en ≤ 10 s
     impl: tests/bench/test_jrn01.py::test_jrn_01_1_portal_without_config
     status: successful
-    commit: 46989e0
-    date: 2026-11-14
-    ci_run: 43670049284   # build.yml, workflow_dispatch variant=bench version=0.0.0-46989e0
-    evidence: test-results/20261115T025940Z-46989e0/
+    commit: 44d29c2
+    date: 2026-11-15
+    ci_run: 43709844065
+    evidence: test-results/20261115T162357Z-44d29c2/
     observed: >
-      ARRANQUE -> PORTAL; SSID abierto agua-7f9af8 visto en el escaneo; id estable en 3 arranques
+      repetido con FSD 0.4.0. SLOT2, imagen 0.0.0-26c3661-bench.
   - id: JRN-01.2
     shape: workflow
     kind: standard
@@ -185,12 +185,12 @@ tests:
       el banco envía por el portal su AP, el broker y sitio1/zona1 (ficticios, NFR-SEC-01); el nodo reinicia y se une al AP del banco (con: CONECTANDO_WIFI -> CONECTANDO_BROKER)
     impl: tests/bench/test_jrn01.py::test_jrn_01_2_provision
     status: successful
-    commit: 46989e0
-    date: 2026-11-14
-    ci_run: 43670049284   # build.yml, workflow_dispatch variant=bench version=0.0.0-46989e0
-    evidence: test-results/20261115T025940Z-46989e0/
+    commit: 44d29c2
+    date: 2026-11-15
+    ci_run: 43709844065
+    evidence: test-results/20261115T162357Z-44d29c2/
     observed: >
-      T04 → T05, nvs: config escrita, reinicio ≤ 5 s; tras el reinicio T01 y T08 con el AP del banco
+      repetido con FSD 0.4.0. SLOT2, imagen 0.0.0-26c3661-bench.
   - id: JRN-01.3
     shape: workflow
     kind: standard
@@ -202,11 +202,13 @@ tests:
     expect: >
       pasa a OPERATIVO; status retained con estado = online y las configuraciones de Discovery de §14 llegan retained, sin duplicados
     impl: tests/bench/test_jrn01.py::test_jrn_01_3_broker_status_discovery
-    status: not_run
-    commit: 2b0be9b
+    status: successful
+    commit: 44d29c2
     date: 2026-11-15
+    ci_run: 43709844065
+    evidence: test-results/20261115T162357Z-44d29c2/
     observed: >
-      repetir: FSD 0.4.0 añade estado_bateria (21 entidades). Último verde con 20 entidades en 7112486 (test-results/20261115T030348Z-9e6a43e/).
+      status y 21 configuraciones de Discovery retenidas (con estado_bateria), sin duplicados. SLOT2, imagen 0.0.0-26c3661-bench.
   - id: JRN-01.4
     shape: workflow
     kind: standard
@@ -1046,11 +1048,13 @@ tests:
     expect: >
       HA de prueba nuevo (scripts/ha/ha_prueba.py) con la integración MQTT al broker del banco: 1 dispositivo «Agua sitio1 zona1» con las 20 entidades de §14 (valve 1, switch 1, binary_sensor 10, sensor 5, button 2, event 1; el % de batería pendiente de definir), ninguna unavailable salvo los sensores de medida (expire_after, sin valor hasta tener E/S), tras conectar y tras cada uno de 3 reinicios del DUT, sin duplicados
     impl: tests/bench/test_ha.py::test_tc_ha_a1_home_assistant_entities
-    status: not_run
-    commit: 2b0be9b
+    status: successful
+    commit: 356e4a9
     date: 2026-11-15
+    ci_run: 43709844065
+    evidence: test-results/20261115T163630Z-356e4a9/
     observed: >
-      repetir: FSD 0.4.0 añade estado_bateria (21 entidades). Último verde con 20 entidades en de0f8cd (test-results/20261115T043833Z-de0f8cd/).
+      HA 2026.10.4 de prueba: 1 dispositivo con 21 entidades, sin duplicados tras 3 reinicios. Corrida roja previa por un defecto del test (5 sensores esperados en vez de 6): test-results/20261115T162952Z-44d29c2/. SLOT2, imagen 0.0.0-26c3661-bench.
   - id: TC-TIME-01
     shape: atomic
     kind: standard
@@ -1121,13 +1125,13 @@ tests:
     expect: >
       hora sincronizada; SNTP bloqueado y «reiniciar» por el USB-Serial/JTAG → `boot: … reset=sw`, hora_valida = false en ≥ 2 status tras el reinicio y ninguna «sntp: sincronizado»
     impl: tests/bench/test_e13.py::test_tc_time_08_reboot_without_sntp
-    status: not_run
-    commit: 26c3661
+    status: successful
+    commit: 44d29c2
     date: 2026-11-15
     ci_run: 43709844065
-    evidence: test-results/20261115T114519Z-26c3661/
+    evidence: test-results/20261115T162357Z-44d29c2/
     observed: >
-      precondición del entorno no cumplida (no es un fallo del DUT): 3 intentos (114047Z, 114359Z, 114519Z) se cortan antes del estímulo porque el suscriptor de la laptop no conecta al broker del banco (TCP 1883 sin respuesta, con el broker en marcha; la API y el SSH del banco sí responden). Causa (propietario, 2026-11-15): el router cambió la IP de la laptop y la regla del 1883 del banco solo permitía la anterior; ni el banco ni el DUT. Regla corregida; repetir.
+      «reiniciar» por el USB-Serial/JTAG con SNTP bloqueado → reset=sw y hora_valida = false en los status siguientes, sin sincronizar. SLOT2, imagen 0.0.0-26c3661-bench.
 
 gate_verdicts:   # [{gate, verdict, date, commit}] — los escribe el checker
   - {gate: 01-load-defined, verdict: OPEN, date: 2026-11-14, commit: c3e5053}
