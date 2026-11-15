@@ -14,7 +14,7 @@ T11 = re.escape("con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)")
 HA_ESPERA_S = 60
 REINICIOS = 3
 ENTIDADES = 21     # §14 (FSD 0.4.0)
-DOMINIOS = {"valve": 1, "switch": 1, "binary_sensor": 10, "sensor": 5, "button": 2, "event": 1}
+DOMINIOS = {"valve": 1, "switch": 1, "binary_sensor": 10, "sensor": 6, "button": 2, "event": 1}
 
 
 def _errores(devs):
