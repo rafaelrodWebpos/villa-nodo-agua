@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.4.0
+fsd_version: 0.4.1
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
@@ -24,6 +24,9 @@ change_history:
     (con LiFePO4 la tensión no da un % fiable); se anuncian la tensión y el estado
     `ok`/`baja`/`critica` de P5, con sus avisos (FR-ENE-02/03). §20: clima:E13 se hereda en
     la redacción de la 0.9.10 del piloto (E13-USJ), solo en la imagen de banco.
+  - 0.4.1 (2026-11-15): aclaraciones del propietario. P4: cada banda incluye su borde
+    superior (≤ 0,05 corto … > 0,90 abierta). FR-CIC-02: «una vez por ventana» = como mucho
+    un aviso cada `ciclado_ventana_min`, contados desde el aviso.
 ```
 
 ## Convenciones de este documento
@@ -329,7 +332,7 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | P1 | Pines y direcciones de §2.2 | aceptado [user] | C-HW-24, C-HW-30 |
 | P2 | Muestreo de sondas cada 250 ms; mojada **confirmada** tras 4 muestras seguidas (1 s); orden de cierre ≤ 500 ms después de confirmar (≤ 1,5 s desde el agua) | aceptado [user] | FR-FUG-01/02 |
 | P3 | Tiempo máximo de carrera = `t_carrera_max_s`, 30 s de fábrica (rango 5–120 s) | aceptado [user] | FR-VAL-04 |
-| P4 | Bandas del lazo (fracción de la referencia): corto < 0,05; mojada 0,05–0,40; seca 0,40–0,60; indeterminada 0,60–0,90; abierta > 0,90 | aceptado [user] | FR-SON-01 |
+| P4 | Bandas del lazo (fracción de la referencia): corto ≤ 0,05; mojada (0,05–0,40]; seca (0,40–0,60]; indeterminada (0,60–0,90]; abierta > 0,90. Cada banda incluye su borde superior, para que en la duda gane la protección [user, 2026-11-15] | aceptado [user] | FR-SON-01 |
 | P5 | Batería LiFePO4 4S: «baja» < 12,4 V, «crítica» < 12,0 V, histéresis 0,2 V; divisor 1:6 | aceptado [user] | FR-ENE-* |
 | P6 | Bomba: `i_marcha_a` 0,5 A; `i_seco_a` sin valor de fábrica (detección por corriente inactiva hasta calibrar); `p_min_bar` 0,5; `t_seco_s` 10 s; rearme con nivel ≥ 30 % y flotador con agua durante 10 min; 3 intentos en 24 h; nivel crítico < 10 % | aceptado [user] | §6 |
 | P7 | Ciclado: arranque = corriente ≥ `i_marcha_a` sostenida 2 s tras ≥ 2 s por debajo; aviso con ≥ 6 arranques en 60 min | aceptado [user] | §6.6 |
@@ -562,7 +565,8 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
   en una ventana móvil de `ciclado_ventana_min`.
 - **FR-CIC-02** [Must] [user] D11 (P7): al alcanzar `ciclado_max` arranques en la ventana,
   el nodo deberá publicar el evento `ciclado_anormal` con el número de arranques y el
-  estado de la válvula (`abierta` o `cerrada`), una vez por ventana.
+  estado de la válvula (`abierta` o `cerrada`), una vez por ventana: como mucho un aviso
+  cada `ciclado_ventana_min`, contados desde el aviso [user, 2026-11-15].
 - **FR-CIC-03** [Must] [user] D11: el ciclado no deberá mover la válvula ni cambiar el
   permiso de la bomba.
 

@@ -24,3 +24,61 @@ typedef struct {
  * (≥ max arranques en los últimos ventana_s), como mucho una vez por ventana; *n queda
  * con los arranques en la ventana. */
 bool cic_arranque(cic_t *c, uint32_t t_s, uint32_t ventana_s, int max, int *n);
+
+/* ---- Permiso de la bomba (FSD §6.1–§6.2, B01–B09) ------------------------------------ */
+typedef enum { BOM_PERMITIDA, BOM_CORTADA, BOM_BLOQUEADA } bom_estado_t;
+typedef enum { BMOT_NINGUNO, BMOT_SECO, BMOT_NIVEL, BMOT_FLOTADOR, BMOT_ORDEN } bom_motivo_t;
+typedef enum {
+    BEV_SECO,               /* trabajo en seco declarado (FR-BOM-03, sec_muestra) */
+    BEV_FLOTADOR_SIN_AGUA,  /* el flotador pasa a «sin agua» */
+    BEV_NIVEL,              /* lectura de nivel (B03 si es válida y < nivel_critico_pct) */
+    BEV_CORTAR,             /* orden `cortar` */
+    BEV_REARME_CUMPLIDO,    /* condición de rearme cumplida (FR-BOM-05, rea_tick) */
+    BEV_REARMAR,            /* orden `rearmar` o pulsación larga */
+    BEV_PERMITIR,           /* orden `permitir` */
+    BEV_N_EVENTOS
+} bom_evento_t;
+
+typedef struct {
+    bom_evento_t evento;
+    bool flotador_agua;
+    bool nivel_valido;      /* transductor sin falla (FR-NIV-02) */
+    float nivel_pct;
+    uint32_t t_s;           /* reloj monótono, s */
+} bom_entrada_t;
+
+#define BOM_MAX_CORTES 8    /* intentos_max ≤ 5 (§19) */
+typedef struct {
+    bom_estado_t estado;
+    bom_motivo_t motivo;            /* solo en CORTADA */
+    uint32_t cortes[BOM_MAX_CORTES];/* instantes de los cortes por seco (B01), para las 24 h móviles */
+    int n_cortes;
+    int intentos_max;               /* P6 */
+    int nivel_critico_pct;          /* P6 */
+} bom_t;
+
+typedef enum { BRECH_NINGUNO, BRECH_SIN_AGUA } bom_rechazo_t;
+typedef struct {
+    int fila;                       /* 1…9 = B01…B09; 0 = par ignorado */
+    bom_rechazo_t rechazo;
+    bool evento_bloqueada;          /* B06: publicar `bomba_bloqueada` */
+} bom_accion_t;
+
+void bom_iniciar(bom_t *b, int intentos_max, int nivel_critico_pct);
+bom_accion_t bom_evento(bom_t *b, const bom_entrada_t *e);
+/* intentos_24h: cortes por seco en las últimas 24 h hasta t_s */
+int bom_intentos_24h(bom_t *b, uint32_t t_s);
+/* FR-BOM-01: relé energizado (GPIO14 alto) salvo en PERMITIDA */
+static inline bool bom_rele(const bom_t *b) { return b->estado != BOM_PERMITIDA; }
+
+/* FR-BOM-03 (P6): trabajo en seco = I ≥ i_marcha y I < i_seco y P < p_min durante más de
+ * t_seco_s seguidos. Con i_seco ≤ 0 (sin configurar) la detección está inactiva (P6). */
+typedef struct { bool en_curso; uint32_t desde_ms; } sec_t;
+bool sec_muestra(sec_t *s, uint32_t t_ms, float i_a, float p_bar,
+                 float i_marcha, float i_seco, float p_min, uint32_t t_seco_s);
+
+/* FR-BOM-05 (P6): nivel válido ≥ nivel_rearme_pct y flotador con agua, sin interrupción,
+ * durante t_rearme_s. Devuelve true una vez al cumplirse y vuelve a contar desde cero. */
+typedef struct { bool en_curso; uint32_t desde_s; } rea_t;
+bool rea_tick(rea_t *r, uint32_t t_s, bool nivel_valido, float nivel_pct, bool flotador_agua,
+              int nivel_rearme_pct, uint32_t t_rearme_s);

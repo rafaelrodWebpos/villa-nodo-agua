@@ -120,3 +120,14 @@ add_test(NAME TC-ENE-A1 COMMAND test_nucleo ene)
 add_test(NAME TC-NIV-A1 COMMAND test_nucleo niv)
 add_test(NAME TC-PRE-A1 COMMAND test_nucleo pre)
 add_test(NAME TC-CIC-A1 COMMAND test_nucleo cic)
+
+# Tablas y núcleos de §5, §6 y §8: TC-VAL-A1 · V01–V20, TC-EJE-A1 · FR-EJE-01, TC-BOM-A1 · B01–B09
+# (+ FR-BOM-05/07 host), TC-BOM-A2 · FR-BOM-03, TC-LOC-A1 · FR-LOC-04, TC-SON-A1 · FR-SON-01
+add_executable(test_tablas test_tablas.c ${COMP}/valvula/valvula.c ${COMP}/bomba/bomba.c ${COMP}/interfaz/interfaz.c ${COMP}/fugas/fugas.c)
+target_include_directories(test_tablas PRIVATE ${COMP}/valvula/include ${COMP}/bomba/include ${COMP}/interfaz/include ${COMP}/fugas/include)
+add_test(NAME TC-VAL-A1 COMMAND test_tablas val)
+add_test(NAME TC-EJE-A1 COMMAND test_tablas eje)
+add_test(NAME TC-BOM-A1 COMMAND test_tablas bom)
+add_test(NAME TC-BOM-A2 COMMAND test_tablas seco)
+add_test(NAME TC-LOC-A1 COMMAND test_tablas loc)
+add_test(NAME TC-SON-A1 COMMAND test_tablas son)
