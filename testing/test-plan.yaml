@@ -1056,7 +1056,13 @@ tests:
     expect: >
       AP con salida a Internet desde que se levanta: «sntp: sincronizado» ≤ 30 s después de wifi_up (marcas del DUT) y hora_valida = true en el primer status posterior
     impl: tests/bench/test_bench_plus.py::test_tc_time_01_sntp_sync
-    status: not_run
+    status: successful
+    commit: 4a4510b
+    date: 2026-11-15
+    ci_run: 43670049284
+    evidence: test-results/20261115T044204Z-4a4510b/
+    observed: >
+      SLOT2, imagen de banco 0.0.0-46989e0-bench: status.hora_valida pasa a true tras SNTP del banco.
   - id: TC-TIME-04
     shape: atomic
     kind: standard
@@ -1069,7 +1075,13 @@ tests:
     expect: >
       hora válida; SNTP bloqueado 2 h: hora_valida = true en todos los status (≥ 115), «sntp: fallo» en la resincronización, ninguna sincronización ni reinicio durante el bloqueo; «todas las medidas llevan ts» se añade con los drivers de E/S
     impl: tests/bench/test_bench_plus.py::test_tc_time_04_resync_failure_keeps_time
-    status: not_run
+    status: successful
+    commit: 4a4510b
+    date: 2026-11-15
+    ci_run: 43670049284
+    evidence: test-results/20261115T044204Z-4a4510b/
+    observed: >
+      SLOT2: 2 h con SNTP bloqueado, status.hora_valida sigue true (2 passed en 2:04:45 con TC-TIME-01).
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
