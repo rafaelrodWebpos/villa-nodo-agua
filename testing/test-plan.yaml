@@ -1235,12 +1235,12 @@ tests:
       tabla de §5.3 (FSD 0.5.0) como prueba parametrizada: cada fila V01–V23 (con V03b) produce su estado, su acción (motor, rechazo, evento, marcas) y nada más; V07 solo al superar P3; completitud: en todas las combinaciones (estado × evento × finales × g_seco × marcas), o una fila admitida para ese par o el par se ignora sin ningún efecto; nunca IN1 e IN2 a la vez (el motor es un único valor); la fuga siempre gana: desde cualquier estado salvo ARRANQUE (imposible por construcción), fuga y final «cerrada» dejan CERRADA con bloqueo_fuga = 1 y cerrada_por = fuga, y nada sin g_seco la reabre (FR-EJE-03, parte host)
     impl: tests/host/test_tablas.c (val)
     status: successful
-    commit: af2e82d
+    commit: 836f609
     date: 2026-11-15
-    ci_run: 43737945218
-    evidence: CI host-tests (ctest), log del run 43737945218
+    ci_run: 43738664821
+    evidence: CI host-tests (ctest), log del run 43738664821
     observed: >
-      31 casos de V01–V20 y 3920 combinaciones de completitud (2178 ignoradas sin efecto); un mutante (V18 quitada) da 73 fallos.
+      FSD 0.5.0: 39 casos de V01–V23 y 5040 combinaciones de completitud (3054 ignoradas sin efecto); la fuga siempre gana desde los 6 estados; un mutante sin V21 da 10 fallos.
   - id: TC-EJE-A1
     shape: atomic
     kind: standard
@@ -1271,12 +1271,12 @@ tests:
       tabla de §6.2 (FSD 0.5.0) como prueba parametrizada: cada fila B01–B11 produce su estado y su rechazo (sin_agua, nivel_bajo) y nada más; los cortes por nivel o flotador rearman sin límite y solo los de seco cuentan como intentos; completitud en todas las combinaciones; ninguna orden a PERMITIDA sin agua (FR-BOM-08, parte host); rearme a los 600 s exactos y reinicio con una interrupción del flotador (FR-BOM-05, parte host); sin rearme con el transductor en falla (FR-BOM-06, parte host); 3 cortes por seco en 24 h → BLOQUEADA, que solo sale con rearmar (FR-BOM-07, parte host)
     impl: tests/host/test_tablas.c (bom)
     status: successful
-    commit: af2e82d
+    commit: 836f609
     date: 2026-11-15
-    ci_run: 43737945218
-    evidence: CI host-tests (ctest), log del run 43737945218
+    ci_run: 43738664821
+    evidence: CI host-tests (ctest), log del run 43738664821
     observed: >
-      18 casos de B01–B09 y 14112 combinaciones de completitud; rearme a 600 s y 901 s con interrupción; BLOQUEADA a los 3 cortes.
+      FSD 0.5.0: 22 casos de B01–B11 y 14112 combinaciones; solo los cortes por seco cuentan como intentos; rearme a 600 s y 901 s; BLOQUEADA a los 3 cortes.
   - id: TC-BOM-A2
     shape: atomic
     kind: standard
@@ -1342,7 +1342,13 @@ tests:
     expect: >
       lógica pura (P16): condición de cierre solo con batería crítica y red ausente; reapertura con red presente y Vbat ≥ 12,8 V durante 300 s exactos, reiniciada por un corte de red, nunca con 12,79 V; secuencia V22 → V06 → V23 → V12 en la válvula (la parte de banco va con la compra)
     impl: tests/host/test_tablas.c (bat)
-    status: not_run
+    status: successful
+    commit: 836f609
+    date: 2026-11-15
+    ci_run: 43738664821
+    evidence: CI host-tests (ctest), log del run 43738664821
+    observed: >
+      cierre solo con crítica y red ausente; reapertura a los 300 s y a los 501 s con un corte de red; nunca con 12,79 V; V22 → V06 → V23 → V12.
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
