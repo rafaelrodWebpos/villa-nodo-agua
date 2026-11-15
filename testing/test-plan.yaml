@@ -1044,6 +1044,32 @@ tests:
     evidence: test-results/20261115T043833Z-de0f8cd/
     observed: >
       HA 2026.10.4 de prueba: 1 dispositivo «Agua sitio1 zona1» con 20 entidades tras conectar y tras 3 reinicios, sin duplicados. Antes: failed sobre 04f5616 por un defecto del test (corregido)
+  - id: TC-TIME-01
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench+
+    verifies: [clima:FR-TIME-01, clima:FR-TIME-02]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-portal-driver, bench-mqtt-broker, bench-ap-internet, bench-serial-monitor, dut-board]
+    origin: villa-nodo-clima-piloto (parte de hora de su JRN-01.6)
+    expect: >
+      AP con salida a Internet desde que se levanta: «sntp: sincronizado» ≤ 30 s después de wifi_up (marcas del DUT) y hora_valida = true en el primer status posterior
+    impl: tests/bench/test_bench_plus.py::test_tc_time_01_sntp_sync
+    status: not_run
+  - id: TC-TIME-04
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench+
+    verifies: [clima:FR-TIME-04]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-portal-driver, bench-mqtt-broker, bench-ap-internet, bench-sntp-block, bench-serial-monitor, dut-board]
+    origin: villa-nodo-clima-piloto
+    expect: >
+      hora válida; SNTP bloqueado 2 h: hora_valida = true en todos los status (≥ 115), «sntp: fallo» en la resincronización, ninguna sincronización ni reinicio durante el bloqueo; «todas las medidas llevan ts» se añade con los drivers de E/S
+    impl: tests/bench/test_bench_plus.py::test_tc_time_04_resync_failure_keeps_time
+    status: not_run
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
