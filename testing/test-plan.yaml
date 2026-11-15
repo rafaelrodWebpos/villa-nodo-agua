@@ -626,7 +626,7 @@ tests:
     needs: [hosted-ci]
     origin: villa-nodo-clima-piloto@ddf8016
     expect: >
-      nodo agua-a1b2c3, sitio1, zona1, fw 0.3.0: una configuración por entidad de §14 (20; el % de batería pendiente de definir), tópicos homeassistant/<comp>/<nodo>/<obj>/config, JSON bien formado, unique_id = <nodo>_<obj> sin sitio ni zona y sin repetir, sw_version = fw, expire_after = 180 solo en los sensores de medida; la válvula, literal; sin espacio o entidad inexistente → -1 y búfer vacío
+      nodo agua-a1b2c3, sitio1, zona1, fw 0.3.0: una configuración por entidad de §14 (21, con estado_bateria; FSD 0.4.0: sin % de batería), tópicos homeassistant/<comp>/<nodo>/<obj>/config, JSON bien formado, unique_id = <nodo>_<obj> sin sitio ni zona y sin repetir, sw_version = fw, expire_after = 180 solo en los sensores de medida; la válvula, literal; sin espacio o entidad inexistente → -1 y búfer vacío
     impl: tests/host/test_ha_discovery.c
     status: successful
     commit: 46989e0
@@ -1046,7 +1046,7 @@ tests:
     verifies: [FR-HA-A1, clima:FR-HA-01]
     needs: [bench-driver, bench-flash, bench-wifi-ap, bench-portal-driver, bench-mqtt-broker, bench-serial-monitor, home-assistant-test, dut-board]
     expect: >
-      HA de prueba nuevo (scripts/ha/ha_prueba.py) con la integración MQTT al broker del banco: 1 dispositivo «Agua sitio1 zona1» con las 20 entidades de §14 (valve 1, switch 1, binary_sensor 10, sensor 5, button 2, event 1; el % de batería pendiente de definir), ninguna unavailable salvo los sensores de medida (expire_after, sin valor hasta tener E/S), tras conectar y tras cada uno de 3 reinicios del DUT, sin duplicados
+      HA de prueba nuevo (scripts/ha/ha_prueba.py) con la integración MQTT al broker del banco: 1 dispositivo «Agua sitio1 zona1» con las 21 entidades de §14 (valve 1, switch 1, binary_sensor 10, sensor 6, button 2, event 1; FSD 0.4.0: sin % de batería), ninguna unavailable salvo los sensores de medida (expire_after, sin valor hasta tener E/S), tras conectar y tras cada uno de 3 reinicios del DUT, sin duplicados
     impl: tests/bench/test_ha.py::test_tc_ha_a1_home_assistant_entities
     status: successful
     commit: 356e4a9
@@ -1132,6 +1132,71 @@ tests:
     evidence: test-results/20261115T162357Z-44d29c2/
     observed: >
       «reiniciar» por el USB-Serial/JTAG con SNTP bloqueado → reset=sw y hora_valida = false en los status siguientes, sin sincronizar. SLOT2, imagen 0.0.0-26c3661-bench.
+
+  - id: TC-FUG-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-FUG-01]
+    needs: [hosted-ci]
+    expect: >
+      lógica pura: confirma con 4 «mojada» seguidas; no con 3; no con 3 + 1 seca; tras la seca hacen falta 4 nuevas
+    impl: tests/host/test_nucleo.c (fug)
+    status: not_run
+  - id: TC-ENE-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-ENE-02]
+    needs: [hosted-ci]
+    expect: >
+      función pura de umbrales: rampa de bajada cambia a baja/crítica por debajo de 12,4/12,0 V; rampa de subida a baja/ok en 12,2/12,6 V; saltos directos; ruido ± 0,1 V alrededor de cada umbral sin oscilar (≤ 1 cambio)
+    impl: tests/host/test_nucleo.c (ene)
+    status: not_run
+  - id: TC-NIV-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-NIV-01]
+    needs: [hosted-ci]
+    expect: >
+      función pura con rango 500 cm y altura útil 400 cm: 4 mA → 0 cm / 0 %; 12 mA → 250 cm / 62,5 %; 20 mA → 500 cm / 100 % (saturado); nunca % > 100 en 3,8–20,5 mA
+    impl: tests/host/test_nucleo.c (niv)
+    status: not_run
+  - id: TC-PRE-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-PRE-01]
+    needs: [hosted-ci]
+    expect: >
+      función pura: 0,5 / 2,5 / 4,5 V → 0 / 5 / 10 bar; fuera de 0,3–4,7 V → falla (la parte de banco, ± 0,2 bar con 2,5 V, va con la compra)
+    impl: tests/host/test_nucleo.c (pre)
+    status: not_run
+  - id: TC-CIC-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [FR-CIC-01, FR-CIC-02]
+    needs: [hosted-ci]
+    expect: >
+      lógica pura, ventana 60 min y ciclado_max 6: 6 arranques en 50 min → un aviso con n = 6; el 7.º en la misma ventana no repite; 5 en 60 min → ninguno; un arranque que salió de la ventana no cuenta
+    impl: tests/host/test_nucleo.c (cic)
+    status: not_run
+
+tier_checks:
+  host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
+  other: ci.yml/config-checks + build.yml/Verify build constraints (C-HW-01/02/03/08, C-BLD-01…04, C-SEC-A3)
 
 gate_verdicts:   # [{gate, verdict, date, commit}] — los escribe el checker
   - {gate: 01-load-defined, verdict: OPEN, date: 2026-11-14, commit: c3e5053}

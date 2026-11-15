@@ -109,3 +109,14 @@ add_executable(test_hora test_hora.c ${COMP}/hora/hora.c)
 target_include_directories(test_hora PRIVATE ${COMP}/hora/include)
 add_test(NAME TC-TIME-02 COMMAND test_hora time02)
 add_test(NAME TC-TIME-07 COMMAND test_hora time07)
+
+# Núcleos puros de §5–§7: TC-FUG-A1 · FR-FUG-01, TC-ENE-A1 · FR-ENE-02, TC-NIV-A1 · FR-NIV-01,
+# TC-PRE-A1 · FR-PRE-01, TC-CIC-A1 · FR-CIC-01/02
+add_executable(test_nucleo test_nucleo.c ${COMP}/fugas/fugas.c ${COMP}/energia/energia.c ${COMP}/bomba/bomba.c)
+target_include_directories(test_nucleo PRIVATE ${COMP}/fugas/include ${COMP}/energia/include ${COMP}/bomba/include)
+target_link_libraries(test_nucleo m)
+add_test(NAME TC-FUG-A1 COMMAND test_nucleo fug)
+add_test(NAME TC-ENE-A1 COMMAND test_nucleo ene)
+add_test(NAME TC-NIV-A1 COMMAND test_nucleo niv)
+add_test(NAME TC-PRE-A1 COMMAND test_nucleo pre)
+add_test(NAME TC-CIC-A1 COMMAND test_nucleo cic)
