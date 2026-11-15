@@ -1144,7 +1144,13 @@ tests:
     expect: >
       lógica pura: confirma con 4 «mojada» seguidas; no con 3; no con 3 + 1 seca; tras la seca hacen falta 4 nuevas
     impl: tests/host/test_nucleo.c (fug)
-    status: not_run
+    status: successful
+    commit: e229ad8
+    date: 2026-11-15
+    ci_run: 43736946928
+    evidence: CI host-tests (ctest), log del run 43736946928
+    observed: >
+      27/27 en ctest; el caso pasa en el contenedor IDF 6.0 y en la CI.
   - id: TC-ENE-A1
     shape: atomic
     kind: standard
@@ -1156,7 +1162,13 @@ tests:
     expect: >
       función pura de umbrales: rampa de bajada cambia a baja/crítica por debajo de 12,4/12,0 V; rampa de subida a baja/ok en 12,2/12,6 V; saltos directos; ruido ± 0,1 V alrededor de cada umbral sin oscilar (≤ 1 cambio)
     impl: tests/host/test_nucleo.c (ene)
-    status: not_run
+    status: successful
+    commit: e229ad8
+    date: 2026-11-15
+    ci_run: 43736946928
+    evidence: CI host-tests (ctest), log del run 43736946928
+    observed: >
+      27/27 en ctest; el caso pasa en el contenedor IDF 6.0 y en la CI.
   - id: TC-NIV-A1
     shape: atomic
     kind: standard
@@ -1168,7 +1180,13 @@ tests:
     expect: >
       función pura con rango 500 cm y altura útil 400 cm: 4 mA → 0 cm / 0 %; 12 mA → 250 cm / 62,5 %; 20 mA → 500 cm / 100 % (saturado); nunca % > 100 en 3,8–20,5 mA
     impl: tests/host/test_nucleo.c (niv)
-    status: not_run
+    status: successful
+    commit: e229ad8
+    date: 2026-11-15
+    ci_run: 43736946928
+    evidence: CI host-tests (ctest), log del run 43736946928
+    observed: >
+      27/27 en ctest; el caso pasa en el contenedor IDF 6.0 y en la CI.
   - id: TC-PRE-A1
     shape: atomic
     kind: standard
@@ -1180,7 +1198,13 @@ tests:
     expect: >
       función pura: 0,5 / 2,5 / 4,5 V → 0 / 5 / 10 bar; fuera de 0,3–4,7 V → falla (la parte de banco, ± 0,2 bar con 2,5 V, va con la compra)
     impl: tests/host/test_nucleo.c (pre)
-    status: not_run
+    status: successful
+    commit: e229ad8
+    date: 2026-11-15
+    ci_run: 43736946928
+    evidence: CI host-tests (ctest), log del run 43736946928
+    observed: >
+      27/27 en ctest; el caso pasa en el contenedor IDF 6.0 y en la CI.
   - id: TC-CIC-A1
     shape: atomic
     kind: standard
@@ -1192,7 +1216,13 @@ tests:
     expect: >
       lógica pura, ventana 60 min y ciclado_max 6: 6 arranques en 50 min → un aviso con n = 6; el 7.º en la misma ventana no repite; 5 en 60 min → ninguno; un arranque que salió de la ventana no cuenta
     impl: tests/host/test_nucleo.c (cic)
-    status: not_run
+    status: successful
+    commit: e229ad8
+    date: 2026-11-15
+    ci_run: 43736946928
+    evidence: CI host-tests (ctest), log del run 43736946928
+    observed: >
+      27/27 en ctest; el caso pasa en el contenedor IDF 6.0 y en la CI.
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
