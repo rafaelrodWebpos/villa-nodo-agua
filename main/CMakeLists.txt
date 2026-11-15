@@ -1,9 +1,9 @@
 # Raíz de composición. Cada componente se añade con la fase que lo usa
 # (docs/Method/project/arquitectura.md); nada especulativo en PRIV_REQUIRES.
-idf_component_register(SRCS "main.c"
+idf_component_register(SRCS "main.c" "proteccion_tarea.c"
                        INCLUDE_DIRS "."
                        PRIV_REQUIRES esp_app_format app_update esp_hw_support esp_system
                                      esp_event esp_netif esp_wifi nvs_flash
                                      identidad conectividad portal udplog diagnostico publicador ha_discovery hora
                                      esp_timer freertos lwip esp_driver_uart
-                                     esp_hal_usb espressif__mqtt)
+                                     esp_hal_usb espressif__mqtt es proteccion)

@@ -10,6 +10,19 @@ fsd: docs/Functionality/FSD-nodo-agua.md
 fsd_version: 0.5.0
 fsd_inherits: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.9 @ ddf80167e0ed1a0ef72e2783d02265e1eac7e5aa   # clima:<ID>
 fsd_inherits_e13: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.10 @ 32027b0a8329e1eadfa57d99f377afbb9a1e0694   # solo clima:E13 (E13-USJ), FSD §20
+banco_con_la_compra:   # qué se prueba en el banco cuando llegue la compra (agenda 2–5); el firmware ya lo tiene (2026-11-15)
+  - paso: "1 · regresión en el SLOT2 sin E/S"
+    que: "repetir JRN-01.0–01.3, los 20 heredados, TC-HA-A1, TC-WDT-02 y TC-TIME-08 con la imagen que ya incluye los drivers y la tarea de protección (sin la E/S montada los ADS no responden y la protección queda en falla_adc, sin mover nada)"
+  - paso: "2 · agenda fila 2 (montaje de E/S)"
+    que: "línea A7 «i2c: scan sda=8 scl=9 hz=100000 ack=0x48,0x49,0x4a» (C-HW-24); cada salida (IN1, IN2, relé, LED verde y rojo, zumbador) vista por bench-salidas-dut; IN1 e IN2 nunca a la vez (C-HW-22)"
+  - paso: "3 · agenda fila 3 (válvula real)"
+    que: "tiempo de carrera real frente a t_carrera_max_s 30 s (P3); finales en GPIO6/7 con su polaridad; FR-VAL-05 (≤ 100 ms) medido en banco; INT-4 (los dos finales → FALLA y falla_valvula)"
+  - paso: "4 · agenda fila 4 (simuladores CR-TB-16…22)"
+    que: "los contratos de banco de §5–§9 y §12 (FR-FUG-02, FR-SON-01…03, FR-IO-04…06, FR-BOM-01…09, FR-NIV-01/02, FR-PRE-01, FR-ENE-01…05, FR-LOC-01…05, FR-PER-01…03, FR-EJE-01…04, FR-OBS-A1) y JRN-01.4–01.8, JRN-02.0–02.2; cada uno se declara en el plan al empezar esta fase"
+  - paso: "5 · agenda fila 5 (sensores reales)"
+    que: "referencia real de los lazos (ES_VREF_SONDAS_V, hoy 3,3 V nominales), R(mojada) con agua de la villa (P4), lazo de 4–20 mA a 24 V (C-HW-31), presión y pinza con carga conocida"
+  - paso: "6 · revisar las interpretaciones"
+    que: "INT-1…INT-6 con la E/S real"
 interpretaciones:   # confirmadas por el propietario 2026-11-15; revisarlas cuando llegue la compra (agenda 2–5)
   - id: INT-1
     texto: expire_after (180 s) solo en los sensores de medida periódica, no en binary_sensor, valve, switch, button ni event
@@ -1358,6 +1371,30 @@ tests:
     evidence: CI host-tests (ctest), log del run 43738664821
     observed: >
       cierre solo con crítica y red ausente; reapertura a los 300 s y a los 501 s con un corte de red; nunca con 12,79 V; V22 → V06 → V23 → V12.
+  - id: TC-IO-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [C-HW-22, C-HW-24, FR-IO-04, FR-IO-05, FR-SON-01]
+    needs: [hosted-ci]
+    expect: >
+      drivers de E/S, parte pura: palabra del ADS1115 por canal (AINx–GND, ±4,096 V, 860 SPS); lazo de 10 kΩ / 3 kΩ / abierto / corto → seca / mojada / abierta / corto; 12 mA sobre 150 Ω → 250 cm; 2,5 V con divisor 2:3 → 5 bar; Vbat 1:6; el fondo de escala cubre todos los canales; rebotes de 30 ms sin cambio y cambio a los 50 ms; nunca IN1 e IN2 a la vez; senoide de 0,5 V RMS a 60 Hz → 15 A ± 1,5 con ≥ 2000 muestras/s durante 10 ciclos; pulsación de 0,5 s corta, 2,5 s nada, 3,5 s larga a los 3 s; 3 pitidos cada 10 min
+    impl: tests/host/test_es.c
+    status: not_run
+  - id: TC-PROT-A1
+    shape: workflow
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-FUG-02, FR-FUG-03, FR-VAL-05, FR-VAL-06, FR-VAL-11, FR-PER-01, FR-PER-02, FR-PER-03, FR-IO-06, FR-SON-02, FR-SON-03, FR-BOM-03, FR-BOM-04, FR-ENE-04, FR-ENE-05, FR-LOC-01, FR-LOC-02, FR-LOC-03, FR-EJE-01, FR-EJE-03]
+    needs: [hosted-ci]
+    expect: >
+      el núcleo de protección cada 10 ms sobre una planta simulada (válvula de 3 s con finales, 8 lazos, 3 ADS1115, flotador, red, batería, presión, pinza, botón), 11 escenarios: arranque sin mover el motor; fuga confirmada en ≤ 1,25 s, IN1 ≤ 500 ms, motor parado ≤ 100 ms tras el final, bloqueo guardado, bomba igual, LED rojo y zumbador que la pulsación corta silencia; arranque con sonda mojada → CERRANDO ≤ 1,5 s; restauración de NVS con relé alto desde el primer paso y 0 escrituras sin cambios; ADS 0x49 caído → falla_adc y sondas 5–8 en falla ≤ 2 s sin cierre; lazo abierto 6 s → un falla_sonda a los 5 s, sonda inactiva sin eventos; seco a los 10 ± 1 s solo con presión baja e i_seco configurado; flotador sin agua → relé ≤ 1 s, rechazo y rearme con pulsación larga; cierre por batería y reapertura a los 5 min; pulsación de 2,5 s sin efecto y de 3,5 s que abre; ejercicio completo y fuga durante el ejercicio → CERRADA con bloqueo. Es la parte host: los contratos de banco de esos requisitos van con la compra
+    impl: tests/host/test_proteccion.c (11 escenarios)
+    status: not_run
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"

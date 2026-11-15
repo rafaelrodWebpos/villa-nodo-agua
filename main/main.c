@@ -50,6 +50,8 @@
 #include "ha_discovery.h"
 #include "hora.h"
 #include "udplog.h"
+#include "es_hw.h"
+#include "proteccion_tarea.h"
 
 static const char *TAG = "nodo";
 static char s_id[IDENTIDAD_LEN];
@@ -315,6 +317,20 @@ static bool hora_valida(void)
     taskEXIT_CRITICAL(&s_mux_hora);
     return hora_es_valida(sinc, (int64_t)time(NULL), s_build_epoch);
 }
+
+/* Ganchos de la protección: no toman s_lock (la tarea de protección nunca espera a la red) */
+static bool hora_para_proteccion(int *hora_local, uint32_t *ahora_s)
+{
+    if (!hora_valida()) return false;
+    time_t t = time(NULL);
+    struct tm tm;
+    localtime_r(&t, &tm);                         /* zona horaria: pendiente en el FSD (UTC mientras tanto) */
+    *hora_local = tm.tm_hour;
+    *ahora_s = (uint32_t)t;
+    return true;
+}
+
+static bool conectado_para_proteccion(void) { return s_estado == CON_OPERATIVO; }
 
 static void al_sincronizar(struct timeval *tv)
 {
@@ -782,6 +798,7 @@ static void comandos_iniciar(void)
 
 void app_main(void)
 {
+    es_hw_gpio_iniciar();                         /* FR-BOM-02: relé y motor en bajo desde el arranque */
     const esp_app_desc_t *app = esp_app_get_description();
     uint8_t mac[6];
     ESP_ERROR_CHECK(esp_read_mac(mac, ESP_MAC_WIFI_STA));
@@ -802,6 +819,10 @@ void app_main(void)
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
+
+    /* Protección (§5–§9, §12): restaura los bloqueos y corre en todos los estados (FR-HER-02) */
+    proteccion_iniciar(&(proteccion_ganchos_t){ .hora = hora_para_proteccion, .conectado = conectado_para_proteccion,
+                                                .wdt_bloquear = &s_wdt_bloquear });
 
     /* El ciclo corre en todos los estados, desde el arranque */
     xTaskCreate(tarea_ciclo, "ciclo", 4096, NULL, 5, NULL);

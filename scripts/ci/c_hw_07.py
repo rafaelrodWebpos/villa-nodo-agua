@@ -5,7 +5,7 @@ import pathlib, re, sys
 
 root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".")
 PROHIBIDOS = {0, 3, 19, 20, 38, 43, 44, 45, 46, 48}
-PATRONES = [r"GPIO_NUM_(\d+)", r"#define\s+PIN_\w+\s+(\d+)", r"\.\w*_io_num\s*=\s*(\d+)",
+PATRONES = [r"GPIO_NUM_(\d+)", r"#define\s+(?:PIN|ES_GPIO)_\w+\s+(\d+)", r"\.\w*_io_num\s*=\s*(\d+)",
             r"gpio_\w+\(\s*(?:\(gpio_num_t\)\s*)?(\d+)\s*[,)]"]
 usados, mal = {}, []
 for f in list(root.glob("main/**/*.[ch]")) + list(root.glob("components/**/*.[ch]")):
