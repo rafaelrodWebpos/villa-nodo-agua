@@ -1094,6 +1094,32 @@ tests:
     observed: >
       SLOT2: 2 h con SNTP bloqueado, status.hora_valida sigue true (2 passed en 2:04:45 con TC-TIME-01).
 
+  - id: TC-WDT-02
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench
+    verifies: [clima:NFR-WDT-01]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-portal-driver, bench-mqtt-broker, bench-serial-write, bench-serial-monitor, dut-board]
+    origin: villa-nodo-clima-piloto
+    expect: >
+      imagen de banco en OPERATIVO; «wdt-test» por el USB-Serial/JTAG (E13-USJ) → «wdt: bloqueando ciclo» y `boot: … reset=task_wdt` en ≤ 32 s; nunca colgado sin reinicio. La tarea vigilada es el ciclo hasta que exista la tarea de protección (NFR-WDT-A1, con la E/S)
+    impl: tests/bench/test_e13.py::test_tc_wdt_02_task_watchdog
+    status: not_run
+  - id: TC-TIME-08
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench+
+    verifies: [clima:FR-TIME-02]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-portal-driver, bench-mqtt-broker, bench-ap-internet, bench-sntp-block, bench-serial-write, bench-serial-monitor, dut-board]
+    origin: villa-nodo-clima-piloto
+    expect: >
+      hora sincronizada; SNTP bloqueado y «reiniciar» por el USB-Serial/JTAG → `boot: … reset=sw`, hora_valida = false en ≥ 2 status tras el reinicio y ninguna «sntp: sincronizado»
+    impl: tests/bench/test_e13.py::test_tc_time_08_reboot_without_sntp
+    status: not_run
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
   other: ci.yml/config-checks + build.yml/Verify build constraints (C-HW-01/02/03/08, C-BLD-01…04, C-SEC-A3)
