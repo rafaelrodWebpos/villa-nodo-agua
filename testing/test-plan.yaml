@@ -1161,6 +1161,16 @@ tests:
       2026-11-18 20:36–20:51 (UTC−4), cac68f1, imagen 0.0.0-3e3ffe7-bench, SLOT2: corrida de humo
       de 15 min con un corte de broker: PASS (13 status, 0 reinicios, vuelta 3,4 s);
       test-results/20261119T003435Z-cac68f1/. No cuenta como resultado
+    intento: >
+      2026-11-18 20:54:35 → 2026-11-19 07:05:49 (UTC−4), 90bf07a, imagen 0.0.0-3e3ffe7-bench,
+      SLOT2: not done a las 10,19 h. El broker del banco se apagó a las 07:05:42 sin orden de la
+      prueba; a las 07:06 el banco reporta build f50858b (antes b5623c4): lo más probable es un
+      despliegue del portal, que reinicia el broker. No es fallo del firmware. Hasta ahí,
+      analizado con estabilidad.py sobre la evidencia: 601 status en vivo, uptime_s 5 → 36720
+      sin retroceso, reset=usb siempre, 0 reinicios (del nodo ni del banco), 0 task_wdt; un
+      solo rst: (0x15, el reset inicial de la prueba); 3 cortes hechos (broker 22:54, Wi-Fi
+      02:54, broker 06:54) y los únicos huecos entre status son esos cortes (312, 348 y 313 s).
+      test-results/20261119T005223Z-90bf07a/. Hay que repetir las 24 h
   - id: TC-WDT-02
     shape: atomic
     kind: standard
