@@ -22,6 +22,8 @@ jobs:
           ctest --test-dir build-host --output-on-failure
       - name: Grabado por el banco con los bytes exactos (portado del piloto)
         run: python3 tests/host/test_grabado.py
+      - name: TC-WDT-01 análisis de reinicios (banco frente a nodo)
+        run: python3 tests/host/test_estabilidad.py
 
   test-plan:            # un plan que no carga pone la CI en rojo
     runs-on: ubuntu-latest

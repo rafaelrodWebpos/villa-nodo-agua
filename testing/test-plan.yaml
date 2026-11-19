@@ -1133,6 +1133,30 @@ tests:
     observed: >
       SLOT2: 2 h con SNTP bloqueado, status.hora_valida sigue true (2 passed en 2:04:45 con TC-TIME-01).
 
+  - id: TC-WDT-01
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench
+    verifies: [clima:NFR-WDT-01]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-wifi-ap-outage, bench-portal-driver, bench-mqtt-broker, bench-broker-outage, bench-serial-monitor, dut-board]
+    origin: villa-nodo-clima-piloto
+    expect: >
+      fila bench de clima:NFR-WDT-01: OPERATIVO 24 h con 3 cortes de broker y 2 de Wi-Fi
+      (AP del banco apagado) de 5 min, todos por API (sin acción física ni bench-serial-write).
+      Ningún reinicio del nodo: un uptime_s que no crece en los status en vivo es un reinicio
+      y su causa es el reset del status siguiente; reset=usb/jtag (rst:0x15
+      USB_UART_CHIP_RESET) es del banco (upstream #83, #86; PR #87) y se informa sin contar
+      como fallo; cualquier otra causa falla. Consola de apoyo (upstream #80): ningún task_wdt
+      ni rst: que no sea del banco. Tras cada corte, un status en vivo en ≤ 150 s; fuera de
+      los cortes y de los reinicios del banco, ningún hueco entre status > 75 s. Sin sensores
+      aún: no hay Δlecturas ni control med: (el control positivo es el status de cada ciclo).
+      Si el AP o el broker cambian de manos (otro uso del banco), not done sin tocar lo ajeno.
+      NODO_WDT_HUMO=1: corrida de humo de 15 min con un corte de broker, no cuenta como resultado.
+      Análisis en tests/bench/estabilidad.py, probado en tests/host/test_estabilidad.py
+    impl: tests/bench/test_wdt.py::test_tc_wdt_01_24h_stability
+    status: not_run
   - id: TC-WDT-02
     shape: atomic
     kind: standard
