@@ -12,7 +12,7 @@ fsd_inherits: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.9
 fsd_inherits_e13: villa-nodo-clima-piloto docs/Functionality/FSD-nodo-clima.md 0.9.10 @ 32027b0a8329e1eadfa57d99f377afbb9a1e0694   # solo clima:E13 (E13-USJ), FSD §20
 banco_con_la_compra:   # qué se prueba en el banco cuando llegue la compra (agenda 2–5); el firmware ya lo tiene (2026-11-15)
   - paso: "0 · SLOT2 tras soldarle los pines (pendiente desde 2026-11-15)"
-    que: "el propietario soldó los pines de la placa del SLOT2 y apagó el Pi; al encenderlo: GET /api/devices ve el SLOT2 (SLOT1 sin tocar), POST /api/chip/info con la MAC de dut.identity, JRN-01.0 con la imagen de banco de 3e3ffe7 (CI 43754845133, ya en .fw-run, ignorado por git) y espefuse summary con los valores de dut.identity.efuses_observed (todo en 0). Intento del 2026-11-15: not done, banco apagado (connect refused en :8080)"
+    que: "el propietario soldó los pines de la placa del SLOT2 y apagó el Pi; al encenderlo: GET /api/devices ve el SLOT2 (SLOT1 sin tocar), POST /api/chip/info con la MAC de dut.identity, JRN-01.0 con la imagen de banco de 3e3ffe7 (CI 43754845133, ya en .fw-run, ignorado por git) y espefuse summary con los valores de dut.identity.efuses_observed (todo en 0). Intento del 2026-11-15: not done, banco apagado (connect refused en :8080). Hecho 2026-11-18: pasa (JRN-01.0, dut.identity)"
   - paso: "1 · regresión en el SLOT2 sin E/S"
     que: "repetir JRN-01.0–01.3, los 20 heredados, TC-HA-A1, TC-WDT-02 y TC-TIME-08 con la imagen que ya incluye los drivers y la tarea de protección (sin la E/S montada los ADS no responden y la protección queda en falla_adc, sin mover nada)"
   - paso: "2 · agenda fila 2 (montaje de E/S)"
@@ -65,7 +65,9 @@ dut:
     efuses_observed: >
       2026-11-14, espefuse summary por RFC2217 desde nodo-clima-piloto-dev (IDF 6.0):
       SECURE_BOOT_EN=0, SPI_BOOT_CRYPT_CNT=0b000, KEY_PURPOSE_0..5=USER (0x0),
-      DIS_DOWNLOAD_MODE=0, ENABLE_SECURITY_DOWNLOAD=0, SECURE_VERSION=0, RD_DIS=0
+      DIS_DOWNLOAD_MODE=0, ENABLE_SECURITY_DOWNLOAD=0, SECURE_VERSION=0, RD_DIS=0.
+      2026-11-18, tras soldar los pines (paso 0): los mismos valores y WR_DIS=0;
+      chip/info: ESP32-S3 (QFN56) v0.2, 8MB, la misma MAC
     publication: >
       la MAC se publica: la placa es unidad permanente del banco y nunca se
       instala (propietario, 2026-11-14; mismo criterio que el piloto, H-20 /
@@ -181,12 +183,17 @@ tests:
       se graba en SLOT2 la imagen construida por la CI sobre el commit que se prueba, con los offsets de su flash_args y la NVS borrada; tras el reset aparecen la versión, NODO-BENCH-IMAGE (imagen de banco) e «Init complete»
     impl: tests/bench/test_jrn01.py::test_jrn_01_0_flash_ci_image
     status: successful
-    commit: 44d29c2
-    date: 2026-11-15
-    ci_run: 43709844065
-    evidence: test-results/20261115T162357Z-44d29c2/
+    commit: 3766991
+    date: 2026-11-18
+    ci_run: 43754845133
+    evidence: test-results/20261119T002551Z-3766991/
     observed: >
-      repetido con FSD 0.4.0. SLOT2, imagen 0.0.0-26c3661-bench.
+      paso 0 de banco_con_la_compra (SLOT2 tras soldarle los pines): imagen
+      0.0.0-3e3ffe7-bench (drivers de E/S, tarea de protección), grabada con la defensa
+      de grabado: «Wrote N bytes» = lo enviado en los 5 offsets (la app termina en 0xd9,
+      sin relleno); NODO-BENCH-IMAGE + Init complete; sin «Image hash failed». El reset
+      de la captura es rst:0x15 (USB_UART_CHIP_RESET), el del banco. Antes: 44d29c2,
+      2026-11-15, CI 43709844065.
   - id: JRN-01.1
     shape: workflow
     kind: standard
