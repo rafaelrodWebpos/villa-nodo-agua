@@ -1157,6 +1157,10 @@ tests:
       Análisis en tests/bench/estabilidad.py, probado en tests/host/test_estabilidad.py
     impl: tests/bench/test_wdt.py::test_tc_wdt_01_24h_stability
     status: not_run
+    humo: >
+      2026-11-18 20:36–20:51 (UTC−4), cac68f1, imagen 0.0.0-3e3ffe7-bench, SLOT2: corrida de humo
+      de 15 min con un corte de broker: PASS (13 status, 0 reinicios, vuelta 3,4 s);
+      test-results/20261119T003435Z-cac68f1/. No cuenta como resultado
   - id: TC-WDT-02
     shape: atomic
     kind: standard
