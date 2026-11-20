@@ -2,15 +2,16 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.6.0
+fsd_version: 0.7.0
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
 author: Rafael Rodriguez
 reviewers: []
-approval_status: D1–D18 y P1–P21 aceptadas por el propietario (2026-11-14; P14 con condición)
+approval_status: D1–D18 y P1–P21 aceptadas por el propietario (2026-11-14; P14 con condición);
+  H-93 (2026-11-20) aceptado; P22–P25 propuestos
 created: 2026-11-14
-last_updated: 2026-11-15
+last_updated: 2026-11-20
 herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9 (commit ddf8016)
 change_history:
   - 0.1.0 (2026-11-14): versión inicial a partir de /define (D1–D18 del propietario).
@@ -39,6 +40,15 @@ change_history:
     10 min sin agua con nivel suficiente; evento `flotador_falla`), con excepciones en
     FR-BOM-04/08. Confirmados: GPIO5 sin señal = red ausente; los cortes por seco de antes
     de un reinicio cuentan como ocurridos al arrancar (FR-PER-02).
+  - 0.7.0 (2026-11-20): H-93 del propietario, a partir del análisis de cortes parciales
+    (`testing/analisis-cortes-parciales.md`). Cola de eventos críticos (FR-PUB-04, P23);
+    evento `falla_vref` y LED (FR-SON-04); cierre preventivo con la casa cerrada y ≥ 2
+    sondas en falla o falla de la referencia (FR-SON-05, V24, V25, parámetro `casa_cerrada`,
+    P22): **cambia D6**. §25 nuevo: vigilante externo de 15 min por un canal que no depende
+    de la Pi (FR-VIG-01), UPS de la cadena de red (C-INS-01) y broker por IPv4 con reservas
+    DHCP (C-INS-02). FR-CON-A1/A2 (heredados del análisis del piloto, H1 y H2: IP perdida y
+    reasociación sin broker), propuestos con P24/P25. Valores aceptados para la próxima
+    ronda: k = 3 reinicios en 10 min (P26) y RSSI mínimo −75 dBm (P27).
 ```
 
 ## Convenciones de este documento
@@ -92,7 +102,7 @@ riesgo n.º 1 y los cortes de la red eléctrica son frecuentes. Por eso, la prot
 ### 1.4 No-objetivos
 
 - El nodo **no** arranca ni para la bomba por presión: eso lo sigue haciendo el presostato (D3).
-- El nodo **no** interpreta los modos de la casa (`Casa cerrada`, `Preparar llegada`). Esos modos son escenas de HA que mandan órdenes al nodo (D11).
+- El nodo **no** interpreta los modos de la casa (`Casa cerrada`, `Preparar llegada`). Esos modos son escenas de HA que mandan órdenes al nodo (D11). La única huella de esos modos en el nodo es el parámetro `casa_cerrada` (§19), que HA fija y que el nodo guarda en NVS para seguir actuando sin red (FR-SON-05, H-93).
 - El nodo **no** recibe los sensores inalámbricos WH31LA. Le llegan como orden de cierre de HA (D4).
 - El nodo **no** envía WhatsApp. Las alertas y los recordatorios son de HA.
 
@@ -290,7 +300,7 @@ la activación de Secure Boot y del cifrado ocurre solo en la placa final, al in
 
 Auditoría completa del nodo y de su configuración de producción (S2), más la revisión
 reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
-(calibración de §6 y contratos `field`).
+(calibración de §6, requisitos de instalación de §25 y contratos `field`).
 
 ---
 
@@ -303,7 +313,10 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | Una fuga en un punto sin sonda cableada no se detecta en local | WH31LA vía HA (D4) + detección de ciclado (§6.6) |
 | Un WH31LA detecta una fuga mientras HA o la red están caídos: no se cierra | Riesgo aceptado (D4); el ciclado sigue avisando cuando vuelva la red |
 | La válvula se pega por el sarro | Ejercicio periódico (§5.6, D12) |
-| Un cable de sonda cortado deja un punto sin protección | Lazo supervisado y aviso `abierta` (D6) |
+| Un cable de sonda cortado deja un punto sin protección | Lazo supervisado y aviso `abierta` (D6); con la casa cerrada, cierre preventivo con ≥ 2 sondas en falla (FR-SON-05) |
+| Se cae la referencia de los lazos y todas las sondas quedan ciegas | Evento `falla_vref` y LED (FR-SON-04); con la casa cerrada, cierre preventivo (FR-SON-05) |
+| Una fuga ocurre con el broker inalcanzable y su evento se pierde | Cola de eventos críticos que se envía al volver (FR-PUB-04) |
+| La Pi, el switch o internet caen y ninguna alerta sale | Vigilante externo por un canal que no depende de la Pi (FR-VIG-01) y UPS de la cadena de red (C-INS-01) |
 | Una falsa alarma deja la casa sin agua con nadie dentro | Reapertura remota con todas las sondas secas (D5) |
 | Un apagón largo agota la batería con la válvula abierta | Cierre preventivo con batería crítica y sin red (§7) |
 | Un atacante en la LAN manda abrir la válvula durante una fuga | Guardas en el firmware (§5) que ningún mensaje salta; nodo crítico S4 (D14) |
@@ -332,7 +345,7 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | D3 | Permiso de la bomba con contactor por contacto NC + selector «Auto / Puenteado» | aceptada [user] | C-HW-23, §6 |
 | D4 | 8 sondas cableadas con cierre local; WH31LA solo vía HA (riesgo aceptado) | aceptada [user] | §5, §13 |
 | D5 | Reapertura remota solo con todas las sondas cableadas secas; en persona con botón o palanca; recierre si vuelve la fuga | aceptada [user] | FR-VAL-07…09 |
-| D6 | Lazos supervisados (seca, mojada, abierta, corto); una falla de lazo avisa, no cierra | aceptada [user] | FR-SON-* |
+| D6 | Lazos supervisados (seca, mojada, abierta, corto); una falla de lazo avisa, no cierra. **Cambiada por H-93 (2026-11-20):** con `casa_cerrada`=true, ≥ 2 sondas activas en falla o la falla de la referencia cierran la válvula en preventivo; con la casa ocupada, solo aviso | aceptada [user]; H-93 | FR-SON-*, FR-SON-05 |
 | D7 | Válvula a la salida de la bomba, con piscina y riego antes; con la válvula cerrada se mantiene el permiso de la bomba | aceptada [user] | FR-BOM-09 |
 | D8 | Nivel por transductor 4–20 mA + flotador de nivel mínimo independiente | aceptada [user] | §6 |
 | D9 | Trabajo en seco = corriente baja **y** presión baja durante T; umbrales en NVS, calibrados al instalar | aceptada [user] | FR-BOM-03 |
@@ -366,6 +379,19 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | P19 | Con el transductor en falla, el rearme automático queda inhibido (solo manual) | aceptado [user] | FR-BOM-06 |
 | P21 | El lazo 4–20 mA del transductor se alimenta a **24 V CC** con un elevador CC-CC desde los 12 V: un transmisor de 12–36 V no funciona con 12 V menos los 3 V del shunt (elevador MT3608) | aceptado [user] | C-HW-31 |
 | P20 | Bloqueo `bomba_bloqueada` también al rearmar en seco dentro de los 10 min siguientes a un rearme | aceptado [user] | FR-BOM-07 |
+| H-93 | Cola de eventos críticos; vigilante externo con T = 15 min y canal que no depende de la Pi; `falla_vref` + LED; cierre preventivo con la casa cerrada y N = 2 sondas en falla o falla de la referencia (con la casa ocupada, solo aviso); UPS de la cadena de red y broker por IPv4 con reservas DHCP como requisitos de instalación | aceptado [user] 2026-11-20 | FR-PUB-04, FR-SON-04/05, §25 |
+| P22 | `casa_cerrada` es un parámetro de §19 que fijan las escenas de HA (`Casa cerrada` → true; `Preparar llegada` y llegada → false); se guarda en NVS; **valor de fábrica `true`** (sin configurar, gana la protección) | propuesto | FR-SON-05 |
+| P23 | Cola de eventos críticos en RAM con **32** entradas; llena, se descarta el evento más antiguo que no sea `fuga` y se cuenta en `eventos_perdidos` | propuesto | FR-PUB-04 |
+| P24 | Asociado al AP sin dirección IP durante **60 s** (o `IP_LOST`) → se trata como `wifi_down` | propuesto (H1 del análisis del piloto) | FR-CON-A1 |
+| P25 | Con el Wi-Fi asociado y el broker inalcanzable durante **10 min**, una reasociación del Wi-Fi, sin reiniciar; como mucho una vez por cada periodo de 10 min | propuesto (H2 del análisis del piloto) | FR-CON-A2 |
+| P26 | Bucle de reinicios: k = **3** reinicios en **10 min** | aceptado [user] H-93; el requisito va en la próxima ronda | próxima ronda |
+| P27 | RSSI mínimo de instalación **−75 dBm** | aceptado [user] H-93; el requisito va en la próxima ronda | próxima ronda (hueco P8) |
+
+**Próxima ronda del FSD (H-93):** huecos P4 (brownout al arrancar el motor y bucle de
+reinicios, con P26), P5 (`red` mide la salida del inversor, no la red pública), P8 (elegir
+el AP por señal, con P27), P9 (ejercicio vencido sin hora válida) y P10 (seco con el sensor
+de presión en falla) de `testing/analisis-cortes-parciales.md`. P11 no se hace: lo cubre
+el térmico de la bomba [user, H-93].
 
 ---
 
@@ -390,10 +416,13 @@ los finales de carrera.
 | FALLA | Movimiento sin confirmar a tiempo, o los dos finales activos a la vez [user, 2026-11-15] | No (se reevalúa al arrancar) |
 
 **Marcas persistentes** (NVS, §9): `bloqueo_fuga` (cierre por sonda cableada) y
-`cerrada_por` ∈ {`ninguno`, `fuga`, `orden`, `bateria`, `ejercicio`}.
+`cerrada_por` ∈ {`ninguno`, `fuga`, `orden`, `bateria`, `ejercicio`, `sondas`}.
 
 **Guarda `g_seco`:** ninguna sonda **activa** está en estado `mojada` (P13: una sonda
 en falla cuenta como no mojada).
+
+**Guarda `g_ciego`** (H-93): `casa_cerrada`=true **y** (≥ 2 sondas activas en falla según
+FR-SON-02 **o** la referencia en falla según FR-SON-04).
 
 ### 5.3 Tabla de transiciones (normativa)
 
@@ -431,9 +460,15 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 | V20 | FALLA | fuga confirmada | — | CERRANDO | `bloqueo_fuga`=1, `cerrada_por`=`fuga`; un reintento | P3 |
 | V21 | CERRANDO | fuga confirmada | — | CERRANDO (sigue cerrando) | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | — |
 | V22 | ABIERTA, DESCONOCIDA | batería `critica` y red `ausente` (FR-ENE-04) | — | CERRANDO | `cerrada_por`=`bateria` | ≤ 500 ms |
-| V23 | CERRADA | reapertura por batería cumplida (FR-ENE-05) | `cerrada_por`=`bateria`, `bloqueo_fuga`=0 y `g_seco` | ABRIENDO | `cerrada_por`=`ninguno` | ≤ 500 ms |
+| V23 | CERRADA | reapertura por batería cumplida (FR-ENE-05) | `cerrada_por`=`bateria`, `bloqueo_fuga`=0, `g_seco` y no `g_ciego` (H-93) | ABRIENDO | `cerrada_por`=`ninguno` | ≤ 500 ms |
+| V24 | ABIERTA, DESCONOCIDA | `g_ciego` (FR-SON-05) | — | CERRANDO | `cerrada_por`=`sondas`; `bloqueo_fuga` sin cambio | ≤ 500 ms |
+| V25 | CERRADA | orden `abrir` válida o pulsación larga | `g_seco` y `g_ciego` | CERRADA | rechazar `sondas_en_falla`; con la pulsación, patrón de rechazo (§8) | — |
 
-Filas V20–V23 [user, 2026-11-15]. **Una fuga confirmada siempre gana:** en ABIERTA,
+Filas V20–V23 [user, 2026-11-15]. Filas V24 y V25 [user] H-93; V24 es de nivel, como V22.
+V25 tiene prioridad sobre V08 y V10: mientras se cumple `g_ciego` no se reabre, porque V24
+volvería a cerrar. No hay reapertura automática cuando `g_ciego` deja de cumplirse: la
+reapertura es la de D5 (remota con todo seco, o en persona); con la llegada, HA pone
+`casa_cerrada`=false y la reapertura vuelve a ser posible [derived]. **Una fuga confirmada siempre gana:** en ABIERTA,
 DESCONOCIDA, ABRIENDO, CERRANDO, FALLA y CERRADA (V04, V18, V21, V20, V17) la válvula
 termina CERRADA con `bloqueo_fuga`=1 y `cerrada_por`=`fuga`. El par (ARRANQUE × fuga
 confirmada) es imposible por construcción: ARRANQUE dura la primera lectura de los
@@ -480,7 +515,7 @@ envía en cada ciclo mientras se cumple su condición. V14 deja `cerrada_por`=`n
 | FR-VAL-09 | CERRADA con fuga activa: pulsación de 3 s; luego seca: pulsación de 3 s | 1.º: patrón de rechazo, sin movimiento. 2.º: ABRIENDO | Abrir con fuga | bench |
 | FR-VAL-10 | CERRADA con `bloqueo_fuga`; el banco simula la palanca (final «abierta» activo, «cerrada» inactivo) | Evento `movimiento_manual`; IN1 = IN2 = 0 durante 60 s | Intento de cierre por el motor | bench |
 | FR-VAL-11 | Lógica pura: todas las filas de §5.3 y combinaciones de eventos simultáneos | Nunca IN1 = IN2 = 1 | Cualquier caso con los dos en alto | host + bench |
-| V01–V23 | Tabla de transiciones como prueba parametrizada | Cada fila produce su estado y su acción | Una transición no listada | host |
+| V01–V25 | Tabla de transiciones como prueba parametrizada | Cada fila produce su estado y su acción | Una transición no listada | host |
 
 ### 5.6 Ejercicio periódico (D12)
 
@@ -666,7 +701,7 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
 | Prioridad | Condición | LED | Zumbador |
 |---|---|---|---|
 | 1 | Fuga confirmada | rojo fijo | intermitente 1 Hz (FR-LOC-01) |
-| 2 | Válvula FALLA, bomba BLOQUEADA, sonda en falla o batería crítica | rojo 1 Hz | 3 pitidos cada 10 min |
+| 2 | Válvula FALLA, bomba BLOQUEADA, sonda en falla, referencia de los lazos en falla (FR-SON-04, H-93) o batería crítica | rojo 1 Hz | 3 pitidos cada 10 min |
 | 3 | Válvula CERRADA o bomba CORTADA | rojo 0,25 Hz | — |
 | 4 | Sin red o sin broker | verde 1 Hz | — |
 | 5 | Todo normal | verde fijo | — |
@@ -712,9 +747,23 @@ clima:FR-CON-01…07, con sus contratos.
 - **FR-HER-02** [Must] [user] D18: en todos los estados de conectividad (incluidos
   PORTAL, VALIDANDO, ESPERA y OTA_DESCARGA) deberán cumplirse los plazos de FR-FUG-02,
   FR-BOM-03 y FR-BOM-04.
+- **FR-CON-A1** [Must] [derived] H-93, H1 del análisis del piloto (P24): el evento
+  `IP_LOST` del Wi-Fi, o seguir asociado al AP sin dirección IP durante 60 s, deberá
+  tratarse como `wifi_down` (T08 de clima §6), con su backoff y sin reiniciar.
+- **FR-CON-A2** [Must] [derived] H-93, H2 del análisis del piloto (P25): con el Wi-Fi
+  asociado y con IP, y el broker inalcanzable durante 10 min seguidos, el nodo deberá
+  reasociar el Wi-Fi una vez, sin reiniciar, y no más de una vez por cada 10 min. Aclara
+  clima:FR-CON-04: el plazo de ≤ 75 s cuenta desde que el broker vuelve, también después
+  de una reasociación.
+
+Si el piloto adopta H1 y H2 con otros valores, se alinean aquí por enmienda (§«Convenciones»).
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
+| FR-CON-A1 | Lógica pura del gestor: `IP_LOST`; asociado sin IP 59 s y 61 s | `wifi_down` con `IP_LOST` y a los 61 s; nada a los 59 s | Quedarse asociado sin IP > 60 s + 1 s; reinicio | host |
+| FR-CON-A1 | Banco con el DHCP apagado y el AP arriba (capacidad nueva; número CR-TB que asigna el propietario) | `con: … (wifi_down)` a 60 s ± 2 s; OPERATIVO ≤ 90 s tras volver el DHCP (clima:FR-CON-03) | Nodo mudo sin causa | bench⁺ |
+| FR-CON-A2 | Broker bloqueado (DROP) 25 min con el AP arriba | Una reasociación a los 10 min ± 30 s y otra a los 20 min ± 30 s; ningún reinicio; OPERATIVO ≤ 75 s tras desbloquear | Reasociar antes de 10 min; reinicio | bench⁺ |
+| FR-CON-A2 | Lógica pura con relojes simulados | Reasociación a 600 s y como mucho una por 600 s | Más de una por 600 s | host |
 | FR-HER-01 | Contratos heredados ejecutados con este firmware | Todos en verde con `agua-…` | Un contrato heredado sin ejecutar | bench |
 | FR-HER-02 | Forzar cada estado de conectividad (sin config, Wi-Fi caído, broker caído, portal abierto, ESPERA, OTA en curso) y provocar fuga, seco y flotador | Plazos cumplidos en cada uno | Un plazo incumplido en algún estado | bench |
 
@@ -743,7 +792,16 @@ repositorio.
 - **FR-SON-01** [Must] [user] D6 (P4): cada lazo deberá clasificarse en `seca`, `mojada`,
   `abierta`, `corto` o `indeterminada` según las bandas de P4.
 - **FR-SON-02** [Must] [user] D6: un lazo activo en `abierta`, `corto` o `indeterminada`
-  durante 5 s seguidos deberá publicar el evento `falla_sonda` y no deberá mover la válvula.
+  durante 5 s seguidos deberá publicar el evento `falla_sonda` y no deberá mover la válvula,
+  salvo el cierre preventivo de FR-SON-05.
+- **FR-SON-04** [Must] [user] H-93: con A3 del 0x4A fuera de 3,0–3,6 V o el 0x4A sin
+  responder durante 5 s seguidos, el nodo deberá publicar el evento `falla_vref` (una vez
+  por cambio a falla), escribir `son: vref nominal` y mostrar en el LED la prioridad 2
+  (§8.2). La clasificación sigue con la referencia nominal de §2.2.
+- **FR-SON-05** [Must] [user] H-93 (P22): con `g_ciego` (§5.2) el nodo deberá cerrar la
+  válvula con `cerrada_por`=`sondas` (V24) en ≤ 500 ms, sin ninguna condición de red, y
+  no deberá poner `bloqueo_fuga` en 1. Con `casa_cerrada`=false, las mismas fallas solo
+  avisan (FR-SON-02, FR-SON-04).
 - **FR-SON-03** [Must] [derived]: una sonda con `sonda_activa`=false no deberá
   confirmar fugas ni fallas y deberá publicarse como `inactiva`.
 - **FR-IO-04** [Must] [user] D9 (P10): la corriente RMS de la bomba deberá calcularse
@@ -759,6 +817,9 @@ repositorio.
 | FR-SON-01 | El banco presenta 10 kΩ, 3 kΩ, abierto y corto en cada canal | `seca`, `mojada`, `abierta`, `corto` | Otra clase | bench |
 | FR-SON-02 | Lazo 6 abierto 6 s | Un `falla_sonda` (sonda 6, `abierta`); válvula sin movimiento | Cierre | bench |
 | FR-SON-03 | Sonda 8 inactiva y en corto | Estado `inactiva`; sin eventos | Evento o cierre | bench |
+| FR-SON-04 | El banco baja A3 a 2,5 V durante 6 s; luego la devuelve a 3,3 V | Un `falla_vref` a 5 s ± 1 s; `son: vref nominal`; LED rojo 1 Hz; sin `falla_vref` repetidos; al volver, LED según el resto de condiciones | Ningún evento; eventos repetidos sin cambio; reinicio | bench |
+| FR-SON-05 | Lógica pura: `casa_cerrada` × número de sondas activas en falla (0–8) × referencia (ok/falla) × estado de la válvula | Cierre solo con `casa_cerrada`=true y (≥ 2 en falla o referencia en falla); `bloqueo_fuga` sin cambio; V25 rechaza la reapertura | Cierre con 1 sonda en falla; cierre con `casa_cerrada`=false; reapertura con `g_ciego` | host |
+| FR-SON-05 | ABIERTA, **broker apagado y Wi-Fi caído**; `casa_cerrada`=true; el banco abre los lazos 2 y 7 durante 6 s. Repetir con la referencia en falla. Repetir con `casa_cerrada`=false | Con true: IN1 en alto a 5 s + 500 ms del segundo lazo (o de la referencia); `cerrada_por`=`sondas`. Con false: solo `falla_sonda`/`falla_vref`, sin movimiento | Cierre con false; esperar a la red; `bloqueo_fuga`=1 | bench |
 | FR-IO-04 | Banco: senoide de 60 Hz de 0,5 V RMS en GPIO4 | 15 A ± 1,5 A | Error mayor | bench |
 | FR-IO-05 | Rebotes de 30 ms | Sin cambio de estado | Cambio | bench |
 | FR-IO-06 | Desconectar el ADS1115 0x49 en marcha | `falla_adc`; sondas 5–8 en falla ≤ 2 s; sin pánico | Reinicio; cierre | bench |
@@ -772,7 +833,7 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 
 | Tópico | Dir. | Payload (ejemplo) | QoS | Retain |
 |---|---|---|---|---|
-| `valvula/state` | → | `{"estado":"cerrada","bloqueo_fuga":true,"cerrada_por":"fuga","t_cierre_ms":8200,"t_apertura_ms":8100,"ts":…}` | 1 | sí |
+| `valvula/state` | → | `{"estado":"cerrada","bloqueo_fuga":true,"cerrada_por":"fuga"\|"orden"\|"bateria"\|"ejercicio"\|"sondas"\|"ninguno","t_cierre_ms":8200,"t_apertura_ms":8100,"ts":…}` | 1 | sí |
 | `valvula/set` | ← | `{"accion":"cerrar"\|"abrir"\|"ejercicio"\|"posponer_ejercicio","motivo":"fuga_remota"\|"casa_cerrada"\|"llegada"\|"manual"}` | 1 | no |
 | `bomba/state` | → | `{"permiso":"cortada","motivo":"seco","intentos_24h":1,"calibrada":true,"ts":…}` | 1 | sí |
 | `bomba/set` | ← | `{"accion":"cortar"\|"permitir"\|"rearmar"}` | 1 | no |
@@ -783,7 +844,7 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 | `flotador` | → | `{"estado":"agua"\|"sin_agua","ts":…}` | 1 | sí |
 | `red` | → | `{"estado":"presente"\|"ausente","ts":…}` | 1 | sí |
 | `bateria` | → | `{"v":12.9,"u":"V","estado":"ok"\|"baja"\|"critica","ts":…}` | 1 | sí |
-| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla",…,"ts":…}` | 1 | no |
+| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla"\|"falla_vref",…,"ts":…,"edad_s":…}` (`edad_s` solo en los eventos que salen de la cola, FR-PUB-04) | 1 | no |
 | `config/set`, `config/state` | ←, → | §16 | 1 | no, sí |
 | `status`, `cmd/ota` | →, ← | heredados (clima §9.3, §12) | 1 | sí, no |
 
@@ -796,9 +857,22 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 - **FR-PUB-02** [Must] [derived]: al entrar en OPERATIVO, el nodo deberá publicar todos
   los tópicos con retain de §13.1 con el estado actual.
 - **FR-PUB-03** [Must] [user] (P8): las medidas deberán publicarse cada 60 s.
+- **FR-PUB-04** [Must] [user] H-93 (P23): un evento crítico (`fuga`, `falla_valvula`,
+  `movimiento_manual`, `falla_sonda`, `falla_adc`, `falla_vref`, `bomba_seco`,
+  `bomba_bloqueada`, `ciclado_anormal`, `bateria_baja`, `bateria_critica`,
+  `flotador_falla`) generado fuera de OPERATIVO deberá guardarse en una cola en RAM y
+  publicarse al entrar en OPERATIVO, después de los tópicos de FR-PUB-02, en el orden en
+  que ocurrió, con `edad_s` (segundos del reloj monótono desde que ocurrió) y con `ts` solo
+  si la hora era válida al ocurrir. La cola no sobrevive a un reinicio: tras un reinicio,
+  lo que se pierde lo reconstruyen los estados con retain y FR-PER-03.
+- **FR-PUB-05** [Must] [derived] H-93 (P23): con la cola llena, el nodo deberá descartar el
+  evento más antiguo que no sea `fuga` (si todos son `fuga`, el `fuga` más antiguo) y
+  publicar el número de
+  descartados en `status` como `eventos_perdidos`.
 - **FR-ORD-01** [Must] [user] regla de confirmación: cada orden de válvula o bomba deberá
   responderse con su `…/state` final o con un evento `orden_rechazada` que incluya el
-  motivo (`fuga_activa`, `sin_agua`, `nivel_bajo`, `ocupado`, `payload`, `accion`).
+  motivo (`fuga_activa`, `sin_agua`, `nivel_bajo`, `ocupado`, `payload`, `accion`,
+  `sondas_en_falla` (V25, H-93)).
 - **FR-ORD-02** [Must] [derived] (P15): un payload > 256 bytes, JSON no válido, una
   acción desconocida o un campo de tipo incorrecto deberán rechazarse con
   `orden_rechazada` (`payload` o `accion`), sin efecto y sin reinicio.
@@ -812,6 +886,9 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 | FR-PUB-01 | Suscriptor a `#`; cambiar cada entrada en el banco | Cada `…/state` ≤ 1 s | Retraso o ausencia | bench |
 | FR-PUB-02 | Reiniciar el broker | Todos los tópicos retain reaparecen tras reconectar | Faltan tópicos | bench |
 | FR-PUB-03 | 5 min en OPERATIVO | 5 ± 1 publicaciones de cada medida | Otro número | bench |
+| FR-PUB-04 | Suscriptor a `#`; broker apagado; el banco moja la sonda 3 y abre el lazo 6 (6 s); a los 3 min, broker encendido | `evento` `fuga` y luego `falla_sonda`, en ese orden, después de los tópicos con retain y en ≤ 75 s desde que vuelve el broker (clima:FR-CON-04); `edad_s` ≈ el tiempo transcurrido ± 5 s | Un evento ausente, duplicado o fuera de orden | bench |
+| FR-PUB-04 | Lógica pura de la cola: llenado, orden, `edad_s` | Orden de llegada; `edad_s` correcta | Pérdida con la cola sin llenar | host |
+| FR-PUB-05 | Lógica pura: 40 eventos con 2 `fuga` entre ellos y la cola de 32 | Los 2 `fuga` se conservan; `eventos_perdidos` = 8 | Un `fuga` descartado; contador distinto | host |
 | FR-ORD-01 | Cada orden en cada estado relevante | Estado final o rechazo con motivo | Silencio | bench |
 | FR-ORD-02 | 300 bytes, `{`, `{"accion":"x"}`, `{"accion":5}` | `orden_rechazada`; sin movimiento; `uptime` sigue creciendo | Reinicio; movimiento | bench |
 | FR-ORD-03 | Publicar `abrir` con retain y reconectar | Sin efecto | Apertura | bench |
@@ -904,6 +981,7 @@ Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; P-valores propuest
 | `t_carrera_max_s` | entero | 30 | 5–120 | P3 |
 | `ejercicio_dias` | entero | 30 | 7–90 | D12 |
 | `ejercicio_hora` | entero (hora local: UTC−4 sin horario de verano, TZ POSIX `AST4`) [user, 2026-11-15] | 3 | 0–23 | D12 |
+| `casa_cerrada` | bool | true (P22, propuesto) | — | FR-SON-05, H-93 |
 | `zumbador_activo` | bool | true | — | D16 |
 | `zumbador_min` | entero | 5 | 1–30 | D16 |
 | `rango_transductor_cm` | entero | 500 | 50–1000 | FR-NIV-01 |
@@ -920,6 +998,8 @@ Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; P-valores propuest
 | `ciclado_ventana_min` | entero | 60 | 10–240 | P7 |
 
 Ningún rango permite apagar el cierre por fuga ni el corte por seco o por flotador (D17).
+`casa_cerrada`=false apaga solo el cierre preventivo de FR-SON-05, nunca el cierre por
+fuga; es la decisión del propietario para la casa ocupada (H-93).
 `i_seco_a` sin configurar no apaga el corte por flotador ni por nivel crítico.
 
 ## 20. Observabilidad
@@ -960,7 +1040,10 @@ Se hereda el perfil «LAN doméstica, repositorio público» de clima §19.1, co
 | Integridad del firmware | Heredada en desarrollo. En la placa de producción: firma + Secure Boot v2 + cifrado de flash, activados al instalar (P14, FR-SEC-A4) |
 
 **Riesgos aceptados.** (b′) puede **cerrar** la válvula o **cortar** la bomba (deja la
-casa sin agua, un fallo seguro) y puede leer los estados. No puede abrir con una sonda
+casa sin agua, un fallo seguro) y puede leer los estados. Con `config/set` también puede
+poner `casa_cerrada`=false y apagar el cierre preventivo de FR-SON-05 (no el cierre por
+fuga); el cambio sale en `config/state` y HA puede avisarlo (propuesto con P22, pendiente
+de que el propietario lo acepte como riesgo). No puede abrir con una sonda
 mojada, permitir la bomba sin agua ni apagar una protección (FR-SEC-A1).
 
 ### 21.2 Requisitos
@@ -1016,7 +1099,7 @@ cambio de la batería.
 | L2 (§5–§9) | host (tablas de transición, umbrales, guardas, ventanas de tiempo) + bench | La lógica de protección debe ser pura y testeable en host |
 | L1 (§12–§16) | bench | Necesita las capacidades de simulación de §3.1 |
 | L0 (§17) | target + bench (heredado) | — |
-| Instalación | field | Calibración, NC de la bomba, finales reales; nunca se inyectan fugas reales sin supervisión |
+| Instalación | field | Calibración, NC de la bomba, finales reales, §25; nunca se inyectan fugas reales sin supervisión |
 
 La matriz y el plan de pruebas los genera `/build` desde los contratos.
 
@@ -1028,11 +1111,36 @@ La matriz y el plan de pruebas los genera `/build` desde los contratos.
 4. **Apagón largo:** red ausente → batería baja → crítica → cierre preventivo → vuelve la red → reapertura.
 5. **Ataque en la LAN:** con una fuga activa, órdenes de abrir y configuraciones hostiles → sin efecto (FR-SEC-A1).
 
+En el journey 1, el `fuga` que recibe HA al volver la red sale de la cola de FR-PUB-04 (H-93).
+
+## 25. Instalación y vigilancia externa (H-93)
+
+Requisitos que no cumple el firmware del nodo sino la instalación y el sistema de la
+casa. Se verifican en la puesta en marcha (§3.5) y entran en la auditoría S2.
+
+- **C-INS-01** [Must] [user] H-93: el módem, el router principal del mesh, el satélite que
+  da cobertura al nodo, el switch y la Pi del broker deben alimentarse desde un circuito
+  respaldado (inversor o UPS), igual que el nodo (C-HW-20).
+- **C-INS-02** [Must] [user] H-93: en producción, `mqtt_host` debe ser una dirección IPv4
+  (no un nombre) y el router debe tener reservas DHCP para el nodo y para la Pi del broker.
+- **FR-VIG-01** [Must] [user] H-93 (A-16 del propietario): si durante **15 min** no hay
+  constancia, fuera de la casa, de que el nodo publica su `status` en vivo, el propietario
+  deberá recibir un aviso en el teléfono por un canal que no dependa de la Pi ni de la
+  conexión a internet de la casa (por ejemplo, un servicio externo que espera un latido y
+  avisa cuando falta). La caída de la Pi, del switch, del router o de internet deberá
+  producir el mismo aviso.
+
+| ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
+|---|---|---|---|---|
+| C-INS-01 | Puesta en marcha: quitar la luz general | `valvula/state` y `status` siguen llegando a HA durante 30 min de apagón | HA sin datos del nodo durante el apagón | field |
+| C-INS-02 | Revisión de la configuración de producción (S2) y del router; luego apagar el DNS del router 10 min | `mqtt_host` es IPv4; reservas presentes; el nodo sigue en OPERATIVO | Un nombre en `mqtt_host`; salida de OPERATIVO | field |
+| FR-VIG-01 | Cuatro cortes, uno cada vez: switch de la Pi, la Pi, el internet de la casa (desconectar el módem) y el nodo | En cada uno, aviso en el teléfono en ≤ 15 min más el periodo de comprobación del canal (que queda anotado en la instalación) | Ningún aviso; aviso que llega por la Pi | field |
+
 ---
 
 ## Apéndice A — Constantes
 
-Ver §4.4 (D1–D18, P1–P20) y §19. Todo valor numérico normativo de este documento
+Ver §4.4 (D1–D18, P1–P27, H-93) y §19. Todo valor numérico normativo de este documento
 procede de una de esas dos tablas.
 
 ## Relacionado
