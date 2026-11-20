@@ -1177,6 +1177,19 @@ tests:
       casa hasta el sábado), con el fork del banco reinstalado en 6dffd70. Un solo comando:
       scripts/bench/tc_wdt_01_24h.sh (comprueba repo, imagen, piloto, candado, AP, broker,
       panel y SLOT2; --check solo comprueba). Hasta entonces no se usa el banco
+    intento_2: >
+      2026-11-19 18:03:28 → 2026-11-20 08:08 (UTC−4), 934735c, imagen 0.0.0-3e3ffe7-bench,
+      banco 6dffd70, SLOT2: not done a las 14 h 07 min, durante el corte de Wi-Fi de las 08:03.
+      La laptop que corre la prueba cambió sola de red Wi-Fi al caerse el internet de la casa y
+      perdió la LAN del banco (CommandTimeout en GET /api/serial/output y luego en
+      POST /api/test/update; propietario, 2026-11-20). No es fallo del firmware. La evidencia no
+      se guardó (benchlib escribía el .md después de avisar al banco, que no respondía): el
+      directorio test-results/20261119T220126Z-934735c/ quedó vacío. Comprobado después en la
+      consola del SLOT2 que guarda el banco (08:11 → 12:28): ningún rst:, ni task_wdt, ni
+      arranque; el uptime de los logs (66 360 s a las 12:28:28) sitúa el último arranque en la
+      grabación de la prueba (≈ 18:02 del 19), así que el nodo no se reinició en todo el
+      intento. La limpieza tampoco llegó al banco: el panel y el broker de la prueba se cerraron
+      a mano el 2026-11-20 antes de repetir
   - id: TC-WDT-02
     shape: atomic
     kind: standard

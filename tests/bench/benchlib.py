@@ -63,10 +63,12 @@ def case(tb, tid, name, run_dir, requires=None, spec="JRN-01 villa-nodo-agua"):
         raise
     finally:
         c.detail = c._r(c.detail)
+        c.lines += ["", f"**Resultado: {c.result}** — {c.detail}", ""]
+        # La evidencia primero: si el banco no responde (p. ej. el host perdió la LAN,
+        # TC-WDT-01 intento_2), el .md queda escrito igual.
+        (run_dir / f"{tid}.md").write_text(c._r("\n".join(c.lines)))
         tb.test_result(tid, name, c.result, c.detail[:200])
         tb.test_end()
-        c.lines += ["", f"**Resultado: {c.result}** — {c.detail}", ""]
-        (run_dir / f"{tid}.md").write_text(c._r("\n".join(c.lines)))
 
 
 def _parse_flash_args(coldflash: pathlib.Path) -> dict:
