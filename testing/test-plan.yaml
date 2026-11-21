@@ -1615,7 +1615,7 @@ tests:
       variante con lo que el banco ya tiene: broker parado (conexión rechazada, no DROP) 25 min con el AP arriba → las mismas
       dos reasociaciones a 10 y 20 min ± 30 s, sin reinicio, OPERATIVO ≤ 75 s tras arrancar el broker. Prueba la cuenta de 10 min
       y la reasociación; no sustituye a TC-CON-A4 (el DROP cambia los tiempos de TCP)
-    impl: null
+    impl: tests/bench/test_mqtt.py::test_tc_con_a5_reasociar_sin_broker
     status: not_run
 
   # --- H-96 (FSD 0.8.1, P28–P34 aceptados): medidor testigo en GPIO18 (rama integracion-6.0.3-h95) ---
