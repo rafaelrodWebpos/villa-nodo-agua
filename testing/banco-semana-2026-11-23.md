@@ -35,6 +35,7 @@ bloques 5–7.
 | TC-IO-A6 | FR-IO-06 con las dos casas | `bench-ads-desconexion` (con el montaje puede hacerse con un aviso al operador), `bench-salidas-dut` | Ídem |
 | TC-CON-A3 | FR-CON-A1 | `bench-dhcp-off` (CR-TB-24) | Próxima ronda del fork. Hasta entonces, **bloqueada, no fallida** |
 | TC-CON-A4 | FR-CON-A2 (DROP) | `bench-broker-blackhole` (CR-TB-23) | Ídem. TC-CON-A5 cubre la cuenta de 10 min, pero no el DROP |
+| TC-MED-A4…A7 | FR-MED-01/03…07 (H-96, propuesto) | `bench-pulsos-medidor` (sin número) | Además, P28–P33 sin aceptar. Las pruebas de host TC-MED-A1…A3 se escriben antes que el código |
 
 Mientras tanto, la lógica de FR-SON-04/05, FR-IO-06 y FR-CON-A1/A2 está cubierta en host:
 TC-PROT-A1 (ciego, falla_vref, ads), TC-VAL-A1 (V24/V25) y TC-CON-A1.
@@ -42,3 +43,5 @@ TC-PROT-A1 (ciego, falla_vref, ads), TC-VAL-A1 (V24/V25) y TC-CON-A1.
 ## Lo que hay que decidir
 
 - Un número CR-TB para `bench-vref-lazos` (llevar A3 fuera de 3,0–3,6 V), o ampliar CR-TB-16 para que lo cubra.
+- Un número CR-TB para `bench-pulsos-medidor` (H-96), o ampliar CR-TB-18 para que lo cubra.
+- Aceptar o corregir P28–P33 (FSD 0.8.0, §4.4).

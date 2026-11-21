@@ -154,6 +154,7 @@ capabilities:
   bench-ads-desconexion:   {what: desconectar y reconectar un ADS1115 en marcha (FR-IO-06), available: no, reason: sin instrumento; con nodo-io-montaje puede hacerse con bench-operator-prompt (acto físico)}
   bench-dhcp-off:          {what: apagar solo el DHCP del AP del banco con el AP arriba, con contrato DHCP corto (FR-CON-A1), available: no, reason: CR-TB-24 (H-94 del piloto) — próxima ronda del fork}
   bench-broker-blackhole:  {what: descartar (DROP, sin RST) el tráfico del DUT al puerto 1883 (FR-CON-A2), available: no, reason: CR-TB-23 (H-94 del piloto) — próxima ronda del fork}
+  bench-pulsos-medidor:    {what: tren de cierres de contacto seco en GPIO18 del DUT con duración, periodo y rebote programables (FR-MED-*, H-96), available: no, reason: sin número CR-TB — lo asigna el propietario, o se amplía CR-TB-18 (bench-entradas-digitales)}
 
   # --- infraestructura propia ---
   hosted-ci:              {what: runner alojado de GitHub (host, build, escaneo de secretos), available: yes}
@@ -1616,6 +1617,103 @@ tests:
       y la reasociación; no sustituye a TC-CON-A4 (el DROP cambia los tiempos de TCP)
     impl: null
     status: not_run
+
+  # --- H-96 (FSD 0.8.0, propuesto): medidor testigo en GPIO18 (rama integracion-6.0.3-h95) ---
+  - id: TC-MED-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-MED-01, FR-MED-02, FR-MED-04]
+    needs: [hosted-ci]
+    expect: >
+      marcas de tiempo simuladas: cierres de 60/60 ms cuentan, 40 ms no, 5 rebotes de 3 ms = 1 pulso, 5 pulsos/s exactos; 10 pulsos a 1,0 gal y 10 a 0,5 → 37,85 y 56,78 L ± 0,01 sin recalcular ni bajar; 50 L en 5 min → caudal_lh 600
+    impl: null
+    status: not_run
+    nota: "propuesto (FSD 0.8.0, H-96): no es normativo hasta que el propietario acepte P28–P33"
+  - id: TC-MED-A2
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [FR-MED-05, FR-MED-06, FR-MED-08]
+    needs: [hosted-ci]
+    expect: >
+      casa_cerrada × periodo (sin, dentro, margen, vencido) × litros (19, 21): evento solo con true, fuera de periodo y 21 L, uno por episodio; una orden nueva solo alarga; nivel 100→112 cm sin pulsos → un medidor_falla, ninguno con pulsos o con el nivel en falla
+    impl: null
+    status: not_run
+    nota: "propuesto (FSD 0.8.0, H-96): no es normativo hasta que el propietario acepte P28–P33"
+  - id: TC-MED-A3
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-MED-03]
+    needs: [hosted-ci]
+    expect: >
+      reloj simulado: 5 min de pulsos → ≤ 1 escritura de NVS cada 60 s; 10 min sin pulsos → 0 escrituras; reinicio ordenado → escritura antes
+    impl: null
+    status: not_run
+    nota: "propuesto (FSD 0.8.0, H-96): no es normativo hasta que el propietario acepte P28–P33"
+  - id: TC-MED-A4
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-MED-01, FR-MED-03]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-pulsos-medidor, bench-serial-monitor, dut-board]
+    salvedad: bench-pulsos-medidor sin número CR-TB; hasta que exista queda bloqueada, no fallida
+    expect: >
+      1000 cierres de 100 ms cada 200 ms con 3 rebotes de 2 ms por flanco y el AP apagado a la mitad → pulsos = 1000; 300 pulsos + esp_restart → 300; 300 más + 90 s + corte de alimentación → 600, nvs=1 en A8
+    impl: null
+    status: not_run
+    nota: "propuesto (FSD 0.8.0, H-96): no es normativo hasta que el propietario acepte P28–P33"
+  - id: TC-MED-A5
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench
+    verifies: [FR-MED-04, FR-MED-06, FR-MED-07]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-pulsos-medidor, bench-serial-monitor, dut-board]
+    salvedad: bench-pulsos-medidor sin número CR-TB; hasta que exista queda bloqueada, no fallida
+    expect: >
+      suscriptor a #: 5 min con un pulso cada 6 s → 5 ± 1 `medidor`, caudal_lh ≈ 2271 ± 5 %, total creciente; casa_cerrada=true, permitir_consumo 30 min y 25 L a los 10 min → sin evento; consumo_casa_cerrada provocado → válvula y permiso sin cambios
+    impl: null
+    status: not_run
+    nota: "propuesto (FSD 0.8.0, H-96): no es normativo hasta que el propietario acepte P28–P33"
+  - id: TC-MED-A6
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench
+    verifies: [FR-MED-05]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-pulsos-medidor, bench-serial-monitor, dut-board, bench-broker-outage]
+    salvedad: bench-pulsos-medidor sin número CR-TB; hasta que exista queda bloqueada, no fallida
+    expect: >
+      casa_cerrada=true, broker parado, 25 L en 10 min, broker arrancado → consumo_casa_cerrada desde la cola con edad_s, uno solo
+    impl: null
+    status: not_run
+    nota: "propuesto (FSD 0.8.0, H-96): no es normativo hasta que el propietario acepte P28–P33"
+  - id: TC-MED-A7
+    shape: atomic
+    kind: negative
+    wave: 3
+    phase: 2
+    tier: bench
+    verifies: [FR-MED-06]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-pulsos-medidor, bench-serial-monitor, dut-board]
+    salvedad: bench-pulsos-medidor sin número CR-TB; hasta que exista queda bloqueada, no fallida
+    expect: >
+      medidor/set con min=0, min=721, {"accion":5} y 300 bytes → orden_rechazada, sin cambio del periodo, uptime sigue creciendo
+    impl: null
+    status: not_run
+    nota: "propuesto (FSD 0.8.0, H-96): no es normativo hasta que el propietario acepte P28–P33"
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
