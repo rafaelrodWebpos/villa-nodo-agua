@@ -150,6 +150,10 @@ capabilities:
   bench-tensiones:         {what: 0–5 V en presión y Vbat equivalente, available: no, reason: CR-TB-20 — ídem}
   bench-senal-pinza:       {what: senoide de 60 Hz de amplitud programable en la entrada de la pinza, available: no, reason: CR-TB-21 — ídem}
   bench-salidas-dut:       {what: leer IN1, IN2, relé, zumbador y LED con marca de tiempo, available: no, reason: CR-TB-22 — ídem}
+  bench-vref-lazos:        {what: llevar A3 del 0x4A (referencia de los lazos) fuera de 3,0–3,6 V y devolverla (FR-SON-04/05), available: no, reason: ninguna de CR-TB-16…22 la cubre — el número o la ampliación de CR-TB-16 los decide el propietario}
+  bench-ads-desconexion:   {what: desconectar y reconectar un ADS1115 en marcha (FR-IO-06), available: no, reason: sin instrumento; con nodo-io-montaje puede hacerse con bench-operator-prompt (acto físico)}
+  bench-dhcp-off:          {what: apagar solo el DHCP del AP del banco con el AP arriba, con contrato DHCP corto (FR-CON-A1), available: no, reason: CR-TB-24 (H-94 del piloto) — próxima ronda del fork}
+  bench-broker-blackhole:  {what: descartar (DROP, sin RST) el tráfico del DUT al puerto 1883 (FR-CON-A2), available: no, reason: CR-TB-23 (H-94 del piloto) — próxima ronda del fork}
 
   # --- infraestructura propia ---
   hosted-ci:              {what: runner alojado de GitHub (host, build, escaneo de secretos), available: yes}
@@ -1337,7 +1341,7 @@ tests:
     wave: 1
     phase: 1
     tier: host
-    verifies: [V01, V02, V03, V04, V05, V06, V07, V08, V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, FR-VAL-06, FR-VAL-11, FR-EJE-03]
+    verifies: [V01, V02, V03, V04, V05, V06, V07, V08, V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, V24, V25, FR-VAL-06, FR-VAL-11, FR-EJE-03]
     needs: [hosted-ci]
     expect: >
       tabla de §5.3 (FSD 0.5.0) como prueba parametrizada: cada fila V01–V23 (con V03b) produce su estado, su acción (motor, rechazo, evento, marcas) y nada más; V07 solo al superar P3; completitud: en todas las combinaciones (estado × evento × finales × g_seco × marcas), o una fila admitida para ese par o el par se ignora sin ningún efecto; nunca IN1 e IN2 a la vez (el motor es un único valor); la fuga siempre gana: desde cualquier estado salvo ARRANQUE (imposible por construcción), fuga y final «cerrada» dejan CERRADA con bloqueo_fuga = 1 y cerrada_por = fuga, y nada sin g_seco la reabre (FR-EJE-03, parte host)
@@ -1481,11 +1485,14 @@ tests:
     wave: 1
     phase: 1
     tier: host
-    verifies: [FR-FUG-02, FR-FUG-03, FR-VAL-05, FR-VAL-06, FR-VAL-11, FR-PER-01, FR-PER-02, FR-PER-03, FR-IO-06, FR-SON-01, FR-SON-02, FR-SON-03, FR-BOM-03, FR-BOM-04, FR-BOM-10, FR-ENE-04, FR-ENE-05, FR-LOC-01, FR-LOC-02, FR-LOC-03, FR-EJE-01, FR-EJE-03]
+    verifies: [FR-FUG-02, FR-FUG-03, FR-VAL-05, FR-VAL-06, FR-VAL-11, FR-PER-01, FR-PER-02, FR-PER-03, FR-IO-06, FR-SON-01, FR-SON-02, FR-SON-03, FR-SON-04, FR-SON-05, FR-BOM-03, FR-BOM-04, FR-BOM-10, FR-ENE-04, FR-ENE-05, FR-LOC-01, FR-LOC-02, FR-LOC-03, FR-EJE-01, FR-EJE-03]
     needs: [hosted-ci]
     expect: >
       el núcleo de protección cada 10 ms sobre una planta simulada (válvula de 3 s con finales, 8 lazos, 3 ADS1115, flotador, red, batería, presión, pinza, botón), 11 escenarios: arranque sin mover el motor; fuga confirmada en ≤ 1,25 s, IN1 ≤ 500 ms, motor parado ≤ 100 ms tras el final, bloqueo guardado, bomba igual, LED rojo y zumbador que la pulsación corta silencia; arranque con sonda mojada → CERRANDO ≤ 1,5 s; restauración de NVS con relé alto desde el primer paso y 0 escrituras sin cambios; ADS 0x49 caído → falla_adc y sondas 5–8 en falla ≤ 2 s sin cierre; lazo abierto 6 s → un falla_sonda a los 5 s, sonda inactiva sin eventos; seco a los 10 ± 1 s solo con presión baja e i_seco configurado; flotador sin agua → relé ≤ 1 s, rechazo y rearme con pulsación larga; cierre por batería y reapertura a los 5 min; pulsación de 2,5 s sin efecto y de 3,5 s que abre; ejercicio completo y fuga durante el ejercicio → CERRADA con bloqueo; FSD 0.6.0: flotador en falla (FR-BOM-10) a los 10 min con nivel 50 %, PERMITIDA protegida por seco, rearmar, y B02 otra vez con el transductor en falla, nunca con nivel 20 %; referencia de los lazos medida en A3 (un lazo en 0,42 con 3,0 V reales es seca) y aviso con la nominal. Es la parte host: los contratos de banco de esos requisitos van con la compra
-    impl: tests/host/test_proteccion.c (13 escenarios)
+    impl: "tests/host/test_proteccion.c (13 escenarios en main; 15 en la rama integracion-6.0.3-h95, con ciego, falla_vref y ads con las dos casas)"
+    rama: >
+      integracion-6.0.3-h95 ab3ddb2 (FSD 0.7.2, ESP-IDF 6.0.3): ctest 52/52 en local en espressif/idf v6.0.3,
+      2026-11-21; la CI de host solo corre en main, así que el resultado de arriba sigue siendo el de main
     status: successful
     commit: 98310bd
     date: 2026-11-15
@@ -1493,6 +1500,122 @@ tests:
     evidence: CI host-tests (ctest), log del run 43743225426
     observed: >
       FSD 0.6.0: 13 escenarios en verde; flotador_falla a los 600 s y B02 otra vez con el transductor en falla; mutantes sin FR-BOM-10 y sin la referencia medida tumban su escenario. Firmware compilado en la CI (Build Firmware 43743225487).
+
+  # --- H-95 (FSD 0.7.2): núcleos nuevos en host (rama integracion-6.0.3-h95) ---
+  - id: TC-CON-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: host
+    verifies: [FR-CON-A1, FR-CON-A2]
+    needs: [hosted-ci]
+    expect: >
+      reloj simulado: asociado sin IP 59 s → nada, 60 s → wifi_down una vez; con IP o desasociado antes, nada;
+      10 min sin broker → una reasociación, la siguiente como pronto 10 min después; broker de vuelta o Wi-Fi
+      caído anulan la cuenta; desborde del reloj
+    impl: tests/host/test_vigia.c (components/conectividad/conectividad_vigia.c)
+    status: not_run
+    rama: integracion-6.0.3-h95 ab3ddb2 — en verde en local (ctest), 2026-11-21; pasa a CI al mezclar a main
+  - id: TC-PUB-A4
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [FR-PUB-04, FR-PUB-05]
+    needs: [hosted-ci]
+    expect: >
+      cola de 32: orden de llegada, edad_s, ts solo con hora válida, solo los eventos críticos; 40 eventos con 2
+      fuga → 8 perdidos y los 2 fuga conservados; todos fuga → sale el fuga más antiguo
+    impl: tests/host/test_cola_eventos.c (components/eventos/cola_eventos.c)
+    status: not_run
+    rama: integracion-6.0.3-h95 ab3ddb2 — en verde en local (ctest), 2026-11-21; la cola aún no está conectada al publicador (§13, Fase 2)
+
+  # --- H-95 (FSD 0.7.2): pruebas de banco declaradas; ejecutables por escribir ---
+  - id: TC-SON-A4
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-SON-04, FR-LOC-04]
+    needs: [bench-driver, bench-flash, bench-serial-monitor, bench-vref-lazos, bench-salidas-dut, nodo-io-montaje, dut-board]
+    expect: >
+      el banco baja A3 a 2,5 V durante 6 s y la devuelve a 3,3 V: un falla_vref a 5 s ± 1 s, línea son: vref nominal,
+      LED rojo 1 Hz; sin falla_vref repetidos; al volver, LED según el resto. No debe: ningún evento, repetidos, reinicio
+    impl: null
+    status: not_run
+  - id: TC-SON-A5
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-SON-05, V24, V25]
+    needs: [bench-driver, bench-flash, bench-serial-monitor, bench-lazos-fuga, bench-vref-lazos, bench-salidas-dut, bench-finales-valvula, valvula-real, nodo-io-montaje, dut-board]
+    expect: >
+      válvula ABIERTA, broker apagado y Wi-Fi caído; casa_cerrada=true (fábrica): el banco abre los lazos 2 y 7 durante 6 s →
+      IN1 en alto a 5 s + 500 ms del segundo lazo, cerrada_por=sondas, bloqueo_fuga sin cambio; pulsación larga rechazada (V25);
+      sin reapertura automática al secar. Repetir con la referencia en falla. Con casa_cerrada=false (NVS de la imagen de banco):
+      solo falla_sonda/falla_vref, sin movimiento
+    impl: null
+    status: not_run
+  - id: TC-IO-A6
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-IO-06, FR-SON-05]
+    needs: [bench-driver, bench-flash, bench-serial-monitor, bench-ads-desconexion, bench-salidas-dut, nodo-io-montaje, dut-board]
+    expect: >
+      casa_cerrada=false: desconectar el ADS1115 0x49 en marcha → falla_adc y sondas 5–8 en falla ≤ 2 s, sin pánico y sin cierre.
+      Repetir con casa_cerrada=true: lo mismo y cierre por V24. No debe: reinicio; con false, cierre
+    impl: null
+    status: not_run
+  - id: TC-CON-A3
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-CON-A1]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-dhcp-off, bench-serial-monitor, dut-board]
+    salvedad: bench-dhcp-off es CR-TB-24 (próxima ronda del fork); hasta que exista queda bloqueada, no fallida
+    expect: >
+      banco con el DHCP apagado y el AP arriba: con: … (wifi_down) a 60 s ± 2 s del asociado sin IP; OPERATIVO ≤ 90 s tras volver
+      el DHCP (clima:FR-CON-03). No debe: nodo mudo sin causa
+    impl: null
+    status: not_run
+  - id: TC-CON-A4
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-CON-A2]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-broker-blackhole, bench-serial-monitor, dut-board]
+    salvedad: bench-broker-blackhole es CR-TB-23 (próxima ronda del fork); hasta que exista queda bloqueada, no fallida
+    expect: >
+      broker en DROP 25 min con el AP arriba: una reasociación a los 10 min ± 30 s y otra a los 20 min ± 30 s; ningún reinicio;
+      OPERATIVO ≤ 75 s tras quitar el DROP. No debe: reasociar antes de 10 min; reinicio
+    impl: null
+    status: not_run
+  - id: TC-CON-A5
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 1
+    tier: bench
+    verifies: [FR-CON-A2]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-broker-outage, bench-serial-monitor, dut-board]
+    expect: >
+      variante con lo que el banco ya tiene: broker parado (conexión rechazada, no DROP) 25 min con el AP arriba → las mismas
+      dos reasociaciones a 10 y 20 min ± 30 s, sin reinicio, OPERATIVO ≤ 75 s tras arrancar el broker. Prueba la cuenta de 10 min
+      y la reasociación; no sustituye a TC-CON-A4 (el DROP cambia los tiempos de TCP)
+    impl: null
+    status: not_run
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
