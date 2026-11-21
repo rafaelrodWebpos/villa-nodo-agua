@@ -121,7 +121,7 @@ add_test(NAME TC-NIV-A1 COMMAND test_nucleo niv)
 add_test(NAME TC-PRE-A1 COMMAND test_nucleo pre)
 add_test(NAME TC-CIC-A1 COMMAND test_nucleo cic)
 
-# Tablas y núcleos de §5–§8: TC-VAL-A1 · V01–V23, TC-EJE-A1 · FR-EJE-01, TC-BOM-A1 · B01–B11, TC-ENE-A2 · FR-ENE-04/05
+# Tablas y núcleos de §5–§8: TC-VAL-A1 · V01–V25, TC-EJE-A1 · FR-EJE-01, TC-BOM-A1 · B01–B11, TC-ENE-A2 · FR-ENE-04/05
 # (+ FR-BOM-05/07 host), TC-BOM-A2 · FR-BOM-03, TC-LOC-A1 · FR-LOC-04, TC-SON-A1 · FR-SON-01
 add_executable(test_tablas test_tablas.c ${COMP}/valvula/valvula.c ${COMP}/bomba/bomba.c ${COMP}/interfaz/interfaz.c ${COMP}/fugas/fugas.c ${COMP}/energia/energia.c)
 target_include_directories(test_tablas PRIVATE ${COMP}/valvula/include ${COMP}/bomba/include ${COMP}/interfaz/include ${COMP}/fugas/include ${COMP}/energia/include)
@@ -143,6 +143,14 @@ add_test(NAME TC-IO-A1 COMMAND test_es)
 add_executable(test_proteccion test_proteccion.c ${COMP}/proteccion/proteccion.c ${COMP}/es/es.c ${NUCLEOS})
 target_include_directories(test_proteccion PRIVATE ${NUCLEOS_INC} ${COMP}/proteccion/include)
 target_link_libraries(test_proteccion m)
-foreach(caso arranque fuga arranque_mojado restaurar ads sondas seco flotador bateria boton ejercicio flotador_falla vref)
+foreach(caso arranque fuga arranque_mojado restaurar ads sondas seco flotador bateria boton ejercicio flotador_falla vref ciego falla_vref)
   add_test(NAME TC-PROT-A1-${caso} COMMAND test_proteccion ${caso})
 endforeach()
+
+# FSD 0.7.1 (H-93/H-95): TC-CON-A1 · FR-CON-A1/A2 (vigilancia de IP y de broker); TC-PUB-A4 · FR-PUB-04/05 (cola de eventos críticos)
+add_executable(test_vigia test_vigia.c ${COMP}/conectividad/conectividad_vigia.c)
+target_include_directories(test_vigia PRIVATE ${COMP}/conectividad/include)
+add_test(NAME TC-CON-A1 COMMAND test_vigia)
+add_executable(test_cola_eventos test_cola_eventos.c ${COMP}/eventos/cola_eventos.c)
+target_include_directories(test_cola_eventos PRIVATE ${COMP}/eventos/include)
+add_test(NAME TC-PUB-A4 COMMAND test_cola_eventos)

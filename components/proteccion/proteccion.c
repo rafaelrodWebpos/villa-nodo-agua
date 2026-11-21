@@ -10,7 +10,7 @@ void prot_config_fabrica(prot_config_t *c)
         .rango_transductor_cm = 500, .altura_util_cm = 200,
         .i_marcha_a = 0.5f, .i_seco_a = 0.0f, .p_min_bar = 0.5f, .t_seco_s = 10,
         .ciclado_max = 6, .ciclado_ventana_s = 60 * 60,
-        .zumbador_activo = true, .zumbador_min = 5,
+        .zumbador_activo = true, .zumbador_min = 5, .casa_cerrada = true,
     };
     for (int i = 0; i < PROT_N_SONDAS; i++) c->sonda_activa[i] = true;
 }
@@ -44,6 +44,15 @@ bool prot_sonda_mojada(const prot_t *p)
     return false;
 }
 
+bool prot_g_ciego(const prot_t *p)
+{
+    if (!p->cfg.casa_cerrada) return false;
+    if (p->vref_falla) return true;
+    int n = 0;
+    for (int i = 0; i < PROT_N_SONDAS; i++) if (p->cfg.sonda_activa[i] && p->falla_avisada[i]) n++;
+    return n >= PROT_CIEGO_MIN_SONDAS;
+}
+
 static void emitir(prot_salida_t *s, prot_ev_tipo_t t, int a, int b, int c, int d)
 {
     if (s->n_ev < PROT_MAX_EVENTOS) s->ev[s->n_ev++] = (prot_evento_t){ t, a, b, c, d };
@@ -54,7 +63,7 @@ static void rechazo(prot_t *p, uint32_t t_ms) { p->rechazo_hasta_ms = t_ms + 200
 static void aplicar_val(prot_t *p, const prot_entrada_t *e, val_evento_t ev, prot_salida_t *s)
 {
     val_estado_t desde = p->val.estado;
-    val_entrada_t ve = { ev, p->finales, !prot_sonda_mojada(p), e->t_ms };
+    val_entrada_t ve = { ev, p->finales, !prot_sonda_mojada(p), e->t_ms, prot_g_ciego(p) };
     val_accion_t a = val_evento(&p->val, &ve);
     if (a.fila == 0) return;
     emitir(s, PEV_VAL, a.fila, desde, p->val.estado, ev);
@@ -63,7 +72,7 @@ static void aplicar_val(prot_t *p, const prot_entrada_t *e, val_evento_t ev, pro
     else if (a.motor == VMOT_PARAR) p->motor = ES_MOTOR_PARADO;
     if (a.evento == VPUB_FALLA_VALVULA) emitir(s, PEV_FALLA_VALVULA, 0, 0, 0, 0);
     if (a.evento == VPUB_MOVIMIENTO_MANUAL) emitir(s, PEV_MOVIMIENTO_MANUAL, 0, 0, 0, 0);
-    if (a.patron_rechazo) { rechazo(p, e->t_ms); emitir(s, PEV_RECHAZO, 1, 0, 0, 0); }
+    if (a.patron_rechazo) { rechazo(p, e->t_ms); emitir(s, PEV_RECHAZO, a.rechazo == VRECH_SONDAS_EN_FALLA ? 3 : 1, 0, 0, 0); }
     if ((a.fila == 6 || a.fila == 12) && e->hora_valida) p->ultimo_mov_s = e->ahora_s;   /* movimiento completo */
 }
 
@@ -89,8 +98,19 @@ static void medidas(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     /* Referencia de los lazos: A3 del 0x4A o la nominal (FSD 0.6.0) */
     bool nominal;
     p->vref = es_vref(p->ads_ok[2], e->v_ref, &nominal);
-    if (nominal != p->vref_nominal) emitir(s, PEV_VREF, nominal, 0, 0, 0);
+    if (nominal != p->vref_nominal) {
+        emitir(s, PEV_VREF, nominal, 0, 0, 0);
+        p->vref_nominal_desde_ms = e->t_ms;
+    }
     p->vref_nominal = nominal;
+    /* FR-SON-04: la referencia en falla 5 s seguidos es el evento falla_vref (una vez por cambio) */
+    if (nominal && !p->vref_falla && e->t_ms - p->vref_nominal_desde_ms >= PROT_FALLA_VREF_MS) {
+        p->vref_falla = true;
+        emitir(s, PEV_FALLA_VREF, 1, 0, 0, 0);
+    } else if (!nominal && p->vref_falla) {
+        p->vref_falla = false;
+        emitir(s, PEV_FALLA_VREF, 0, 0, 0, 0);
+    }
     /* Sondas: clase (FR-SON-01) y falla (FR-SON-02); las inactivas no cuentan (FR-SON-03) */
     for (int i = 0; i < PROT_N_SONDAS; i++) {
         if (!p->cfg.sonda_activa[i]) {
@@ -150,6 +170,7 @@ static void medidas(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
                  p->cfg.nivel_rearme_pct, p->cfg.t_rearme_s))
         aplicar_bom(p, e, BEV_REARME_CUMPLIDO, s);             /* B05/B06 */
     if (p->bateria_conocida && ene_cierre(p->bateria, p->red_presente)) aplicar_val(p, e, VEV_BATERIA_CIERRE, s);
+    if (prot_g_ciego(p)) aplicar_val(p, e, VEV_CIEGO, s);       /* V24, FR-SON-05: de nivel */
     if (ok && ene_reapertura(&p->reap, e->t_s, p->red_presente, p->vbat)) aplicar_val(p, e, VEV_BATERIA_REAPERTURA, s);
     if (p->val.estado == VAL_CERRADA && p->val.cerrada_por == VCP_EJERCICIO) aplicar_val(p, e, VEV_FINALES, s);   /* V14 */
     if (e->hora_valida) {                                      /* FR-EJE-01 */
@@ -182,6 +203,7 @@ static void salidas(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     s->rele = bom_rele(&p->bom);
     bool fuga = false, sonda_falla = false;
     for (int i = 0; i < PROT_N_SONDAS; i++) { fuga |= p->confirmada[i]; sonda_falla |= p->falla_avisada[i]; }
+    sonda_falla |= p->vref_falla;                               /* §8.2 prioridad 2 (FR-SON-04) */
     if (fuga && !p->fuga_activa) { p->fuga_desde_ms = e->t_ms; p->silenciado = false; }
     p->fuga_activa = fuga;
     loc_entrada_t le = { fuga, p->val.estado == VAL_FALLA, p->bom.estado == BOM_BLOQUEADA, sonda_falla,

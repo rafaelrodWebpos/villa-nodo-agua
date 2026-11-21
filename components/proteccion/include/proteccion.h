@@ -15,6 +15,8 @@
 #define PROT_N_SONDAS 8
 #define PROT_PERIODO_MS 10u            /* paso de la tarea (FR-VAL-05: ≤ 100 ms con el antirrebote) */
 #define PROT_FALLA_SONDA_MS 5000u      /* FR-SON-02 */
+#define PROT_FALLA_VREF_MS 5000u       /* FR-SON-04 (FSD 0.7.1) */
+#define PROT_CIEGO_MIN_SONDAS 2        /* FR-SON-05: N = 2 (H-93) */
 #define PROT_FLOTADOR_FALLA_S 600u     /* FR-BOM-10: 10 min */
 
 /* Valores de fábrica de §19 (la configuración por MQTT, §16, es de la Fase 2) */
@@ -31,6 +33,7 @@ typedef struct {
     uint32_t ciclado_ventana_s;
     bool zumbador_activo;
     uint32_t zumbador_min;
+    bool casa_cerrada;                       /* FR-SON-05 (P22): de fábrica true */
 } prot_config_t;
 void prot_config_fabrica(prot_config_t *c);
 
@@ -74,9 +77,10 @@ typedef enum {
     PEV_CICLADO,         /* a = arranques, b = válvula abierta */
     PEV_BATERIA,         /* a = estado (ene_estado_t) */
     PEV_FALLA_ADC,       /* a = índice del ADS (0…2) */
-    PEV_RECHAZO,         /* a = 1 válvula (fuga_activa) / 2 bomba (sin_agua) por pulsación larga */
+    PEV_RECHAZO,         /* a = 1 válvula (fuga_activa) / 2 bomba (sin_agua) / 3 válvula (sondas_en_falla, V25) por pulsación larga */
     PEV_FLOTADOR_FALLA,  /* a = 1 declarada (FR-BOM-10), 0 terminada */
     PEV_VREF,            /* a = 1 se usa la referencia nominal, 0 vuelve la medida */
+    PEV_FALLA_VREF,      /* a = 1 referencia en falla 5 s (evento falla_vref, FR-SON-04), 0 terminada */
 } prot_ev_tipo_t;
 
 typedef struct { prot_ev_tipo_t tipo; int a, b, c, d; } prot_evento_t;
@@ -104,6 +108,8 @@ typedef struct {
     uint32_t flot_desde_s;
     bool vref_nominal;
     float vref;
+    bool vref_falla;                    /* FR-SON-04: nominal durante PROT_FALLA_VREF_MS */
+    uint32_t vref_nominal_desde_ms;
     /* sondas */
     fug_sonda_t fug[PROT_N_SONDAS];
     int clase[PROT_N_SONDAS];           /* son_clase_t o -1 (ADS en falla) */
@@ -139,3 +145,5 @@ void prot_paso(prot_t *p, const prot_entrada_t *e, prot_salida_t *s);
 prot_persistente_t prot_persistente(const prot_t *p);
 /* ¿Alguna sonda activa en `mojada`? (FR-OTA-A1, para la Fase 3) */
 bool prot_sonda_mojada(const prot_t *p);
+/* g_ciego (§5.2, FR-SON-05): casa_cerrada y (≥ 2 sondas activas en falla o referencia en falla) */
+bool prot_g_ciego(const prot_t *p);

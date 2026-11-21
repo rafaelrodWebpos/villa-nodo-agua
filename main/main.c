@@ -43,6 +43,7 @@
 #include "diag_reset.h"
 #include "identidad.h"
 #include "conectividad_sta.h"
+#include "conectividad_vigia.h"
 #include "portal_config.h"
 #include "portal_dns.h"
 #include "portal_http.h"
@@ -83,6 +84,8 @@ static bool s_mqtt_activo;                     /* el cliente está arrancado (st
 static int s_intento_mqtt;                     /* E5: <n> del intento MQTT en curso */
 static QueueHandle_t s_eventos_mqtt;           /* mqtt_up / mqtt_down hacia la tarea del gestor */
 static char s_top_status[160];                 /* <sitio>/<zona>/<nodo>/status */
+static con_vigia_t s_vigia;                    /* FR-CON-A1/A2 (FSD 0.7.1): sin IP 60 s; sin broker 10 min */
+static esp_timer_handle_t s_t_vigia;           /* consulta de s_vigia cada segundo */
 
 #define VALIDACION_US   (20 * 1000 * 1000)     /* T06, D12: 20 s */
 #define PORTAL_US       (600LL * 1000 * 1000)  /* T24, D24: 10 min desde T02 */
@@ -209,18 +212,60 @@ static portal_resp_t al_enviar(const char *const v[PORTAL_N_CAMPOS], bool valido
  * vencer la ventana. Así sobrevive a un AP que tarda en aparecer (el banco,
  * de un solo radio, lo levanta después del envío) o a un rechazo puntual.
  * Interpretación aprobada por el propietario (H-41); el FSD no cambia. */
+static uint32_t ms_vigia(void) { return (uint32_t)(esp_timer_get_time() / 1000); }
+
 static void al_evento(void *arg, esp_event_base_t base, int32_t id, void *datos)
 {
     if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
         xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
         bool validando = s_estado == CON_VALIDANDO;
+        con_vigia_desasociado(&s_vigia);
         xSemaphoreGiveRecursive(s_lock);
         if (validando) esp_timer_start_once(s_t_reintento, REINTENTO_US);
         else transicion(CON_EV_WIFI_DOWN, (con_guardas_t){0});
+    } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_CONNECTED) {
+        /* FR-CON-A1: empieza la cuenta de «asociado sin IP» (en VALIDANDO manda T06, 20 s) */
+        xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
+        if (s_estado == CON_CONECTANDO_WIFI) con_vigia_asociado(&s_vigia, ms_vigia());
+        xSemaphoreGiveRecursive(s_lock);
     } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
+        xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
+        con_vigia_con_ip(&s_vigia);
+        xSemaphoreGiveRecursive(s_lock);
         s_intento = 0;
         transicion(CON_EV_WIFI_UP, (con_guardas_t){0});
+    } else if (base == IP_EVENT && id == IP_EVENT_STA_LOST_IP) {
+        /* FR-CON-A1: IP perdida = wifi_down. Se suelta la asociación; el aviso de
+         * desconexión que sigue hace la transición (T09/T14/T16) sin duplicarla. */
+        xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
+        bool fuera = s_estado == CON_VALIDANDO || s_estado == CON_PORTAL || s_estado == CON_ESPERA;
+        con_vigia_desasociado(&s_vigia);
+        xSemaphoreGiveRecursive(s_lock);
+        if (!fuera) {
+            ESP_LOGW(TAG, "con: ip perdida (wifi_down)");
+            esp_wifi_disconnect();
+        }
     }
+}
+
+/* FR-CON-A1/A2 (FSD 0.7.1): cada segundo, la cuenta de «sin broker» sigue al estado y el
+ * vigilante dice si toca soltar la asociación. Soltarla produce STA_DISCONNECTED → wifi_down,
+ * con su backoff y sin reiniciar. */
+static void al_tick_vigia(void *arg)
+{
+    xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
+    const uint32_t t = ms_vigia();
+    if (s_estado == CON_CONECTANDO_BROKER) con_vigia_sin_broker(&s_vigia, t);
+    else if (s_estado == CON_OPERATIVO) con_vigia_broker_ok(&s_vigia);
+    con_vigia_accion_t a = con_vigia_tick(&s_vigia, t);
+    if (a == CON_VIG_SIN_IP && s_estado == CON_CONECTANDO_WIFI) {
+        ESP_LOGW(TAG, "con: %u s asociado sin ip (wifi_down)", (unsigned)(CON_SIN_IP_MS / 1000));
+        esp_wifi_disconnect();
+    } else if (a == CON_VIG_REASOCIAR && s_estado == CON_CONECTANDO_BROKER) {
+        ESP_LOGW(TAG, "con: reasociar (%u min sin broker)", (unsigned)(CON_SIN_BROKER_MS / 60000));
+        esp_wifi_disconnect();
+    }
+    xSemaphoreGiveRecursive(s_lock);
 }
 
 /* E4: cada intento de unión STA escribe «wifi: intento <n>»; <n> vuelve a 1
@@ -610,6 +655,12 @@ static void wifi_iniciar(void)
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, al_evento, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, al_evento, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, al_evento, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_LOST_IP, al_evento, NULL));
+    con_vigia_iniciar(&s_vigia);
+    const esp_timer_create_args_t tvg = {.callback = al_tick_vigia, .name = "vigia"};
+    ESP_ERROR_CHECK(esp_timer_create(&tvg, &s_t_vigia));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(s_t_vigia, 1000 * 1000));
     const esp_timer_create_args_t tv = {.callback = al_vencer_validacion, .name = "validacion"};
     const esp_timer_create_args_t tr = {.callback = al_reiniciar, .name = "reinicio"};
     const esp_timer_create_args_t ti = {.callback = al_reintentar, .name = "reintento"};

@@ -170,6 +170,7 @@ static void restaurar(void)
 static void ads_caido(void)
 {
     static sim_t x; sim_iniciar(&x, &LIMPIO, 1.0);
+    x.p.cfg.casa_cerrada = false;                       /* casa ocupada: solo aviso (FR-SON-05) */
     correr(&x, 5000);
     x.pl.ads_ok[1] = false;
     uint32_t t0 = x.t;
@@ -179,6 +180,82 @@ static void ads_caido(void)
     for (int s = 1; s <= 4; s++) OK(cuando(&x, PEV_FALLA_SONDA, s, t0) == UINT32_MAX, "sonda %d en falla", s);
     OK(x.p.val.estado == VAL_ABIERTA && !x.motor_movido_ms, "cierre por el ADS caído");
     OK(x.s.led_rojo || cuantos(&x, PEV_FALLA_SONDA, -1) == 4, "LED de falla");
+    /* Con la casa cerrada, las 4 sondas del ADS caído dejan el nodo ciego: V24 */
+    static sim_t y; sim_iniciar(&y, &LIMPIO, 1.0);
+    correr(&y, 5000);
+    y.pl.ads_ok[1] = false;
+    t0 = y.t;
+    correr(&y, t0 + 10000);
+    uint32_t tc = y.motor_movido_ms;
+    OK(tc && tc - t0 <= 2500 && y.p.val.estado == VAL_CERRADA && y.p.val.cerrada_por == VCP_SONDAS && !y.p.val.bloqueo_fuga,
+       "casa cerrada + ADS caído: V24 a los %u ms, estado %s", tc - t0, val_nombre_estado(y.p.val.estado));
+}
+
+/* FR-SON-05 (FSD 0.7.1, H-93): casa cerrada y ≥ 2 sondas en falla → V24; V25 rechaza la
+ * reapertura mientras dura; sin reapertura automática; con la casa ocupada, solo aviso */
+static void ciego(void)
+{
+    static sim_t x; sim_iniciar(&x, &LIMPIO, 1.0);
+    correr(&x, 3000);
+    x.pl.sonda[1] = ABIERTA;
+    correr(&x, x.t + 2000);
+    x.pl.sonda[6] = ABIERTA;                            /* la segunda, 2 s después */
+    uint32_t t2 = x.t;
+    correr(&x, t2 + 10000);                             /* 5 s de falla + 500 ms + 3 s de carrera */
+    uint32_t f2 = cuando(&x, PEV_FALLA_SONDA, 7, t2);
+    OK(f2 != UINT32_MAX && x.motor_movido_ms >= f2 && x.motor_movido_ms - f2 <= 500,
+       "V24 a %u ms de la segunda falla", x.motor_movido_ms - f2);
+    OK(x.p.val.estado == VAL_CERRADA && x.p.val.cerrada_por == VCP_SONDAS && !x.p.val.bloqueo_fuga, "cerrada por sondas: %s cp=%d",
+       val_nombre_estado(x.p.val.estado), x.p.val.cerrada_por);
+    OK(!x.ambos, "IN1 e IN2 a la vez");
+    x.pl.boton = true; correr(&x, x.t + 3500); x.pl.boton = false; correr(&x, x.t + 500);
+    OK(cuantos(&x, PEV_RECHAZO, 3) == 1 && x.p.val.estado == VAL_CERRADA, "V25: pulsación rechazada (%d)", cuantos(&x, PEV_RECHAZO, 3));
+    x.pl.sonda[1] = SECA; x.pl.sonda[6] = SECA;
+    correr(&x, x.t + 10000);
+    OK(x.p.val.estado == VAL_CERRADA, "reapertura automática al quitarse la falla");
+    x.pl.boton = true; correr(&x, x.t + 3500); x.pl.boton = false; correr(&x, x.t + 5000);
+    OK(x.p.val.estado == VAL_ABIERTA && x.p.val.cerrada_por == VCP_NINGUNO, "reapertura en persona (V10): %s",
+       val_nombre_estado(x.p.val.estado));
+
+    /* Una sola sonda en falla no cierra */
+    static sim_t u; sim_iniciar(&u, &LIMPIO, 1.0);
+    correr(&u, 3000); u.pl.sonda[2] = CORTO; correr(&u, u.t + 10000);
+    OK(!u.motor_movido_ms && cuantos(&u, PEV_FALLA_SONDA, 3) == 1, "cierre con una sola sonda en falla");
+
+    /* Casa ocupada: las mismas fallas solo avisan */
+    static sim_t o; sim_iniciar(&o, &LIMPIO, 1.0);
+    o.p.cfg.casa_cerrada = false;
+    correr(&o, 3000); o.pl.sonda[1] = ABIERTA; o.pl.sonda[6] = ABIERTA; correr(&o, o.t + 10000);
+    OK(!o.motor_movido_ms && cuantos(&o, PEV_FALLA_SONDA, -1) == 2, "casa ocupada: movimiento o avisos (%d)",
+       cuantos(&o, PEV_FALLA_SONDA, -1));
+}
+
+/* FR-SON-04 (FSD 0.7.1): referencia en falla 5 s → un falla_vref y LED de prioridad 2; con la
+ * casa cerrada, V24; al volver, sin falla_vref repetidos */
+static void falla_vref(void)
+{
+    static sim_t x; sim_iniciar(&x, &LIMPIO, 1.0);
+    correr(&x, 3000);
+    x.pl.v_a3 = 2.5f;                                    /* fuera de 3,0–3,6 V */
+    uint32_t t0 = x.t;
+    correr(&x, t0 + 4500);
+    OK(cuantos(&x, PEV_FALLA_VREF, 1) == 0 && !x.motor_movido_ms, "falla_vref antes de 5 s");
+    correr(&x, t0 + 7000);
+    uint32_t tf = cuando(&x, PEV_FALLA_VREF, 1, t0);
+    OK(cuantos(&x, PEV_FALLA_VREF, 1) == 1 && tf - t0 >= 5000 && tf - t0 <= 5250, "falla_vref a los %u ms", tf - t0);
+    OK(x.motor_movido_ms && x.motor_movido_ms - tf <= 500 && x.p.val.cerrada_por == VCP_SONDAS, "V24 por la referencia");
+    x.pl.v_a3 = 3.3f; correr(&x, x.t + 2000);
+    x.pl.v_a3 = 2.5f; correr(&x, x.t + 3000);           /* < 5 s: no hay otro evento */
+    OK(cuantos(&x, PEV_FALLA_VREF, 1) == 1 && cuantos(&x, PEV_FALLA_VREF, 0) == 1, "eventos repetidos sin cambio");
+
+    static sim_t o; sim_iniciar(&o, &LIMPIO, 1.0);
+    o.p.cfg.casa_cerrada = false;
+    correr(&o, 3000); o.pl.v_a3 = 2.5f; correr(&o, o.t + 8000);
+    OK(cuantos(&o, PEV_FALLA_VREF, 1) == 1 && !o.motor_movido_ms && o.p.val.estado == VAL_ABIERTA, "casa ocupada: solo aviso");
+    /* §8.2: prioridad 2 (rojo 1 Hz) con la válvula abierta y sin otra falla */
+    bool rojo = false, verde = false;
+    for (int i = 0; i < 200; i++) { paso(&o); rojo |= o.s.led_rojo; verde |= o.s.led_verde; }
+    OK(rojo && !verde, "LED de prioridad 2 con la referencia en falla");
 }
 
 /* FR-SON-02/03: lazo 6 abierto 6 s → un falla_sonda sin mover la válvula; sonda 8 inactiva en corto → nada */
@@ -356,6 +433,8 @@ int main(int argc, char **argv)
     else if (!strcmp(c, "ejercicio")) ejercicio();
     else if (!strcmp(c, "flotador_falla")) flotador_falla();
     else if (!strcmp(c, "vref")) vref();
+    else if (!strcmp(c, "ciego")) ciego();
+    else if (!strcmp(c, "falla_vref")) falla_vref();
     else { printf("caso desconocido: %s\n", c); return 2; }
     printf("%s: %d fallos\n", c, fallos);
     return fallos != 0;

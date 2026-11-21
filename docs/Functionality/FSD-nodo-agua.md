@@ -51,7 +51,8 @@ change_history:
     ronda: k = 3 reinicios en 10 min (P26) y RSSI mínimo −75 dBm (P27).
   - 0.7.1 (2026-11-21): H-95 del propietario: P22, P23, P24 y P25 aceptados tal como
     estaban; FR-SON-05, FR-PUB-04/05 y FR-CON-A1/A2 pasan a normativos. Riesgo de
-    `casa_cerrada`=false por (b′) aceptado con P22 (§21.1).
+    `casa_cerrada`=false por (b′) aceptado con P22 (§21.1). Contrato de FR-IO-06 alineado con
+    FR-SON-05: sin cierre solo con `casa_cerrada`=false.
 ```
 
 ## Convenciones de este documento
@@ -825,7 +826,7 @@ repositorio.
 | FR-SON-05 | ABIERTA, **broker apagado y Wi-Fi caído**; `casa_cerrada`=true; el banco abre los lazos 2 y 7 durante 6 s. Repetir con la referencia en falla. Repetir con `casa_cerrada`=false | Con true: IN1 en alto a 5 s + 500 ms del segundo lazo (o de la referencia); `cerrada_por`=`sondas`. Con false: solo `falla_sonda`/`falla_vref`, sin movimiento | Cierre con false; esperar a la red; `bloqueo_fuga`=1 | bench |
 | FR-IO-04 | Banco: senoide de 60 Hz de 0,5 V RMS en GPIO4 | 15 A ± 1,5 A | Error mayor | bench |
 | FR-IO-05 | Rebotes de 30 ms | Sin cambio de estado | Cambio | bench |
-| FR-IO-06 | Desconectar el ADS1115 0x49 en marcha | `falla_adc`; sondas 5–8 en falla ≤ 2 s; sin pánico | Reinicio; cierre | bench |
+| FR-IO-06 | `casa_cerrada`=false; desconectar el ADS1115 0x49 en marcha. Repetir con `casa_cerrada`=true | Con false: `falla_adc`; sondas 5–8 en falla ≤ 2 s; sin pánico. Con true: lo mismo y, además, cierre por V24 (FR-SON-05) | Reinicio; con false, cierre | bench |
 
 ## 13. Publicador MQTT y órdenes
 
