@@ -1202,6 +1202,8 @@ tests:
       intento fallido queda en TC-WDT-01-banco-transitorios.log; la prueba es not done solo si el
       banco no responde durante más de 2 min seguidos o si no atiende una orden de corte o de vuelta,
       y aun así guarda la consola y los mensajes MQTT. Los criterios de PASS/FAIL del nodo no cambian
+      El 2026-11-21 hacia las 15:20 el propietario desenchufó y volvió a enchufar la placa del SLOT2 por error;
+      la consola a las 19:21 muestra un arranque a las 15:15:12 y ningún reinicio después (evidencia).
   - id: TC-WDT-02
     shape: atomic
     kind: standard

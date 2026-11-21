@@ -30,3 +30,9 @@
 - La excepción cortó la prueba antes de guardar la consola y los mensajes MQTT, así que esta evidencia no permite decir si el nodo se reinició en la ventana. Los pasos muestran que el banco hizo los 4 cortes (broker 14:32, Wi-Fi 18:32, broker 22:32 y Wi-Fi 02:32).
 - Desde el commit siguiente, las llamadas de vigilancia toleran errores transitorios: 3 reintentos tras 5, 10 y 20 s, y not done solo si el banco no responde durante más de 2 min seguidos.
 
+
+## Estado del SLOT2 tras el desenchufe del 2026-11-21 (lectura de consola, 19:21)
+
+- Hacia las 15:20 el propietario desenchufó por error la placa del SLOT2 y la volvió a enchufar, así que el uptime ya no dice nada del intento 3.
+- Una sola lectura pasiva del buffer de consola del SLOT2 (`GET /api/serial/output`, 500 líneas; sin tocar SLOT1), 2026-11-21 19:21: última línea `I (14750989) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)` a las 19:21:03. Uptime 14 751 s → **arranque a las 15:15:12**, coherente con el desenchufe.
+- De 17:13 a 19:21, ciclo normal de reintentos Wi-Fi sin AP (backoff de 60 s), con la marca de ms creciendo sin saltos: **sin reinicios después de ese arranque**, sin pánico ni watchdog. Las líneas del arranque ya no están en el buffer.
