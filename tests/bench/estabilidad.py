@@ -88,3 +88,53 @@ def huecos(st, cortes, ciclo_s=60, holgura_s=15, vuelta_s=150):
             continue
         out.append((round(t0, 1), round(t1 - t0, 1)))
     return out
+
+
+REINTENTOS_S = (5, 10, 20)
+SIN_BANCO_MAX_S = 120
+
+
+class Vigia:
+    """Llamadas de vigilancia al banco en una prueba larga, tolerantes a errores transitorios
+    (conexión reiniciada, timeout): hasta 3 reintentos tras 5, 10 y 20 s. Cada intento fallido
+    queda en `eventos` para la evidencia. El banco cuenta como caído (not done, no fallo del
+    nodo) solo si no responde durante más de SIN_BANCO_MAX_S seguidos. No toca los criterios
+    de PASS/FAIL del nodo."""
+
+    def __init__(self, transitorias, reintentos=REINTENTOS_S, max_sin_banco_s=SIN_BANCO_MAX_S,
+                 reloj=None, dormir=None):
+        import time as _t
+        self.transitorias = tuple(transitorias)
+        self.reintentos = tuple(reintentos)
+        self.max_sin_banco_s = max_sin_banco_s
+        self.reloj = reloj or _t.time
+        self.dormir = dormir or _t.sleep
+        self.eventos = []               # {t, llamada, intento, error} y {t, llamada, recuperado}
+        self.sin_respuesta_desde = None
+
+    def llamar(self, nombre, fn, *args):
+        """(True, valor) si alguna de las 1 + 3 tentativas responde; (False, None) si no."""
+        t0 = self.reloj()
+        fallos = 0
+        for i, espera in enumerate((0,) + self.reintentos):
+            if espera:
+                self.dormir(espera)
+            try:
+                valor = fn(*args)
+            except self.transitorias as exc:
+                fallos += 1
+                self.eventos.append({"t": self.reloj(), "llamada": nombre, "intento": i + 1,
+                                     "error": f"{type(exc).__name__}: {exc}"[:200]})
+                continue
+            if fallos or self.sin_respuesta_desde is not None:
+                self.eventos.append({"t": self.reloj(), "llamada": nombre, "recuperado": True})
+            self.sin_respuesta_desde = None
+            return True, valor
+        if self.sin_respuesta_desde is None:
+            self.sin_respuesta_desde = t0
+        return False, None
+
+    def caido(self):
+        """True si el banco lleva más de max_sin_banco_s seguidos sin responder."""
+        return (self.sin_respuesta_desde is not None
+                and self.reloj() - self.sin_respuesta_desde > self.max_sin_banco_s)

@@ -51,10 +51,20 @@ def _hora(t):
     return time.strftime("%Y-%m-%d %H:%M:%S %z", time.localtime(t))
 
 
-def _vigilar(tb, banco, ssid, en_corte):
-    """None si el AP y el broker siguen como los dejó la prueba; si no, el motivo."""
-    ap = tb.ap_status()
-    mq = tb.mqtt_status()
+try:
+    from testbench_driver import CommandTimeout
+    TRANSITORIAS = (OSError, CommandTimeout)
+except ImportError:          # sin el driver (lectura en host): solo errores de red
+    TRANSITORIAS = (OSError,)
+
+
+def _vigilar(tb, banco, ssid, en_corte, vigia):
+    """None si el AP y el broker siguen como los dejó la prueba (o si el banco no respondió
+    tras los reintentos: eso lo decide vigia.caido()); si no, el motivo."""
+    ok_ap, ap = vigia.llamar("GET /api/wifi/ap_status", tb.ap_status)
+    ok_mq, mq = vigia.llamar("GET /api/mqtt/status", tb.mqtt_status)
+    if not (ok_ap and ok_mq):
+        return None
     if en_corte != "wifi" and (not ap.get("active") or ap.get("ssid") != ssid):
         return "el AP del banco ya no es el de la prueba"
     if en_corte != "broker" and not mq.get("running"):
@@ -78,6 +88,7 @@ def test_tc_wdt_01_24h_stability(testbench, dut_slot, dut_mac, firmware, run_dir
                + ", ".join(f"{k} a t={t} s" for t, k in CORTES), "")
         banco.broker_on()
         cortes, ajeno = [], None
+        vigia = est.Vigia(TRANSITORIAS)   # reintentos 5/10/20 s; caído tras > 2 min seguidos
         with _suscribir(tb, nodo) as sub:
             t0, reg = _a_operativo(tb, dut_slot, banco, c)
             fin = time.time() + 150
@@ -90,34 +101,57 @@ def test_tc_wdt_01_24h_stability(testbench, dut_slot, dut_mac, firmware, run_dir
                    f"inicio {_hora(t_ini)}")
             c.note(f"- inicio de la ventana: {_hora(t_ini)}; fin previsto: {_hora(t_fin)}", "")
             pendientes = list(CORTES)
-            while time.time() < t_fin and not ajeno:
-                reg.leer()
-                ajeno = _vigilar(tb, banco, banco.ssid, None)
-                if ajeno:
-                    break
-                ahora = time.time()
-                if pendientes and ahora - t_ini >= pendientes[0][0]:
-                    _, tipo = pendientes.pop(0)
-                    c.step(f"Corte de {tipo} {CORTE_S // 60} min (t={ahora - t_ini:.0f} s, {_hora(ahora)})")
-                    t_c = time.time()
-                    banco.broker_off() if tipo == "broker" else banco.ap_off()
-                    while time.time() < t_c + CORTE_S:
-                        reg.leer()
-                        time.sleep(min(LECTURA_CADA_S, max(1.0, t_c + CORTE_S - time.time())))
-                    t_v = time.time()
-                    banco.broker_on() if tipo == "broker" else banco.ap_on()
-                    cortes.append({"tipo": tipo, "t_corte": t_c, "t_vuelta": t_v})
-                    continue
-                time.sleep(min(LECTURA_CADA_S, max(1.0, t_fin - time.time())))
+            caido = False
+
+            def sin_banco():
+                if vigia.caido():
+                    return (f"el banco no respondió durante más de {est.SIN_BANCO_MAX_S} s seguidos "
+                            f"(desde {_hora(vigia.sin_respuesta_desde)})")
+                return None
+
+            try:
+                while time.time() < t_fin and not ajeno:
+                    vigia.llamar("GET /api/serial/output", reg.leer)
+                    ajeno = _vigilar(tb, banco, banco.ssid, None, vigia) or sin_banco()
+                    if ajeno:
+                        break
+                    ahora = time.time()
+                    if pendientes and ahora - t_ini >= pendientes[0][0]:
+                        _, tipo = pendientes.pop(0)
+                        c.step(f"Corte de {tipo} {CORTE_S // 60} min (t={ahora - t_ini:.0f} s, {_hora(ahora)})")
+                        t_c = time.time()
+                        banco.broker_off() if tipo == "broker" else banco.ap_off()
+                        while time.time() < t_c + CORTE_S:
+                            vigia.llamar("GET /api/serial/output", reg.leer)
+                            time.sleep(min(LECTURA_CADA_S, max(1.0, t_c + CORTE_S - time.time())))
+                        t_v = time.time()
+                        banco.broker_on() if tipo == "broker" else banco.ap_on()
+                        cortes.append({"tipo": tipo, "t_corte": t_c, "t_vuelta": t_v})
+                        continue
+                    time.sleep(min(LECTURA_CADA_S, max(1.0, t_fin - time.time())))
+            except TRANSITORIAS as exc:
+                # Una orden de corte o de vuelta que el banco no atiende: es del banco, no del nodo
+                ajeno = f"error del banco: {type(exc).__name__}: {exc}"[:300]
+            caido = bool(ajeno) and ajeno.startswith(("el banco no respondió", "error del banco"))
             t_real_fin = time.time()
             time.sleep(5)
-            reg.leer()
+            vigia.llamar("GET /api/serial/output", reg.leer)
             msgs = sub.mensajes()
-        if ajeno:
+        if ajeno and not caido:
             # Lo ajeno no se toca: limpiar() no apaga lo que ya no es de la prueba
-            banco.ap = banco.ap and tb.ap_status().get("ssid") == banco.ssid
+            ok, ap = vigia.llamar("GET /api/wifi/ap_status", tb.ap_status)
+            banco.ap = banco.ap and ok and ap.get("ssid") == banco.ssid
             banco.broker = False
-        ent = reg.leer()
+        elif caido:
+            # El AP y el broker son nuestros: se intenta apagarlos; si el banco sigue sin
+            # responder, se deja anotado y el --check del siguiente arranque lo detecta
+            try:
+                banco.limpiar()
+            except TRANSITORIAS as exc:
+                banco.ap = banco.broker = False
+                c.note(f"- limpieza del AP y del broker no hecha (banco sin responder: {type(exc).__name__})")
+        ok, _ = vigia.llamar("GET /api/serial/output", reg.leer)
+        ent = reg.entradas
         c.save_log("serie", [e["text"] for e in ent])
         c.save_log("mqtt", [f"{m['t'] - t0:+.2f} s retain={int(m['retain'])} qos={m['qos']} {m['topic']} {m['payload']}"
                             for m in msgs])
@@ -129,8 +163,17 @@ def test_tc_wdt_01_24h_stability(testbench, dut_slot, dut_mac, firmware, run_dir
             c.note(f"- registro de actividad del banco no disponible: {type(exc).__name__}")
 
         c.note(f"- fin de la ventana: {_hora(t_real_fin)} ({(t_real_fin - t_ini) / 3600:.2f} h)", "")
+        fallidos = [x for x in vigia.eventos if not x.get("recuperado")]
+        c.note(f"- errores transitorios del banco (reintentos 5/10/20 s; no cuentan para el nodo): "
+               f"{len(fallidos)} intentos fallidos, "
+               f"{sum(1 for x in vigia.eventos if x.get('recuperado'))} recuperaciones", "")
+        c.save_log("banco-transitorios",
+                   [f"{_hora(x['t'])} {x['llamada']} " + ("recuperado" if x.get("recuperado")
+                                                         else f"intento {x['intento']}: {x['error']}")
+                    for x in vigia.eventos] or ["ninguno"])
         if ajeno:
-            pytest.skip(f"not done: {ajeno} a las {_hora(t_real_fin)} (otro uso del banco); no es fallo del firmware")
+            origen = "fallo de comunicación con el banco" if caido else "otro uso del banco"
+            pytest.skip(f"not done: {ajeno}, a las {_hora(t_real_fin)} ({origen}); no es fallo del firmware")
 
         st = est.status_vivos(msgs, base, t0)
         ventana = [x for x in st if t_ini - CICLO_S <= x[0] <= t_fin + 5]

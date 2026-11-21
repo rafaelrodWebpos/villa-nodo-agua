@@ -1190,6 +1190,18 @@ tests:
       grabación de la prueba (≈ 18:02 del 19), así que el nodo no se reinició en todo el
       intento. La limpieza tampoco llegó al banco: el panel y el broker de la prueba se cerraron
       a mano el 2026-11-20 antes de repetir
+    intento_3: >
+      2026-11-20 12:31:58 → 2026-11-21 05:26:17 (UTC−4), fbdb8f8, imagen 0.0.0-3e3ffe7-bench,
+      banco 6dffd70, SLOT2: not done a las 16 h 54 min, con 4 de 5 cortes hechos (broker 14:32,
+      Wi-Fi 18:32, broker 22:32, Wi-Fi 02:32). El banco cortó la conexión (Connection reset by
+      peer) en GET /api/wifi/ap_status; la prueba lo registró como FAIL y se corrige a not done
+      (propietario, 2026-11-21). No es fallo del firmware. La excepción impidió guardar la consola
+      y los mensajes MQTT: la evidencia no dice si el nodo se reinició.
+      test-results/20261120T162950Z-fbdb8f8/. Desde 2026-11-21 las llamadas de vigilancia
+      (serial/output, wifi/ap_status, mqtt/status) se reintentan 3 veces tras 5, 10 y 20 s; cada
+      intento fallido queda en TC-WDT-01-banco-transitorios.log; la prueba es not done solo si el
+      banco no responde durante más de 2 min seguidos o si no atiende una orden de corte o de vuelta,
+      y aun así guarda la consola y los mensajes MQTT. Los criterios de PASS/FAIL del nodo no cambian
   - id: TC-WDT-02
     shape: atomic
     kind: standard

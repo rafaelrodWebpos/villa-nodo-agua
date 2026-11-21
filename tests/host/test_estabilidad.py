@@ -82,5 +82,79 @@ class TestEstabilidad(unittest.TestCase):
         self.assertEqual([(x[1], x[3]) for x in r], [("0x15", "banco"), ("0x7", "nodo"), ("0xc", "nodo")])
 
 
+class Reloj:
+    def __init__(self):
+        self.t, self.esperas = 1000.0, []
+
+    def __call__(self):
+        return self.t
+
+    def dormir(self, s):
+        self.esperas.append(s)
+        self.t += s
+
+
+def llamada(reloj, fallos, error=ConnectionResetError("reset by peer"), dura=1.0):
+    """fn que falla las primeras `fallos` veces (cada intento dura `dura` s) y luego responde."""
+    n = {"i": 0}
+
+    def fn():
+        reloj.t += dura
+        n["i"] += 1
+        if n["i"] <= fallos:
+            raise error
+        return {"active": True}
+    return fn
+
+
+class TestVigia(unittest.TestCase):
+    def setUp(self):
+        self.r = Reloj()
+        self.v = e.Vigia((OSError,), reloj=self.r, dormir=self.r.dormir)
+
+    def test_sin_errores_no_registra(self):
+        self.assertEqual(self.v.llamar("ap", llamada(self.r, 0)), (True, {"active": True}))
+        self.assertEqual(self.v.eventos, [])
+        self.assertFalse(self.v.caido())
+
+    def test_transitorio_recuperado_queda_en_la_evidencia(self):
+        ok, _ = self.v.llamar("wifi/ap_status", llamada(self.r, 2))
+        self.assertTrue(ok)
+        self.assertEqual(self.r.esperas, [5, 10])
+        self.assertEqual([x.get("intento") for x in self.v.eventos], [1, 2, None])
+        self.assertTrue(self.v.eventos[-1]["recuperado"])
+        self.assertIn("ConnectionResetError", self.v.eventos[0]["error"])
+        self.assertFalse(self.v.caido())
+
+    def test_tres_reintentos_5_10_20_y_luego_falla(self):
+        ok, val = self.v.llamar("ap", llamada(self.r, 99))
+        self.assertEqual((ok, val), (False, None))
+        self.assertEqual(self.r.esperas, [5, 10, 20])
+        self.assertEqual(len(self.v.eventos), 4)
+        self.assertFalse(self.v.caido())          # ~39 s sin responder: aún no
+
+    def test_caido_solo_tras_mas_de_2_min_seguidos(self):
+        fn = llamada(self.r, 99)
+        self.v.llamar("ap", fn)
+        self.r.t += 30
+        self.v.llamar("ap", fn)                   # ~108 s desde el primer fallo
+        self.assertFalse(self.v.caido())
+        self.r.t += 30
+        self.v.llamar("ap", fn)                   # > 120 s
+        self.assertTrue(self.v.caido())
+
+    def test_una_respuesta_reinicia_la_cuenta(self):
+        self.v.llamar("ap", llamada(self.r, 99))
+        self.r.t += 60
+        self.assertTrue(self.v.llamar("ap", llamada(self.r, 0))[0])
+        self.assertIsNone(self.v.sin_respuesta_desde)
+        self.r.t += 200
+        self.assertFalse(self.v.caido())
+
+    def test_un_error_no_transitorio_no_se_traga(self):
+        with self.assertRaises(KeyError):
+            self.v.llamar("ap", llamada(self.r, 1, error=KeyError("x")))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
