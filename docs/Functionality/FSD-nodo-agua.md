@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.8.0
+fsd_version: 0.8.1
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
@@ -10,7 +10,7 @@ author: Rafael Rodriguez
 reviewers: []
 approval_status: D1–D18 y P1–P21 aceptadas por el propietario (2026-11-14; P14 con condición);
   H-93 (2026-11-20) y H-95 (2026-11-21, P22–P25) aceptados; H-96 (2026-11-21) aprobado,
-  con sus requisitos y P28–P33 propuestos
+  y P28–P34 aceptados (2026-11-21)
 created: 2026-11-14
 last_updated: 2026-11-21
 herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9 (commit ddf8016)
@@ -65,6 +65,12 @@ change_history:
     entrada en GPIO18 (C-HW-32), tópicos `medidor` y `medidor/set`, eventos
     `consumo_casa_cerrada` y `medidor_falla`, parámetros nuevos en §19, línea A8 y P28–P33
     en §4.4. Nada de esto es normativo hasta que el propietario acepte P28–P33.
+  - 0.8.1 (2026-11-21): decisión del propietario: P28–P33 aceptados, y P34 nuevo. Con la
+    casa cerrada, además del umbral por hora hay un **umbral diario** (`consumo_diario_l`,
+    50 L en 24 h fuera de riego y relleno): mismo evento `consumo_casa_cerrada`, con
+    `motivo`=`diario` (FR-MED-09). Las fugas lentas solo se ven así, porque la boya rellena
+    despacio y el medidor no cuenta bien por debajo de 0,25 GPM. §6.7 pasa a normativo.
+    `bench-pulsos-medidor` es CR-TB-27.
 ```
 
 ## Convenciones de este documento
@@ -186,8 +192,8 @@ No se hereda clima:C-HW-04/05/06 (SHT41 y alimentación por USB). Las nuevas son
 | C-HW-28 [Must] | El sensor de presión de salida debe ser **ratiométrico de 0,5–4,5 V y 0–10 bar**, alimentado a 5 V y leído con un divisor 2:3 (P9). | [derived] · P9 |
 | C-HW-29 [Must] | El nodo debe ir en una **caja IP65**. | [user] D13 |
 | C-HW-30 [Must] | La asignación de pines debe ser exactamente la de la tabla siguiente (P1). | P1 |
-| C-HW-32 [Must] (propuesto, P28) | La salida de pulsos del medidor testigo (C-HW-33) debe llegar a GPIO18 como contacto seco a GND, con pull-up externa de 10 kΩ a 3,3 V, resistencia serie de 1 kΩ y 100 nF a GND junto al conector del nodo (el cable mide hasta 10 m). La pull-up interna también se activa. | [user] H-96 · P28 |
-| C-HW-33 [Must] (propuesto) | El medidor testigo debe ser el **DAE AS200U-75P** (¾", galones US, ±1,5 %, 0,25–10 GPM), instalado en horizontal, con la esfera hacia arriba, techado y seco, entre el medidor de la empresa de agua y la válvula de llenado de la cisterna. | [user] H-96 |
+| C-HW-32 [Must] | La salida de pulsos del medidor testigo (C-HW-33) debe llegar a GPIO18 como contacto seco a GND, con pull-up externa de 10 kΩ a 3,3 V, resistencia serie de 1 kΩ y 100 nF a GND junto al conector del nodo (el cable mide hasta 10 m). La pull-up interna también se activa. | [user] H-96 · P28 |
+| C-HW-33 [Must] | El medidor testigo debe ser el **DAE AS200U-75P** (¾", galones US, ±1,5 %, 0,25–10 GPM), instalado en horizontal, con la esfera hacia arriba, techado y seco, entre el medidor de la empresa de agua y la válvula de llenado de la cisterna. | [user] H-96 |
 | C-HW-31 [Must] | El lazo 4–20 mA del transductor debe alimentarse a 24 V CC ± 5 % desde un elevador CC-CC alimentado por los 12 V (P21). | [derived] P21 |
 
 **Asignación de pines (P1, propuesta).** Ningún pin usado está en la lista
@@ -206,7 +212,7 @@ prohibida de clima:C-HW-07.
 | 14 | Relé de permiso de la bomba (alto = relé energizado = **permiso cortado**) | salida |
 | 15 | Zumbador | salida |
 | 16 / 17 | LED de estado verde / rojo (externos) | salida |
-| 18 | Pulsos del medidor testigo (contacto seco a GND; pull-up interna y externa, C-HW-32) — **propuesto, H-96 (P28)** | entrada |
+| 18 | Pulsos del medidor testigo (contacto seco a GND; pull-up interna y externa, C-HW-32) — H-96 (P28) | entrada |
 
 **Canales de los ADS1115 (P1).** 0x48: sondas 1–4; 0x49: sondas 5–8; 0x4A: A0 = nivel
 4–20 mA, A1 = presión, A2 = Vbat (divisor 1:6, P5), A3 = referencia de polarización de
@@ -290,7 +296,7 @@ de fin de línea, shunt, transductores y pinza reales):
 | CR-TB-20 | `bench-tensiones` | Tensión programable de 0–5 V en la entrada de presión y tensión equivalente de Vbat |
 | CR-TB-21 | `bench-senal-pinza` | Senoide de 60 Hz de amplitud programable (0–1 V RMS) en la entrada de la pinza |
 | CR-TB-22 | `bench-salidas-dut` | Lee IN1, IN2, el relé de la bomba, el zumbador y los dos LED con marca de tiempo |
-| (sin número; H-96) | `bench-pulsos-medidor` | Tren de cierres de contacto seco en GPIO18 con duración, periodo y rebote programables. **Falta que el propietario le dé número, o que amplíe CR-TB-18** |
+| CR-TB-27 | `bench-pulsos-medidor` | Tren de cierres de contacto seco en GPIO18 con duración, periodo y rebote programables (H-96) |
 
 ### 3.2 Fase 2 — Telemetría, órdenes y configuración
 
@@ -342,7 +348,7 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | Un apagón largo agota la batería con la válvula abierta | Cierre preventivo con batería crítica y sin red (§7) |
 | Un atacante en la LAN manda abrir la válvula durante una fuga | Guardas en el firmware (§5) que ningún mensaje salta; nodo crítico S4 (D14) |
 | El nodo falla y la bomba queda cortada | Contacto NC: nodo sin energía = bomba permitida (D3) |
-| El cable del medidor testigo se corta y se lee «consumo cero» (un contacto seco no se supervisa) | `medidor_falla` cuando el nivel de la cisterna sube sin pulsos (FR-MED-08, propuesto); comparación mensual con la factura de la empresa de agua |
+| El cable del medidor testigo se corta y se lee «consumo cero» (un contacto seco no se supervisa) | `medidor_falla` cuando el nivel de la cisterna sube sin pulsos (FR-MED-08); comparación mensual con la factura de la empresa de agua |
 
 ### 4.2 Supuestos
 
@@ -408,12 +414,13 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | P25 | Con el Wi-Fi asociado y el broker inalcanzable durante **10 min**, una reasociación del Wi-Fi, sin reiniciar; como mucho una vez por cada periodo de 10 min | aceptado [user] H-95 (H2 del análisis del piloto) | FR-CON-A2 |
 | P26 | Bucle de reinicios: k = **3** reinicios en **10 min** | aceptado [user] H-93; el requisito va en la próxima ronda | próxima ronda |
 | H-96 | Medidor testigo DAE AS200U-75P entre el medidor de la empresa de agua y la cisterna, leído por una entrada del nodo, sin la nube de DAE | aprobado [user] 2026-11-21 | §6.7, C-HW-32/33 |
-| P28 | Entrada del medidor en **GPIO18**: libre, fuera de la lista de clima:C-HW-07, sin función de arranque ni de JTAG. Contacto seco a GND con pull-up externa de 10 kΩ, 1 kΩ en serie y 100 nF. Alternativa: GPIO21 | propuesto | C-HW-30, C-HW-32 |
-| P29 | Pulso válido = contacto cerrado ≥ 50 ms tras ≥ 50 ms abierto (el mismo antirrebote de FR-IO-05); conteo exacto hasta 5 pulsos/s. `galones_por_pulso` de fábrica **1,0, a confirmar con el manual del AS200U-75P** y calibrar en la obra con un balde de 5 galones; rango 0,1–100 | propuesto | FR-MED-01/02 |
-| P30 | Total y pulsos en NVS **como mucho una vez cada 60 s** y solo si cambiaron, y además antes de un reinicio ordenado. Ante un reinicio inesperado se pierden como mucho los pulsos de los últimos 60 s. Desgaste: ≤ 1440 escrituras al día con flujo continuo, repartidas por el nivelado de la NVS | propuesto | FR-MED-03 |
-| P31 | Caudal = litros de los últimos **5 min** × 12, en L/h, publicado con las medidas cada 60 s (P8) | propuesto | FR-MED-04 |
-| P32 | Alerta con `casa_cerrada`=true: más de **20 L** en **60 min** fuera de un periodo permitido. **HA abre el periodo** con `medidor/set` al empezar el riego o el relleno de la piscina (1–720 min), y el periodo se alarga **120 min** después, porque la cisterna se rellena cuando la boya abre, que puede ser después del riego. Alternativa: franjas horarias fijas en §19 (necesitan hora válida) | propuesto | FR-MED-05/06 |
-| P33 | `medidor_falla`: el nivel sube ≥ 10 cm (nivel válido) sin ningún pulso durante esa subida | propuesto | FR-MED-08 |
+| P28 | Entrada del medidor en **GPIO18**: libre, fuera de la lista de clima:C-HW-07, sin función de arranque ni de JTAG. Contacto seco a GND con pull-up externa de 10 kΩ, 1 kΩ en serie y 100 nF. Alternativa: GPIO21 | aceptado [user] H-96 | C-HW-30, C-HW-32 |
+| P29 | Pulso válido = contacto cerrado ≥ 50 ms tras ≥ 50 ms abierto (el mismo antirrebote de FR-IO-05); conteo exacto hasta 5 pulsos/s. `galones_por_pulso` de fábrica **1,0, a confirmar con el manual del AS200U-75P** y calibrar en la obra con un balde de 5 galones; rango 0,1–100 | aceptado [user] H-96 | FR-MED-01/02 |
+| P30 | Total y pulsos en NVS **como mucho una vez cada 60 s** y solo si cambiaron, y además antes de un reinicio ordenado. Ante un reinicio inesperado se pierden como mucho los pulsos de los últimos 60 s. Desgaste: ≤ 1440 escrituras al día con flujo continuo, repartidas por el nivelado de la NVS | aceptado [user] H-96 | FR-MED-03 |
+| P31 | Caudal = litros de los últimos **5 min** × 12, en L/h, publicado con las medidas cada 60 s (P8) | aceptado [user] H-96 | FR-MED-04 |
+| P32 | Alerta con `casa_cerrada`=true: más de **20 L** en **60 min** fuera de un periodo permitido. **HA abre el periodo** con `medidor/set` al empezar el riego o el relleno de la piscina (1–720 min), y el periodo se alarga **120 min** después, porque la cisterna se rellena cuando la boya abre, que puede ser después del riego. Alternativa: franjas horarias fijas en §19 (necesitan hora válida) | aceptado [user] H-96 | FR-MED-05/06 |
+| P33 | `medidor_falla`: el nivel sube ≥ 10 cm (nivel válido) sin ningún pulso durante esa subida | aceptado [user] H-96 | FR-MED-08 |
+| P34 | Con `casa_cerrada`=true, umbral **diario**: más de **50 L** en las últimas 24 h fuera de los periodos permitidos → `consumo_casa_cerrada` con `motivo`=`diario`; configurable (`consumo_diario_l`). Las fugas lentas solo se ven así: la boya rellena despacio y el medidor no cuenta bien por debajo de 0,25 GPM | aceptado [user] H-96 | FR-MED-09 |
 | P27 | RSSI mínimo de instalación **−75 dBm** | aceptado [user] H-93; el requisito va en la próxima ronda | próxima ronda (hueco P8) |
 
 **Próxima ronda del FSD (H-93):** huecos P4 (brownout al arrancar el motor y bucle de
@@ -687,14 +694,15 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
 | FR-CIC-02 | Banco: 6 arranques simulados con la válvula CERRADA | Evento con `valvula`=`cerrada` | Otro valor | bench |
 | FR-CIC-03 | Igual | Válvula y permiso sin cambios | Cambio | bench |
 
-### 6.7 Medidor testigo de agua (H-96, propuesto)
+### 6.7 Medidor testigo de agua (H-96)
 
 El DAE AS200U-75P (C-HW-33) mide todo lo que entra a la cisterna: lo mismo que factura
 la empresa de agua. Su salida de pulsos es un contacto seco (reed) en GPIO18 (C-HW-32). Sirve de testigo
 de la factura, deja un histórico en HA y avisa de consumo con la casa cerrada. Las fugas
 después de la bomba ya las ven la corriente y la presión (§6). El medidor agrega la boya
-que no cierra (la cisterna rebosa) y las fugas de la acometida. **Todo §6.7 es una
-propuesta hasta que el propietario acepte P28–P33.**
+que no cierra (la cisterna rebosa) y las fugas de la acometida. Una fuga lenta de la casa
+baja la cisterna poco a poco y la boya la rellena despacio, a un caudal que el medidor
+puede no contar bien (< 0,25 GPM): por eso hay un umbral por hora y otro diario (P34).
 
 - **FR-MED-01** [Must] [user] H-96 (P29): el nodo deberá contar un pulso por cada cierre del
   contacto que dure ≥ 50 ms después de ≥ 50 ms abierto. Los rebotes más cortos no deberán
@@ -709,9 +717,10 @@ propuesta hasta que el propietario acepte P28–P33.**
   pérdida de como mucho los pulsos de los últimos 60 s.
 - **FR-MED-04** [Must] [user] H-96 (P31): el nodo deberá publicar `medidor` con el total en
   litros, el caudal en L/h y los pulsos, con las medidas (FR-PUB-03).
-- **FR-MED-05** [Must] [user] H-96 (P32): con `casa_cerrada`=true y fuera de un periodo
-  permitido, si los litros de los últimos `consumo_ventana_min` superan `consumo_alerta_l`,
-  el nodo deberá publicar el evento `consumo_casa_cerrada` con los litros y la ventana.
+- **FR-MED-05** [Must] [user] H-96 (P32): con `casa_cerrada`=true, si los litros contados
+  fuera de un periodo permitido en los últimos `consumo_ventana_min` superan
+  `consumo_alerta_l`, el nodo deberá publicar el evento `consumo_casa_cerrada` con
+  `motivo`=`hora`, los litros y la ventana.
   Deberá publicarlo una vez por episodio: el siguiente solo después de una ventana completa
   sin pulsos. El evento es crítico: pasa por la cola de FR-PUB-04 con las mismas reglas.
 - **FR-MED-06** [Must] [user] H-96 (P32): la orden `medidor/set`
@@ -721,6 +730,12 @@ propuesta hasta que el propietario acepte P28–P33.**
   reinicio lo borra.
 - **FR-MED-07** [Must] [derived] H-96: el medidor no deberá mover la válvula ni cambiar el
   permiso de la bomba (como FR-CIC-03).
+- **FR-MED-09** [Must] [user] H-96 (P34): con `casa_cerrada`=true, si los litros contados
+  fuera de un periodo permitido en las últimas 24 h superan `consumo_diario_l`, el nodo
+  deberá publicar el evento `consumo_casa_cerrada` con `motivo`=`diario` y los litros, como
+  mucho una vez cada 24 h contadas desde el aviso. Es independiente del umbral por hora:
+  pueden salir los dos. Es crítico como en FR-MED-05. La suma de 24 h vive en RAM: un
+  reinicio la pone a cero.
 - **FR-MED-08** [Should] [derived] H-96 (P33): si el nivel válido de la cisterna sube
   ≥ 10 cm sin ningún pulso durante esa subida, el nodo deberá publicar `medidor_falla` una
   vez, hasta el siguiente pulso.
@@ -734,7 +749,9 @@ propuesta hasta que el propietario acepte P28–P33.**
 | FR-MED-03 | El banco da 300 pulsos (uno cada 200 ms); reinicio por `esp_restart` (orden). Luego 300 más, 90 s de espera y corte de alimentación | Tras el reinicio: 300 exactos. Tras el corte: 600 exactos; `nvs=1` en la línea A8 | Total menor que el guardado; total a cero | bench |
 | FR-MED-04 | Lógica pura: 50 L en los últimos 5 min | `caudal_lh` = 600 | Otro valor | host |
 | FR-MED-04 | Suscriptor a `medidor`; 5 min con un pulso cada 6 s a 1,0 gal | 5 ± 1 publicaciones; `caudal_lh` ≈ 2271 ± 5 % al final; `total_l` creciente | Total que baja; sin publicaciones | bench |
-| FR-MED-05, FR-MED-06 | Lógica pura: `casa_cerrada` × periodo (sin, dentro, en el margen, vencido) × litros (19, 21) | Evento solo con true, fuera de periodo y 21 L; uno por episodio | Evento con false, dentro del periodo o en el margen; dos en un episodio | host |
+| FR-MED-05, FR-MED-06 | Lógica pura: `casa_cerrada` × periodo (sin, dentro, en el margen, vencido) × litros (19, 21) | Evento `motivo`=`hora` solo con true, fuera de periodo y 21 L; uno por episodio | Evento con false, dentro del periodo o en el margen; dos en un episodio | host |
+| FR-MED-09 | Lógica pura con reloj simulado: 2 L/h durante 26 h (por debajo del umbral por hora); igual con `casa_cerrada`=false; igual dentro de periodos permitidos; 30 h seguidas | Con true: un evento `diario` al pasar de 50 L (hora 26) y ninguno más antes de 24 h desde el aviso; con false o dentro de periodos, ninguno | Evento con false; dos en 24 h; `motivo`=`hora` | host |
+| FR-MED-09 | `casa_cerrada`=true, `consumo_alerta_l`=1000, `consumo_diario_l`=10; el banco da 3 pulsos (11,4 L a 1,0 gal) | Un `consumo_casa_cerrada` con `motivo`=`diario` | `motivo`=`hora`; ningún evento | bench |
 | FR-MED-05 | `casa_cerrada`=true; broker apagado; 25 L en 10 min; broker encendido a los 3 min | `consumo_casa_cerrada` desde la cola, con `edad_s` | Evento perdido | bench |
 | FR-MED-06 | `permitir_consumo` 30 min; 25 L a los 10 min; `min`=0, `min`=721, `{"accion":5}` | Sin evento; las tres órdenes inválidas se rechazan con `orden_rechazada` | Evento dentro del periodo; orden inválida aceptada | bench |
 | FR-MED-07 | Válvula ABIERTA, permiso PERMITIDA; provocar `consumo_casa_cerrada` | Válvula y permiso sin cambios | Movimiento o corte | bench |
@@ -923,12 +940,12 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 | `nivel` | → | `{"v":250,"u":"cm","pct":62.5,"valido":true,"ts":…}` | 0 | sí |
 | `presion` | → | `{"v":3.2,"u":"bar","valido":true,"ts":…}` | 0 | sí |
 | `corriente_bomba` | → | `{"v":4.1,"u":"A","ts":…}` | 0 | sí |
-| `medidor` | → | `{"total_l":12345.67,"caudal_lh":180,"pulsos":3261,"galones_por_pulso":1.0,"ts":…}` (§6.7, propuesto) | 0 | sí |
-| `medidor/set` | ← | `{"accion":"permitir_consumo","min":90}` (FR-MED-06, propuesto) | 1 | no |
+| `medidor` | → | `{"total_l":12345.67,"caudal_lh":180,"pulsos":3261,"galones_por_pulso":1.0,"ts":…}` (§6.7) | 0 | sí |
+| `medidor/set` | ← | `{"accion":"permitir_consumo","min":90}` (FR-MED-06) | 1 | no |
 | `flotador` | → | `{"estado":"agua"\|"sin_agua","ts":…}` | 1 | sí |
 | `red` | → | `{"estado":"presente"\|"ausente","ts":…}` | 1 | sí |
 | `bateria` | → | `{"v":12.9,"u":"V","estado":"ok"\|"baja"\|"critica","ts":…}` | 1 | sí |
-| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla"\|"falla_vref"\|"casa_cerrada"\|"consumo_casa_cerrada"\|"medidor_falla",…,"ts":…,"edad_s":…}` (`edad_s` solo en los eventos que salen de la cola, FR-PUB-04) | 1 | no |
+| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla"\|"falla_vref"\|"casa_cerrada"\|"consumo_casa_cerrada"\|"medidor_falla",…,"ts":…,"edad_s":…}` (`edad_s` solo en los eventos que salen de la cola, FR-PUB-04; `consumo_casa_cerrada` lleva además `"motivo":"hora"\|"diario"`, `"l"` y `"ventana_min"`, §6.7) | 1 | no |
 | `config/set`, `config/state` | ←, → | §16 | 1 | no, sí |
 | `status`, `cmd/ota` | →, ← | heredados (clima §9.3, §12) | 1 | sí, no |
 
@@ -985,7 +1002,7 @@ Se heredan clima:FR-HA-01…03 (esquema y tópicos de Discovery). Las entidades 
 la bomba), `binary_sensor` × 8 (fugas, `device_class: moisture`), `binary_sensor`
 (flotador, red), `sensor` (nivel cm y %, presión, corriente, Vbat, y el estado de la
 batería `ok`/`baja`/`critica` de P5 con `device_class: enum`, ambos del tópico `bateria`),
-`sensor` del medidor testigo (§6.7, propuesto: total en L con `device_class: water` y
+`sensor` del medidor testigo (§6.7: total en L con `device_class: water` y
 `state_class: total_increasing`, para el panel de energía de HA; caudal en L/h con
 `device_class: volume_flow_rate`), `button` (rearmar bomba, ejercicio) y `event` (§13.1; los avisos `bateria_baja` y
 `bateria_critica` de FR-ENE-03). No se anuncia un % de batería: con LiFePO4 la tensión
@@ -1089,10 +1106,11 @@ Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; P-valores propuest
 | `t_seco_s` | entero | 10 | 3–60 | P6 |
 | `ciclado_max` | entero | 6 | 3–30 | P7 |
 | `ciclado_ventana_min` | entero | 60 | 10–240 | P7 |
-| `galones_por_pulso` | decimal | 1,0 (a confirmar con el manual) | 0,1–100 | P29 (propuesto) |
-| `consumo_alerta_l` | entero | 20 | 5–1000 | P32 (propuesto) |
-| `consumo_ventana_min` | entero | 60 | 10–1440 | P32 (propuesto) |
-| `consumo_margen_min` | entero | 120 | 0–720 | P32 (propuesto) |
+| `galones_por_pulso` | decimal | 1,0 (a confirmar con el manual) | 0,1–100 | P29 |
+| `consumo_alerta_l` | entero | 20 | 5–1000 | P32 |
+| `consumo_ventana_min` | entero | 60 | 10–1440 | P32 |
+| `consumo_margen_min` | entero | 120 | 0–720 | P32 |
+| `consumo_diario_l` | entero | 50 | 10–2000 | P34 |
 
 Ningún rango permite apagar el cierre por fuga ni el corte por seco o por flotador (D17).
 `casa_cerrada`=false apaga solo el cierre preventivo de FR-SON-05, nunca el cierre por
@@ -1116,10 +1134,10 @@ el banco solo escribe por este último. La imagen de producción no cambia (C-LO
 | A5 | `nvs: bloqueos escritos (<n>)` | Cada escritura de FR-PER-01 |
 | A6 | `ord: <tópico> <accion> -> <ok\|rechazado:<motivo>>` | Cada orden recibida |
 | A7 | `i2c: scan sda=8 scl=9 hz=100000 ack=<lista>` | Al arrancar |
-| A8 | `med: pulsos=<n> total_l=<L> caudal_lh=<L/h> nvs=<0\|1>` | Cada ciclo de medidas (propuesto, H-96) |
+| A8 | `med: pulsos=<n> total_l=<L> caudal_lh=<L/h> nvs=<0\|1>` | Cada ciclo de medidas (H-96) |
 
 - **FR-OBS-A1** [Must] [derived]: el nodo deberá escribir las líneas A1–A7 en los
-  momentos indicados (y A8 cuando se acepte H-96).
+  momentos indicados, y A8 (H-96).
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
