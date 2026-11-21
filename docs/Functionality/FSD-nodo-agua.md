@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.7.1
+fsd_version: 0.7.2
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
@@ -53,6 +53,12 @@ change_history:
     estaban; FR-SON-05, FR-PUB-04/05 y FR-CON-A1/A2 pasan a normativos. Riesgo de
     `casa_cerrada`=false por (b′) aceptado con P22 (§21.1). Contrato de FR-IO-06 alineado con
     FR-SON-05: sin cierre solo con `casa_cerrada`=false.
+  - 0.7.2 (2026-11-21): decisión del propietario. El riesgo de P22 se acepta con una
+    condición: cada cambio de `casa_cerrada` genera el evento `casa_cerrada` (FR-CFG-A5) y un
+    aviso de HA al propietario (FR-VIG-02), para que un cambio que no hizo él se note.
+    Contratos de FR-CON-A1/A2 con las capacidades del banco ya numeradas por el propietario:
+    `bench-dhcp-off` (CR-TB-24) y `bench-broker-blackhole` (CR-TB-23), registradas en el
+    análisis de cortes parciales del piloto (H-94).
 ```
 
 ## Convenciones de este documento
@@ -384,7 +390,7 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | P21 | El lazo 4–20 mA del transductor se alimenta a **24 V CC** con un elevador CC-CC desde los 12 V: un transmisor de 12–36 V no funciona con 12 V menos los 3 V del shunt (elevador MT3608) | aceptado [user] | C-HW-31 |
 | P20 | Bloqueo `bomba_bloqueada` también al rearmar en seco dentro de los 10 min siguientes a un rearme | aceptado [user] | FR-BOM-07 |
 | H-93 | Cola de eventos críticos; vigilante externo con T = 15 min y canal que no depende de la Pi; `falla_vref` + LED; cierre preventivo con la casa cerrada y N = 2 sondas en falla o falla de la referencia (con la casa ocupada, solo aviso); UPS de la cadena de red y broker por IPv4 con reservas DHCP como requisitos de instalación | aceptado [user] 2026-11-20 | FR-PUB-04, FR-SON-04/05, §25 |
-| P22 | `casa_cerrada` es un parámetro de §19 que fijan las escenas de HA (`Casa cerrada` → true; `Preparar llegada` y llegada → false); se guarda en NVS; **valor de fábrica `true`** (sin configurar, gana la protección) | aceptado [user] H-95 | FR-SON-05 |
+| P22 | `casa_cerrada` es un parámetro de §19 que fijan las escenas de HA (`Casa cerrada` → true; `Preparar llegada` y llegada → false); se guarda en NVS; **valor de fábrica `true`** (sin configurar, gana la protección) | aceptado [user] H-95; riesgo de (b′) aceptado con la condición de FR-CFG-A5 y FR-VIG-02 (2026-11-21) | FR-SON-05 |
 | P23 | Cola de eventos críticos en RAM con **32** entradas; llena, se descarta el evento más antiguo que no sea `fuga` y se cuenta en `eventos_perdidos` | aceptado [user] H-95 | FR-PUB-04 |
 | P24 | Asociado al AP sin dirección IP durante **60 s** (o `IP_LOST`) → se trata como `wifi_down` | aceptado [user] H-95 (H1 del análisis del piloto) | FR-CON-A1 |
 | P25 | Con el Wi-Fi asociado y el broker inalcanzable durante **10 min**, una reasociación del Wi-Fi, sin reiniciar; como mucho una vez por cada periodo de 10 min | aceptado [user] H-95 (H2 del análisis del piloto) | FR-CON-A2 |
@@ -765,8 +771,8 @@ Si el piloto adopta H1 y H2 con otros valores, se alinean aquí por enmienda (§
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
 | FR-CON-A1 | Lógica pura del gestor: `IP_LOST`; asociado sin IP 59 s y 61 s | `wifi_down` con `IP_LOST` y a los 61 s; nada a los 59 s | Quedarse asociado sin IP > 60 s + 1 s; reinicio | host |
-| FR-CON-A1 | Banco con el DHCP apagado y el AP arriba (capacidad nueva; número CR-TB que asigna el propietario) | `con: … (wifi_down)` a 60 s ± 2 s; OPERATIVO ≤ 90 s tras volver el DHCP (clima:FR-CON-03) | Nodo mudo sin causa | bench⁺ |
-| FR-CON-A2 | Broker bloqueado (DROP) 25 min con el AP arriba | Una reasociación a los 10 min ± 30 s y otra a los 20 min ± 30 s; ningún reinicio; OPERATIVO ≤ 75 s tras desbloquear | Reasociar antes de 10 min; reinicio | bench⁺ |
+| FR-CON-A1 | Banco con el DHCP apagado y el AP arriba (`bench-dhcp-off`, CR-TB-24) | `con: … (wifi_down)` a 60 s ± 2 s; OPERATIVO ≤ 90 s tras volver el DHCP (clima:FR-CON-03) | Nodo mudo sin causa | bench⁺ |
+| FR-CON-A2 | Broker bloqueado (DROP, `bench-broker-blackhole`, CR-TB-23) 25 min con el AP arriba | Una reasociación a los 10 min ± 30 s y otra a los 20 min ± 30 s; ningún reinicio; OPERATIVO ≤ 75 s tras desbloquear | Reasociar antes de 10 min; reinicio | bench⁺ |
 | FR-CON-A2 | Lógica pura con relojes simulados | Reasociación a 600 s y como mucho una por 600 s | Más de una por 600 s | host |
 | FR-HER-01 | Contratos heredados ejecutados con este firmware | Todos en verde con `agua-…` | Un contrato heredado sin ejecutar | bench |
 | FR-HER-02 | Forzar cada estado de conectividad (sin config, Wi-Fi caído, broker caído, portal abierto, ESPERA, OTA en curso) y provocar fuga, seco y flotador | Plazos cumplidos en cada uno | Un plazo incumplido en algún estado | bench |
@@ -848,7 +854,7 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 | `flotador` | → | `{"estado":"agua"\|"sin_agua","ts":…}` | 1 | sí |
 | `red` | → | `{"estado":"presente"\|"ausente","ts":…}` | 1 | sí |
 | `bateria` | → | `{"v":12.9,"u":"V","estado":"ok"\|"baja"\|"critica","ts":…}` | 1 | sí |
-| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla"\|"falla_vref",…,"ts":…,"edad_s":…}` (`edad_s` solo en los eventos que salen de la cola, FR-PUB-04) | 1 | no |
+| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla"\|"falla_vref"\|"casa_cerrada",…,"ts":…,"edad_s":…}` (`edad_s` solo en los eventos que salen de la cola, FR-PUB-04) | 1 | no |
 | `config/set`, `config/state` | ←, → | §16 | 1 | no, sí |
 | `status`, `cmd/ota` | →, ← | heredados (clima §9.3, §12) | 1 | sí, no |
 
@@ -933,6 +939,12 @@ H-82). Los campos son los mismos (§19). Los parámetros de §16 no aparecen en 
   `fuga_activa` mientras la sonda n esté en `mojada`.
 - **FR-CFG-A4** [Must] [derived] D17: ningún parámetro del portal (§19, interfaz
   `portal`) deberá poder cambiarse por `config/set`.
+- **FR-CFG-A5** [Must] [user] (condición del riesgo de P22, 2026-11-21): cada `config/set`
+  aceptado que **cambie** el valor de `casa_cerrada` deberá publicar en ≤ 1 s el evento
+  `{"tipo":"casa_cerrada","v":<nuevo>,"antes":<anterior>,…}`, además de `config/state`. Un
+  `config/set` con el mismo valor no es un cambio y no publica el evento. Las escenas de HA
+  cambian el parámetro por `config/set`, así que el evento sale igual venga de donde venga.
+  Fuera de OPERATIVO no hay `config/set`, así que el evento no pasa por la cola de FR-PUB-04.
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
@@ -940,6 +952,7 @@ H-82). Los campos son los mismos (§19). Los parámetros de §16 no aparecen en 
 | FR-CFG-A2 | `t_seco_s`=0, =9999; `xyz`=1 | Rechazo; NVS sin cambios | Valor aplicado | host + bench |
 | FR-CFG-A3 | Sonda 3 mojada; desactivarla | Rechazo `fuga_activa` | Desactivada | bench |
 | FR-CFG-A4 | `mqtt_host`, `wifi_ssid` por `config/set` | Rechazo | Cambio | bench |
+| FR-CFG-A5 | Suscriptor a `#`; `casa_cerrada`: true → false, false → false, false → true por `config/set` | Un evento `casa_cerrada` en ≤ 1 s en el 1.º y el 3.º (`v` y `antes` correctos), ninguno en el 2.º; `config/state` en los tres | Cambio sin evento; evento sin cambio | bench |
 
 ---
 
@@ -1046,8 +1059,10 @@ Se hereda el perfil «LAN doméstica, repositorio público» de clima §19.1, co
 **Riesgos aceptados.** (b′) puede **cerrar** la válvula o **cortar** la bomba (deja la
 casa sin agua, un fallo seguro) y puede leer los estados. Con `config/set` también puede
 poner `casa_cerrada`=false y apagar el cierre preventivo de FR-SON-05 (no el cierre por
-fuga); el cambio sale en `config/state` y HA puede avisarlo (riesgo aceptado con P22,
-H-95). No puede abrir con una sonda
+fuga). Riesgo aceptado con P22 (H-95) **con una condición** del propietario
+(2026-11-21): cada cambio de `casa_cerrada`, venga de una escena de HA o de cualquier otro
+cliente MQTT, genera el evento `casa_cerrada` (FR-CFG-A5) y un aviso de HA al propietario
+(FR-VIG-02), para que un cambio que no hizo él se note. No puede abrir con una sonda
 mojada, permitir la bomba sin agua ni apagar una protección (FR-SEC-A1).
 
 ### 21.2 Requisitos
@@ -1133,11 +1148,15 @@ casa. Se verifican en la puesta en marcha (§3.5) y entran en la auditoría S2.
   conexión a internet de la casa (por ejemplo, un servicio externo que espera un latido y
   avisa cuando falta). La caída de la Pi, del switch, del router o de internet deberá
   producir el mismo aviso.
+- **FR-VIG-02** [Must] [user] (condición del riesgo de P22, 2026-11-21): cada evento
+  `casa_cerrada` del nodo (FR-CFG-A5) deberá producir un aviso de HA al propietario con el
+  valor nuevo y la hora, también cuando el cambio lo hizo una escena.
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
 | C-INS-01 | Puesta en marcha: quitar la luz general | `valvula/state` y `status` siguen llegando a HA durante 30 min de apagón | HA sin datos del nodo durante el apagón | field |
 | C-INS-02 | Revisión de la configuración de producción (S2) y del router; luego apagar el DNS del router 10 min | `mqtt_host` es IPv4; reservas presentes; el nodo sigue en OPERATIVO | Un nombre en `mqtt_host`; salida de OPERATIVO | field |
+| FR-VIG-02 | HA de la casa; cambiar `casa_cerrada` con la escena «Casa cerrada», con «Preparar llegada» y con un `config/set` manual desde otro cliente | Un aviso en el teléfono por cada cambio, con el valor nuevo | Un cambio sin aviso | field |
 | FR-VIG-01 | Cuatro cortes, uno cada vez: switch de la Pi, la Pi, el internet de la casa (desconectar el módem) y el nodo | En cada uno, aviso en el teléfono en ≤ 15 min más el periodo de comprobación del canal (que queda anotado en la instalación) | Ningún aviso; aviso que llega por la Pi | field |
 
 ---
