@@ -2,16 +2,16 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.7.0
+fsd_version: 0.7.1
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
 author: Rafael Rodriguez
 reviewers: []
 approval_status: D1–D18 y P1–P21 aceptadas por el propietario (2026-11-14; P14 con condición);
-  H-93 (2026-11-20) aceptado; P22–P25 propuestos
+  H-93 (2026-11-20) y H-95 (2026-11-21, P22–P25) aceptados
 created: 2026-11-14
-last_updated: 2026-11-20
+last_updated: 2026-11-21
 herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9 (commit ddf8016)
 change_history:
   - 0.1.0 (2026-11-14): versión inicial a partir de /define (D1–D18 del propietario).
@@ -49,6 +49,9 @@ change_history:
     DHCP (C-INS-02). FR-CON-A1/A2 (heredados del análisis del piloto, H1 y H2: IP perdida y
     reasociación sin broker), propuestos con P24/P25. Valores aceptados para la próxima
     ronda: k = 3 reinicios en 10 min (P26) y RSSI mínimo −75 dBm (P27).
+  - 0.7.1 (2026-11-21): H-95 del propietario: P22, P23, P24 y P25 aceptados tal como
+    estaban; FR-SON-05, FR-PUB-04/05 y FR-CON-A1/A2 pasan a normativos. Riesgo de
+    `casa_cerrada`=false por (b′) aceptado con P22 (§21.1).
 ```
 
 ## Convenciones de este documento
@@ -380,10 +383,10 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | P21 | El lazo 4–20 mA del transductor se alimenta a **24 V CC** con un elevador CC-CC desde los 12 V: un transmisor de 12–36 V no funciona con 12 V menos los 3 V del shunt (elevador MT3608) | aceptado [user] | C-HW-31 |
 | P20 | Bloqueo `bomba_bloqueada` también al rearmar en seco dentro de los 10 min siguientes a un rearme | aceptado [user] | FR-BOM-07 |
 | H-93 | Cola de eventos críticos; vigilante externo con T = 15 min y canal que no depende de la Pi; `falla_vref` + LED; cierre preventivo con la casa cerrada y N = 2 sondas en falla o falla de la referencia (con la casa ocupada, solo aviso); UPS de la cadena de red y broker por IPv4 con reservas DHCP como requisitos de instalación | aceptado [user] 2026-11-20 | FR-PUB-04, FR-SON-04/05, §25 |
-| P22 | `casa_cerrada` es un parámetro de §19 que fijan las escenas de HA (`Casa cerrada` → true; `Preparar llegada` y llegada → false); se guarda en NVS; **valor de fábrica `true`** (sin configurar, gana la protección) | propuesto | FR-SON-05 |
-| P23 | Cola de eventos críticos en RAM con **32** entradas; llena, se descarta el evento más antiguo que no sea `fuga` y se cuenta en `eventos_perdidos` | propuesto | FR-PUB-04 |
-| P24 | Asociado al AP sin dirección IP durante **60 s** (o `IP_LOST`) → se trata como `wifi_down` | propuesto (H1 del análisis del piloto) | FR-CON-A1 |
-| P25 | Con el Wi-Fi asociado y el broker inalcanzable durante **10 min**, una reasociación del Wi-Fi, sin reiniciar; como mucho una vez por cada periodo de 10 min | propuesto (H2 del análisis del piloto) | FR-CON-A2 |
+| P22 | `casa_cerrada` es un parámetro de §19 que fijan las escenas de HA (`Casa cerrada` → true; `Preparar llegada` y llegada → false); se guarda en NVS; **valor de fábrica `true`** (sin configurar, gana la protección) | aceptado [user] H-95 | FR-SON-05 |
+| P23 | Cola de eventos críticos en RAM con **32** entradas; llena, se descarta el evento más antiguo que no sea `fuga` y se cuenta en `eventos_perdidos` | aceptado [user] H-95 | FR-PUB-04 |
+| P24 | Asociado al AP sin dirección IP durante **60 s** (o `IP_LOST`) → se trata como `wifi_down` | aceptado [user] H-95 (H1 del análisis del piloto) | FR-CON-A1 |
+| P25 | Con el Wi-Fi asociado y el broker inalcanzable durante **10 min**, una reasociación del Wi-Fi, sin reiniciar; como mucho una vez por cada periodo de 10 min | aceptado [user] H-95 (H2 del análisis del piloto) | FR-CON-A2 |
 | P26 | Bucle de reinicios: k = **3** reinicios en **10 min** | aceptado [user] H-93; el requisito va en la próxima ronda | próxima ronda |
 | P27 | RSSI mínimo de instalación **−75 dBm** | aceptado [user] H-93; el requisito va en la próxima ronda | próxima ronda (hueco P8) |
 
@@ -981,7 +984,7 @@ Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; P-valores propuest
 | `t_carrera_max_s` | entero | 30 | 5–120 | P3 |
 | `ejercicio_dias` | entero | 30 | 7–90 | D12 |
 | `ejercicio_hora` | entero (hora local: UTC−4 sin horario de verano, TZ POSIX `AST4`) [user, 2026-11-15] | 3 | 0–23 | D12 |
-| `casa_cerrada` | bool | true (P22, propuesto) | — | FR-SON-05, H-93 |
+| `casa_cerrada` | bool | true (P22) | — | FR-SON-05, H-93 |
 | `zumbador_activo` | bool | true | — | D16 |
 | `zumbador_min` | entero | 5 | 1–30 | D16 |
 | `rango_transductor_cm` | entero | 500 | 50–1000 | FR-NIV-01 |
@@ -1042,8 +1045,8 @@ Se hereda el perfil «LAN doméstica, repositorio público» de clima §19.1, co
 **Riesgos aceptados.** (b′) puede **cerrar** la válvula o **cortar** la bomba (deja la
 casa sin agua, un fallo seguro) y puede leer los estados. Con `config/set` también puede
 poner `casa_cerrada`=false y apagar el cierre preventivo de FR-SON-05 (no el cierre por
-fuga); el cambio sale en `config/state` y HA puede avisarlo (propuesto con P22, pendiente
-de que el propietario lo acepte como riesgo). No puede abrir con una sonda
+fuga); el cambio sale en `config/state` y HA puede avisarlo (riesgo aceptado con P22,
+H-95). No puede abrir con una sonda
 mojada, permitir la bomba sin agua ni apagar una protección (FR-SEC-A1).
 
 ### 21.2 Requisitos
