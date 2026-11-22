@@ -30,9 +30,9 @@ con el broker, SNTP y los hosts OTA (FR-SEC-A2); nunca con WhatsApp ni la nube (
 
 | N.º | Hueco | Riesgo | Decisión H-93 | En el FSD 0.7.0 |
 |---|---|---|---|---|
-| P1 | Eventos sin retain ni cola: con el broker caído se pierden | Alto | Aprobado | FR-PUB-04/05 (P23 propuesto) |
+| P1 | Eventos sin retain ni cola: con el broker caído se pierden | Alto | Aprobado | FR-PUB-04/05 (P23) |
 | P2 | Sin Pi, switch, internet o WhatsApp no sale ninguna alerta | Alto | Aprobado, T = 15 min, canal que no depende de la Pi | FR-VIG-01 (§25) |
-| P3 | Referencia de los lazos caída: sondas ciegas, solo un log | Alto | Aprobado: `falla_vref` + LED; casa cerrada → cierre con N = 2 sondas en falla o falla de la referencia; casa ocupada → solo aviso (cambia D6) | FR-SON-04/05, V24/V25 (P22 propuesto) |
+| P3 | Referencia de los lazos caída: sondas ciegas, solo un log | Alto | Aprobado: `falla_vref` + LED; casa cerrada → cierre con N = 2 sondas en falla o falla de la referencia; casa ocupada → solo aviso (cambia D6) | FR-SON-04/05, V24/V25 (P22); cambios de `casa_cerrada` avisados (FR-CFG-A5, FR-VIG-02) |
 | P4 | Brownout al arrancar el motor y bucle de reinicios | Medio | Próxima ronda; k = 3 reinicios en 10 min | P26 |
 | P5 | `red` no es la red pública | Medio | Próxima ronda | — |
 | P6 | Sin UPS para la cadena de red | Alto | Aprobado (instalación) | C-INS-01 |
@@ -41,8 +41,8 @@ con el broker, SNTP y los hosts OTA (FR-SEC-A2); nunca con WhatsApp ni la nube (
 | P9 | Sin hora válida no hay ejercicio y no avisa | Medio | Próxima ronda | — |
 | P10 | Seco con el sensor de presión en falla no definido | Medio | Próxima ronda | — |
 | P11 | Bomba con baja tensión y corriente alta | Bajo | No se hace: lo cubre el térmico | — |
-| H1 (piloto) | `IP_LOST` sin atender; asociado sin IP sin plazo | Alto | Heredado para considerar | FR-CON-A1 (P24 propuesto) |
-| H2 (piloto) | Broker inalcanzable con el Wi-Fi arriba: nunca reasocia | Medio | Heredado para considerar | FR-CON-A2 (P25 propuesto) |
+| H1 (piloto) | `IP_LOST` sin atender; asociado sin IP sin plazo | Alto | Heredado para considerar | FR-CON-A1 (P24); banco: `bench-dhcp-off`, CR-TB-24 |
+| H2 (piloto) | Broker inalcanzable con el Wi-Fi arriba: nunca reasocia | Medio | Heredado para considerar | FR-CON-A2 (P25); banco: `bench-broker-blackhole`, CR-TB-23 |
 
 H1 y H2 vienen de `testing/analisis-cortes-parciales.md` del repositorio del piloto
 (commit 77ae38b).

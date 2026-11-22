@@ -134,11 +134,17 @@ static void registrar(const prot_evento_t *e)
     case PEV_CICLADO: ESP_LOGW(TAG, "evento: ciclado_anormal n=%d valvula=%s", e->a, e->b ? "abierta" : "cerrada"); break;
     case PEV_BATERIA: ESP_LOGW(TAG, "evento: bateria_%s", NOMBRE_BAT[e->a]); break;
     case PEV_FALLA_ADC: ESP_LOGW(TAG, "evento: falla_adc 0x%02x", 0x48 + e->a); break;
-    case PEV_RECHAZO: ESP_LOGW(TAG, "evento: pulsacion_larga rechazada (%s)", e->a == 1 ? "fuga_activa" : "sin_agua"); break;
+    case PEV_RECHAZO:
+        ESP_LOGW(TAG, "evento: pulsacion_larga rechazada (%s)",
+                 e->a == 1 ? "fuga_activa" : e->a == 3 ? "sondas_en_falla" : "sin_agua");
+        break;
     case PEV_FLOTADOR_FALLA:
         if (e->a) ESP_LOGW(TAG, "evento: flotador_falla"); else ESP_LOGI(TAG, "bom: flotador sin falla");
         break;
     case PEV_VREF: ESP_LOGW(TAG, "son: vref %s", e->a ? "nominal" : "medida"); break;
+    case PEV_FALLA_VREF:
+        if (e->a) ESP_LOGW(TAG, "evento: falla_vref"); else ESP_LOGI(TAG, "son: vref sin falla");
+        break;
     }
 }
 

@@ -1,4 +1,4 @@
-/* L2 valvula — V01–V20 (FSD §5.3). Núcleo puro. */
+/* L2 valvula — V01–V25 (FSD §5.3, 0.7.1). Núcleo puro. */
 #include "valvula.h"
 
 void val_iniciar(val_t *v, bool bloqueo_fuga, val_cerrada_por_t cerrada_por, uint32_t t_carrera_max_s)
@@ -65,6 +65,7 @@ val_accion_t val_evento(val_t *v, const val_entrada_t *e)
         }
         if (e->evento == VEV_CERRAR) { v->cerrada_por = VCP_ORDEN; return mover(v, e, 5, VAL_CERRANDO); }
         if (e->evento == VEV_BATERIA_CIERRE) { v->cerrada_por = VCP_BATERIA; return mover(v, e, 22, VAL_CERRANDO); }
+        if (e->evento == VEV_CIEGO) { v->cerrada_por = VCP_SONDAS; return mover(v, e, 24, VAL_CERRANDO); }
         return ignorar;
 
     case VAL_ABIERTA:
@@ -82,6 +83,9 @@ val_accion_t val_evento(val_t *v, const val_entrada_t *e)
         case VEV_BATERIA_CIERRE:
             v->cerrada_por = VCP_BATERIA;
             return mover(v, e, 22, VAL_CERRANDO);
+        case VEV_CIEGO:                                                 /* V24: bloqueo_fuga sin cambio */
+            v->cerrada_por = VCP_SONDAS;
+            return mover(v, e, 24, VAL_CERRANDO);
         case VEV_FINALES:
             if (f == VFIN_ABIERTA) return ignorar;                      /* sin cambio */
             return manual(v, f);
@@ -92,16 +96,20 @@ val_accion_t val_evento(val_t *v, const val_entrada_t *e)
     case VAL_CERRADA:
         switch (e->evento) {
         case VEV_ABRIR:
+            if (e->g_seco && e->g_ciego)                                /* V25: antes que V08 */
+                return (val_accion_t){ .fila = 25, .rechazo = VRECH_SONDAS_EN_FALLA };
             if (e->g_seco) return abrir(v, e, 8);
             return (val_accion_t){ .fila = 9, .rechazo = VRECH_FUGA_ACTIVA };
         case VEV_PULSACION_LARGA:
+            if (e->g_seco && e->g_ciego)                                /* V25: antes que V10 */
+                return (val_accion_t){ .fila = 25, .rechazo = VRECH_SONDAS_EN_FALLA, .patron_rechazo = true };
             if (e->g_seco) return abrir(v, e, 10);
             return (val_accion_t){ .fila = 11, .patron_rechazo = true };
         case VEV_FUGA:
             v->bloqueo_fuga = true; v->cerrada_por = VCP_FUGA;
             return (val_accion_t){ .fila = 17 };
         case VEV_BATERIA_REAPERTURA:
-            if (v->cerrada_por != VCP_BATERIA || v->bloqueo_fuga || !e->g_seco) return ignorar;
+            if (v->cerrada_por != VCP_BATERIA || v->bloqueo_fuga || !e->g_seco || e->g_ciego) return ignorar;
             v->cerrada_por = VCP_NINGUNO;
             return mover(v, e, 23, VAL_ABRIENDO);
         case VEV_FINALES:
@@ -171,7 +179,7 @@ const char *val_nombre_estado(val_estado_t s)
 const char *val_nombre_evento(val_evento_t e)
 {
     static const char *const N[] = { "finales", "fuga", "cerrar", "abrir", "pulsacion_larga", "ejercicio", "tick",
-                                       "bateria_cierre", "bateria_reapertura" };
+                                       "bateria_cierre", "bateria_reapertura", "ciego" };
     return e < VEV_N_EVENTOS ? N[e] : "?";
 }
 

@@ -337,3 +337,60 @@ def test_tc_con_10_wifi_loss_operativo(testbench, dut_slot, dut_mac, firmware, r
             f"el primer mensaje tras la reconexión no es status online (FR-MQTT-06): {primero}"
         assert medida and medida["t"] - t_on <= 90, "ningún status online en ≤ 90 s tras volver el AP (clima:FR-CON-03 por FR-HER-01)"
         c.passed(f"T16; siguiente intento a {dt} s; status primero y status online a {medida['t'] - t_on:.1f} s del AP")
+
+
+REASOCIAR = "con: reasociar (10 min sin broker)"
+SIN_BROKER_S = 600            # P25: 10 min con el Wi-Fi asociado y el broker inalcanzable
+TOL_REASOCIAR_S = 30
+CORTE_A5_S = 25 * 60
+
+
+def test_tc_con_a5_reasociar_sin_broker(testbench, dut_slot, dut_mac, firmware, run_dir, tmp_path):
+    """TC-CON-A5 · FR-CON-A2 (P25), variante con lo que el banco ya tiene: en OPERATIVO se para
+    el broker 25 min con el AP arriba (conexión rechazada, no DROP: eso es TC-CON-A4 con
+    CR-TB-23). Se espera «con: reasociar» a 10 min y a 20 min ± 30 s de T15 (la segunda cuenta
+    empieza al volver a CONECTANDO_BROKER tras la reasociación), ninguna antes de 10 min, sin
+    reinicio, y OPERATIVO con status online ≤ 75 s tras arrancar el broker."""
+    tb = testbench
+    nodo = _nodo(dut_mac)
+    base = f"sitio1/zona1/{nodo}"
+    with case(tb, "TC-CON-A5", "Reasociación con el broker caído 25 min", run_dir, spec="FR-CON-A2 (H-95)") as c, \
+            configurado(tb, dut_slot, dut_mac, firmware, c, tmp_path) as banco:
+        banco.broker_on()
+        with _suscribir(tb, nodo) as sub:
+            t0, reg = _a_operativo(tb, dut_slot, banco, c)
+            time.sleep(5)
+            c.step("Parar el broker 25 min con el AP arriba")
+            t_stop = time.time()
+            banco.broker_off()
+            r1 = reg.esperar(re.escape(REASOCIAR), SIN_BROKER_S + 120, desde_ts=t_stop)
+            r2 = r1 and reg.esperar(re.escape(REASOCIAR), SIN_BROKER_S + 180, desde_ts=r1["ts"] + 1)
+            resto = CORTE_A5_S - (time.time() - t_stop)
+            if resto > 0:
+                time.sleep(resto)
+            c.step("Arrancar el broker")
+            t_start = time.time()
+            banco.broker_on()
+            vuelta = reg.esperar(re.escape(T11), 150, desde_ts=t_start)
+            time.sleep(10)
+            msgs = sub.mensajes()
+        ent = _ultimo_arranque(reg)
+        _guardar(c, ent, msgs, t0)
+        textos = [e["text"] for e in ent]
+        t15 = [t for t in textos if "con: OPERATIVO -> CONECTANDO_BROKER (mqtt_down)" in t]
+        reas = [t for t in textos if REASOCIAR in t]
+        assert t15, "sin T15 al parar el broker"
+        ms15 = _ms(t15[0])
+        d = [round((_ms(t) - ms15) / 1000, 1) for t in reas]
+        medida = _ciclo(_del_nodo(msgs, nodo, t_start), base)
+        c.note("", "## Resultado", "",
+               f"- reasociaciones desde T15: {d} s (esperadas {SIN_BROKER_S} y {2 * SIN_BROKER_S} s ± {TOL_REASOCIAR_S} s)",
+               f"- broker de vuelta: T11 {'sí' if vuelta else 'no'}; status online a "
+               f"{(medida['t'] - t_start) if medida else float('nan'):+.1f} s (límite 75 s)")
+        _sin_reinicio(ent)
+        assert r1 and r2 and len(d) == 2, f"se esperaban 2 reasociaciones en 25 min; hubo {len(d)}: {d}"
+        assert abs(d[0] - SIN_BROKER_S) <= TOL_REASOCIAR_S, f"1.ª reasociación a {d[0]} s"
+        assert abs(d[1] - 2 * SIN_BROKER_S) <= TOL_REASOCIAR_S, f"2.ª reasociación a {d[1]} s"
+        assert vuelta, f"sin {T11} en 150 s tras arrancar el broker"
+        assert medida and medida["t"] - t_start <= 75, "ningún status online en ≤ 75 s tras volver el broker"
+        c.passed(f"reasociaciones a {d} s de T15, sin reinicio; status online a {medida['t'] - t_start:.1f} s")
