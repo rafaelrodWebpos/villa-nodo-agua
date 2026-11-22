@@ -1204,6 +1204,15 @@ tests:
       y aun así guarda la consola y los mensajes MQTT. Los criterios de PASS/FAIL del nodo no cambian
       El 2026-11-21 hacia las 15:20 el propietario desenchufó y volvió a enchufar la placa del SLOT2 por error;
       la consola a las 19:21 muestra un arranque a las 15:15:12 y ningún reinicio después (evidencia).
+    intento_4: >
+      2026-11-21 19:23:48 → 2026-11-22 19:23:48 (UTC−4), 689e4b9, imagen 0.0.0-3e3ffe7-bench, banco 6dffd70,
+      SLOT2: FAIL de la prueba por un hueco entre status de 240 s a las 02:59:48. H-97 (propietario,
+      2026-11-22, opción A): se acepta como fallo de la infraestructura de prueba. La laptop perdió la
+      red con el banco de 03:00:29 a 03:03:34 (Errno 101); sin reinicios ni task_wdt; el status
+      retenido con uptime_s=27600 se publicó dentro del hueco; los 5 cortes se recuperaron (3,4 s el
+      broker, 26 s el Wi-Fi). El resultado original no se edita; el análisis va en
+      test-results/20261121T232146Z-689e4b9/TC-WDT-01-anexo-H-97.md. Pendiente: distinguir una caída
+      del suscriptor de un ciclo sin publicar y repetir la 24 h limpia.
   - id: TC-WDT-02
     shape: atomic
     kind: standard

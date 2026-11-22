@@ -1,0 +1,25 @@
+2026-11-22 00:42:12 -0400 GET /api/serial/output intento 1: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795322500.5363204: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 00:42:17 -0400 GET /api/serial/output recuperado
+2026-11-22 03:00:29 -0400 GET /api/serial/output intento 1: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795330796.6795144: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:00:34 -0400 GET /api/serial/output intento 2: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795330796.6795144: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:00:44 -0400 GET /api/serial/output intento 3: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795330796.6795144: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:01:04 -0400 GET /api/serial/output intento 4: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795330796.6795144: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:01:04 -0400 GET /api/wifi/ap_status intento 1: CommandTimeout: GET /api/wifi/ap_status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:01:09 -0400 GET /api/wifi/ap_status intento 2: CommandTimeout: GET /api/wifi/ap_status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:01:19 -0400 GET /api/wifi/ap_status intento 3: CommandTimeout: GET /api/wifi/ap_status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:01:39 -0400 GET /api/wifi/ap_status intento 4: CommandTimeout: GET /api/wifi/ap_status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:01:39 -0400 GET /api/mqtt/status intento 1: CommandTimeout: GET /api/mqtt/status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:01:44 -0400 GET /api/mqtt/status intento 2: CommandTimeout: GET /api/mqtt/status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:01:54 -0400 GET /api/mqtt/status intento 3: CommandTimeout: GET /api/mqtt/status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:02:14 -0400 GET /api/mqtt/status intento 4: CommandTimeout: GET /api/mqtt/status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:02:44 -0400 GET /api/serial/output intento 1: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795330796.6795144: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:02:49 -0400 GET /api/serial/output intento 2: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795330796.6795144: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:02:59 -0400 GET /api/serial/output intento 3: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795330796.6795144: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:03:19 -0400 GET /api/serial/output intento 4: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795330796.6795144: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:03:19 -0400 GET /api/wifi/ap_status intento 1: CommandTimeout: GET /api/wifi/ap_status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:03:24 -0400 GET /api/wifi/ap_status intento 2: CommandTimeout: GET /api/wifi/ap_status: <urlopen error [Errno 101] Network is unreachable>
+2026-11-22 03:03:34 -0400 GET /api/wifi/ap_status recuperado
+2026-11-22 05:19:43 -0400 GET /api/wifi/ap_status intento 1: CommandTimeout: GET /api/wifi/ap_status: [Errno 104] Connection reset by peer
+2026-11-22 05:19:48 -0400 GET /api/wifi/ap_status recuperado
+2026-11-22 14:18:31 -0400 GET /api/wifi/ap_status intento 1: CommandTimeout: GET /api/wifi/ap_status: [Errno 104] Connection reset by peer
+2026-11-22 14:18:36 -0400 GET /api/wifi/ap_status recuperado
