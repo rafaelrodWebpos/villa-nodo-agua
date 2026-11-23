@@ -89,7 +89,10 @@ def test_tc_con_03_wifi_backoff(testbench, dut_slot, dut_mac, firmware, run_dir,
         if error:
             # Decisión del propietario (2026-11-23): not done solo si la consola muestra en el
             # tramo medido una línea cortada o mezclada por el banco (#89); si no, FAIL.
-            malas = _cortadas(textos)
+            # Solo el tramo medido: desde T01 (fin_arranque) hasta el último «wifi: intento»
+            ini = next((k for k, t in enumerate(textos) if "con: ARRANQUE -> CONECTANDO_WIFI" in t), 0)
+            fin = max((k for k, t in enumerate(textos) if "wifi: intento " in t), default=len(textos) - 1)
+            malas = _cortadas(textos[ini:fin + 1])
             if malas:
                 c.note("", f"- líneas cortadas o mezcladas por la captura del banco (upstream #89): {malas}")
                 pytest.skip(f"not done: {error}, con {len(malas)} línea(s) cortada(s) o mezclada(s) por la "

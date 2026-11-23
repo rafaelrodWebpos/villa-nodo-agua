@@ -1,0 +1,94 @@
+I (495) nodo: boot: agua-7f9af8 fw=0.0.0-673bbe8-bench reset=usb part=ota_0 img=valida
+I (495) nodo: nodo_agua 0.0.0-673bbe8-bench
+I (505) nodo: NODO-BENCH-IMAGE
+I (545) nodo: i2c: scan sda=8 scl=9 hz=100000 ack=
+I (735) nodo: cfg: sitio=sitio1 zona=zona1
+I (745) pp: pp rom version: e7ae62f
+I (745) net80211: net80211 rom version: e7ae62f
+I (755) wifi:wifi driver task: 3fcb3c80, prio:23, stack:6656, core=0
+I (765) wifi:wifi firmware version: da143fa
+I (765) wifi:wifi certification version: v7.0
+I (765) wifi:config NVS flash: enabled
+I (765) wifi:config nano formatting: disabled
+I (775) wifi:Init data frame dynamic rx buffer num: 32
+I (775) wifi:Init static rx mgmt buffer num: 5
+I (785) wifi:Init management short buffer num: 32
+I (785) wifi:Init dynamic tx buffer num: 32
+I (785) wifi:Init static tx FG buffer num: 2
+I (795) wifi:Init static rx buffer size: 1600
+I (795) nodo: val: ARRANQUE -> DESCONOCIDA (finales)
+I (795) wifi:Init static rx buffer num: 10
+W (805) nodo: evento: falla_adc 0x48
+I (805) wifi:W (805) nodo: evento: falla_adc 0x49
+Init dynamic rx buffer num: 32W (815) nodo: evento: falla_adc 0x4a
+W (815) nodo: son: vref nominal
+I (825) wifi_init: rx ba win: 6
+I (825) nodo: son: s1 falla
+I (825) wifi_init: accept mbox: 6
+W (825) nodo: evento: falla_sonda s1 falla
+I (835) wifi_init: tcpip mbox: 32
+I (835) nodo: son: s2 falla
+I (835) wifi_init: udp mbox: 6
+W (845) nodo: evento: falla_sonda s2 falla
+I (845) wifi_init: tcp mbox: 6
+I (845) nodo: son: s3 falla
+I (845) wifi_init: tcp tx win: 5760
+W (855) nodo: evento: falla_sonda s3 falla
+I (855) wifi_init: tcp rx win: 5760
+I (855) nodo: son: s4 falla
+I (865) wifi_init: tcp mss: 1440
+W (865) nodo: evento: falla_sonda s4 falla
+I (865) wifi_init: WiFi IRAM OP enabled
+I (875) nodo: son: s5 falla
+I (875) wifi_init: WiFi RX IRAM OP enabled
+W (875) nodo: evento: falla_sonda s5 falla
+I (885) nodo: son: s6 falla
+W (885) nodo: evento: falla_sonda s6 falla
+I (895) phy_init: phy_version 712,87e8c20e,Apr 13 2026,18:51:10
+I (895) nodo: son: s7 falla
+W (905) nodo: evento: falla_sonda s7 falla
+I (905) nodo: son: s8 falla
+W (905) nodo: evento: falla_sonda s8 falla
+I (915) nodo: val: DESCONOCIDA -> CERRANDO (ciego)
+I (945) wifi:mode : sta (b8:f8:62:7f:9a:f8)
+I (945) wifi:enable tsf
+I (945) nodo: wifi: intento 1
+I (945) nodo: con: ARRANQUE -> CONECTANDO_WIFI (fin_arranque)
+I (955) nodo: Init complete
+I (955) main_task: Returned from app_main()
+I (3365) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (4365) nodo: wifi: intento 2
+I (4375) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (8795) nodo: wifi: intento 3
+I (8805) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (11225) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (15225) nodo: wifi: intento 4
+I (15225) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (17645) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (25655) nodo: wifi: intento 5
+I (25655) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (28075) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (30805) nodo: val: CERRANDO -> FALLA (tick)
+W (30805) nodo: evento: falla_valvula
+I (44075) nodo: wifi: intento 6
+I (44085) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (46505) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (60745) nodo: ana: niv=falla p=falla i=10.32 vbat=0.00 red=0
+I (78505) nodo: wifi: intento 7
+I (78505) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (80935) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (120745) nodo: ana: niv=falla p=falla i=10.28 vbat=0.00 red=0
+I (140935) nodo: wifi: intento 8
+I (140935) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (143355) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (180745) nodo: ana: niv=falla p=falla i=10.58 vbat=0.00 red=0
+I (203355) nodo: wifi: intento 9
+I (203365) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (205785) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (240745) nodo: ana: niv=falla p=falla i=10.48 vbat=0.00 red=0
+I (265785) nodo: wifi: intento 10
+I (265785) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
+I (268215) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)
+I (300745) nodo: ana: niv=falla p=falla i=10.70 vbat=0.00 red=0
+I (328215) nodo: wifi: intento 11
+I (328215) nodo: con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)
