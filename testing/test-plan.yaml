@@ -886,7 +886,7 @@ tests:
     wave: 1
     phase: 1
     tier: bench
-    verifies: [clima:FR-CON-06]
+    verifies: [clima:FR-CON-06, FR-CON-A1]
     needs: [bench-driver, bench-flash, bench-wifi-ap, bench-portal-driver, bench-serial-monitor, dut-board]
     origin: villa-nodo-clima-piloto@ddf8016
     expect: >
@@ -1537,7 +1537,8 @@ tests:
     expect: >
       reloj simulado: asociado sin IP 59 s → nada, 60 s → wifi_down una vez; con IP o desasociado antes, nada;
       10 min sin broker → una reasociación, la siguiente como pronto 10 min después; broker de vuelta o Wi-Fi
-      caído anulan la cuenta; desborde del reloj
+      caído anulan la cuenta; desborde del reloj; IP_LOST en cada estado: solo suelta la asociación en CONECTANDO_BROKER y OPERATIVO, y sin IP no toca la
+      cuenta de 60 s (FSD 0.8.2)
     impl: tests/host/test_vigia.c (components/conectividad/conectividad_vigia.c)
     status: not_run
     rama: integracion-6.0.3-h95 ab3ddb2 — en verde en local (ctest), 2026-11-21; pasa a CI al mezclar a main

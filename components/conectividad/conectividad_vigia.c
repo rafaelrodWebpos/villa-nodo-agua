@@ -40,3 +40,10 @@ con_vigia_accion_t con_vigia_tick(con_vigia_t *v, uint32_t t_ms)
     }
     return CON_VIG_NADA;
 }
+
+bool con_vigia_ip_perdida(con_vigia_t *v, con_estado_t estado)
+{
+    if (estado != CON_CONECTANDO_BROKER && estado != CON_OPERATIVO) return false;
+    con_vigia_desasociado(v);
+    return true;
+}

@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.8.1
+fsd_version: 0.8.2
 repository: villa-nodo-agua (público)
 baseline_commit: (commit que introduce este documento)
 applicable_firmware_version: ninguna todavía
@@ -71,6 +71,10 @@ change_history:
     `motivo`=`diario` (FR-MED-09). Las fugas lentas solo se ven así, porque la boya rellena
     despacio y el medidor no cuenta bien por debajo de 0,25 GPM. §6.7 pasa a normativo.
     `bench-pulsos-medidor` es CR-TB-27.
+  - 0.8.2 (2026-11-23): decisión del propietario tras TC-CON-06 en el banco (2026-11-22).
+    P24 y FR-CON-A1 aclarados: `IP_LOST` solo cuenta en los estados que tienen IP
+    (CONECTANDO_BROKER y OPERATIVO). ESP-IDF lo avisa 120 s después de cada desconexión
+    aunque el nodo nunca haya tenido IP; en los demás estados se ignora.
 ```
 
 ## Convenciones de este documento
@@ -410,7 +414,7 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | H-93 | Cola de eventos críticos; vigilante externo con T = 15 min y canal que no depende de la Pi; `falla_vref` + LED; cierre preventivo con la casa cerrada y N = 2 sondas en falla o falla de la referencia (con la casa ocupada, solo aviso); UPS de la cadena de red y broker por IPv4 con reservas DHCP como requisitos de instalación | aceptado [user] 2026-11-20 | FR-PUB-04, FR-SON-04/05, §25 |
 | P22 | `casa_cerrada` es un parámetro de §19 que fijan las escenas de HA (`Casa cerrada` → true; `Preparar llegada` y llegada → false); se guarda en NVS; **valor de fábrica `true`** (sin configurar, gana la protección) | aceptado [user] H-95; riesgo de (b′) aceptado con la condición de FR-CFG-A5 y FR-VIG-02 (2026-11-21) | FR-SON-05 |
 | P23 | Cola de eventos críticos en RAM con **32** entradas; llena, se descarta el evento más antiguo que no sea `fuga` y se cuenta en `eventos_perdidos` | aceptado [user] H-95 | FR-PUB-04 |
-| P24 | Asociado al AP sin dirección IP durante **60 s** (o `IP_LOST`) → se trata como `wifi_down` | aceptado [user] H-95 (H1 del análisis del piloto) | FR-CON-A1 |
+| P24 | Asociado al AP sin dirección IP durante **60 s** (o `IP_LOST` en CONECTANDO_BROKER u OPERATIVO, los estados con IP; en los demás se ignora [user, 2026-11-23]) → se trata como `wifi_down` | aceptado [user] H-95 (H1 del análisis del piloto) | FR-CON-A1 |
 | P25 | Con el Wi-Fi asociado y el broker inalcanzable durante **10 min**, una reasociación del Wi-Fi, sin reiniciar; como mucho una vez por cada periodo de 10 min | aceptado [user] H-95 (H2 del análisis del piloto) | FR-CON-A2 |
 | P26 | Bucle de reinicios: k = **3** reinicios en **10 min** | aceptado [user] H-93; el requisito va en la próxima ronda | próxima ronda |
 | H-96 | Medidor testigo DAE AS200U-75P entre el medidor de la empresa de agua y la cisterna, leído por una entrada del nodo, sin la nube de DAE | aprobado [user] 2026-11-21 | §6.7, C-HW-32/33 |
@@ -847,8 +851,10 @@ clima:FR-CON-01…07, con sus contratos.
   PORTAL, VALIDANDO, ESPERA y OTA_DESCARGA) deberán cumplirse los plazos de FR-FUG-02,
   FR-BOM-03 y FR-BOM-04.
 - **FR-CON-A1** [Must] [derived] H-93, H1 del análisis del piloto (P24): el evento
-  `IP_LOST` del Wi-Fi, o seguir asociado al AP sin dirección IP durante 60 s, deberá
-  tratarse como `wifi_down` (T08 de clima §6), con su backoff y sin reiniciar.
+  `IP_LOST` del Wi-Fi en CONECTANDO_BROKER u OPERATIVO, o seguir asociado al AP sin
+  dirección IP durante 60 s, deberá tratarse como `wifi_down` (T08 de clima §6), con su
+  backoff y sin reiniciar. En los demás estados (sin IP), `IP_LOST` no deberá soltar la
+  asociación ni escribir ninguna línea `con:` [user, 2026-11-23].
 - **FR-CON-A2** [Must] [derived] H-93, H2 del análisis del piloto (P25): con el Wi-Fi
   asociado y con IP, y el broker inalcanzable durante 10 min seguidos, el nodo deberá
   reasociar el Wi-Fi una vez, sin reiniciar, y no más de una vez por cada 10 min. Aclara
@@ -859,7 +865,8 @@ Si el piloto adopta H1 y H2 con otros valores, se alinean aquí por enmienda (§
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
-| FR-CON-A1 | Lógica pura del gestor: `IP_LOST`; asociado sin IP 59 s y 61 s | `wifi_down` con `IP_LOST` y a los 61 s; nada a los 59 s | Quedarse asociado sin IP > 60 s + 1 s; reinicio | host |
+| FR-CON-A1 | Lógica pura del gestor: `IP_LOST` en cada estado; asociado sin IP 59 s y 61 s | `wifi_down` con `IP_LOST` solo en CONECTANDO_BROKER y OPERATIVO; en los demás, sin efecto y sin tocar la cuenta de 60 s; `wifi_down` a los 61 s, nada a los 59 s | Soltar la asociación con `IP_LOST` sin IP; quedarse asociado sin IP > 60 s + 1 s; reinicio | host |
+| FR-CON-A1 | Banco: nodo configurado, AP del banco apagado 10 min (TC-CON-06) | Ninguna línea `con: ip perdida`; solo el ciclo de backoff | `IP_LOST` que suelta la asociación sin IP | bench |
 | FR-CON-A1 | Banco con el DHCP apagado y el AP arriba (`bench-dhcp-off`, CR-TB-24) | `con: … (wifi_down)` a 60 s ± 2 s; OPERATIVO ≤ 90 s tras volver el DHCP (clima:FR-CON-03) | Nodo mudo sin causa | bench⁺ |
 | FR-CON-A2 | Broker bloqueado (DROP, `bench-broker-blackhole`, CR-TB-23) 25 min con el AP arriba | Una reasociación a los 10 min ± 30 s y otra a los 20 min ± 30 s; ningún reinicio; OPERATIVO ≤ 75 s tras desbloquear | Reasociar antes de 10 min; reinicio | bench⁺ |
 | FR-CON-A2 | Lógica pura con relojes simulados | Reasociación a 600 s y como mucho una por 600 s | Más de una por 600 s | host |

@@ -242,8 +242,7 @@ static void al_evento(void *arg, esp_event_base_t base, int32_t id, void *datos)
          * esté en CONECTANDO_WIFI; ahí ya es wifi_down, y soltar la asociación cortaría el
          * intento en curso y movería el backoff (TC-CON-06, 2026-11-22). */
         xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
-        bool con_ip = s_estado == CON_CONECTANDO_BROKER || s_estado == CON_OPERATIVO;
-        if (con_ip) con_vigia_desasociado(&s_vigia);
+        bool con_ip = con_vigia_ip_perdida(&s_vigia, s_estado);
         xSemaphoreGiveRecursive(s_lock);
         if (con_ip) {
             ESP_LOGW(TAG, "con: ip perdida (wifi_down)");
