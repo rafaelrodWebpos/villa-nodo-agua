@@ -1675,7 +1675,7 @@ tests:
     verifies: [FR-MED-05, FR-MED-06, FR-MED-08, FR-MED-09]
     needs: [hosted-ci]
     expect: >
-      casa_cerrada × periodo (sin, dentro, margen, vencido) × litros (19, 21): evento motivo=hora solo con true, fuera de periodo y 21 L, uno por episodio; 2 L/h durante 26 h → un evento motivo=diario al pasar de 50 L y ninguno más en 24 h, ninguno con false o dentro de periodos; una orden nueva solo alarga; nivel 100→112 cm sin pulsos → un medidor_falla, ninguno con pulsos o con el nivel en falla
+      casa_cerrada × periodo (sin, dentro, margen, vencido) × litros (19, 21): evento motivo=hora solo con true, fuera de periodo y 21 L, uno por episodio; 2,5 L/h durante 30 h → un evento motivo=diario al pasar de 50 L (hora 20) y ninguno más en 24 h; la suma de 24 h vuelve a 0 al reiniciar; una orden nueva no acorta el periodo y el reinicio lo borra, ninguno con false o dentro de periodos; una orden nueva solo alarga; nivel 100→112 cm sin pulsos → un medidor_falla, ninguno con pulsos o con el nivel en falla
     impl: null
     status: not_run
   - id: TC-MED-A3

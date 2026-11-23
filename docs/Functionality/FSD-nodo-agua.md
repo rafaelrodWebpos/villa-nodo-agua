@@ -2,17 +2,17 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.8.2
+fsd_version: 0.8.3
 repository: villa-nodo-agua (público)
-baseline_commit: (commit que introduce este documento)
+baseline_commit: c3e5053 (Load defined, 2026-11-14); cada versión, el commit que la introduce
 applicable_firmware_version: ninguna todavía
 author: Rafael Rodriguez
 reviewers: []
 approval_status: D1–D18 y P1–P21 aceptadas por el propietario (2026-11-14; P14 con condición);
   H-93 (2026-11-20) y H-95 (2026-11-21, P22–P25) aceptados; H-96 (2026-11-21) aprobado,
-  y P28–P34 aceptados (2026-11-21)
+  y P28–P34 aceptados (2026-11-21); P26/P27 aceptados para la próxima ronda (H-93)
 created: 2026-11-14
-last_updated: 2026-11-21
+last_updated: 2026-11-23
 herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9 (commit ddf8016)
 change_history:
   - 0.1.0 (2026-11-14): versión inicial a partir de /define (D1–D18 del propietario).
@@ -75,6 +75,12 @@ change_history:
     P24 y FR-CON-A1 aclarados: `IP_LOST` solo cuenta en los estados que tienen IP
     (CONECTANDO_BROKER y OPERATIVO). ESP-IDF lo avisa 120 s después de cada desconexión
     aunque el nodo nunca haya tenido IP; en los demás estados se ignora.
+  - 0.8.3 (2026-11-23): editorial, del cierre de la puerta Load defined (verificador
+    independiente). Sin cambios de comportamiento: A8 en la Fase 1; asignación de fases de
+    §6.6, §6.7, §10 y FR-CON-A1/A2; CR-TB-23/24 en §3; `consumo_casa_cerrada` en la lista de
+    FR-PUB-04 (ya lo decía FR-MED-05); contratos de FR-MED-09 (tasa), FR-SON-04
+    (`casa_cerrada`), FR-MED-03 (comando `reiniciar` de E13), FR-MED-06/09 y FR-EJE-04
+    (casos que faltaban), C-HW-33 en campo; se quita «propuesta» de textos ya aceptados.
 ```
 
 ## Convenciones de este documento
@@ -200,7 +206,7 @@ No se hereda clima:C-HW-04/05/06 (SHT41 y alimentación por USB). Las nuevas son
 | C-HW-33 [Must] | El medidor testigo debe ser el **DAE AS200U-75P** (¾", galones US, ±1,5 %, 0,25–10 GPM), instalado en horizontal, con la esfera hacia arriba, techado y seco, entre el medidor de la empresa de agua y la válvula de llenado de la cisterna. | [user] H-96 |
 | C-HW-31 [Must] | El lazo 4–20 mA del transductor debe alimentarse a 24 V CC ± 5 % desde un elevador CC-CC alimentado por los 12 V (P21). | [derived] P21 |
 
-**Asignación de pines (P1, propuesta).** Ningún pin usado está en la lista
+**Asignación de pines (P1 y P28).** Ningún pin usado está en la lista
 prohibida de clima:C-HW-07.
 
 | GPIO | Función | Tipo |
@@ -228,7 +234,8 @@ el 0x4A sin responder, se usa la referencia nominal de 3,3 V y se registra
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
 | C-BLD-01 | `gen_esp32part.py` sobre la tabla de la imagen (CI, `scripts/ci/build_checks.py`) | Coincide fila a fila con la tabla de §2.2 | Tabla por defecto del toolchain | other (CI) |
-| C-HW-20, C-HW-21, C-HW-25, C-HW-26, C-HW-27, C-HW-28, C-HW-29, C-HW-32, C-HW-33 | Revisión del montaje contra la lista de materiales | Cada componente coincide con su restricción | Una válvula sin finales; una bomba conectada al contacto NA; alimentación sin batería | other (revisión) |
+| C-HW-20, C-HW-21, C-HW-25, C-HW-26, C-HW-27, C-HW-28, C-HW-29, C-HW-32 | Revisión del montaje contra la lista de materiales | Cada componente coincide con su restricción | Una válvula sin finales; una bomba conectada al contacto NA; alimentación sin batería | other (revisión) |
+| C-HW-33 | Medidor instalado | Modelo AS200U-75P, horizontal con la esfera arriba, techado y seco, entre el medidor de la empresa de agua y la válvula de llenado | Otro modelo; instalado vertical, enterrado o a la intemperie | field (instalación) |
 | C-HW-22 | Firmware de prueba que pide abrir y cerrar a la vez | IN1 e IN2 nunca están en alto a la vez (osciloscopio o GPIO del banco) | Los dos en alto, aunque sea un instante | bench |
 | C-HW-23 | Nodo sin alimentación | La bomba recibe tensión a través del contacto NC | Bomba sin tensión con el nodo apagado | field (puesta en marcha) |
 | C-HW-24 | Arranque con los 3 ADS1115 conectados | Línea `i2c: scan … ack=0x48,0x49,0x4a` (§20) | Falta alguna dirección | target |
@@ -281,9 +288,10 @@ dejar el nodo aprovisionado.
 
 **Salida:** en verde, en host, target y bench, **con el broker apagado**, los contratos
 de §5–§9, §12, §18 y FR-OBS-A1 cuyo estímulo es local (sondas, finales, flotador,
-botón, red, tensiones, reloj) y que se observan por GPIO o por las líneas A1–A7. Los
-contratos cuyo estímulo o cuya observación es un mensaje MQTT (órdenes, `…/state`,
-eventos, `config/set`) se cierran en la Fase 2, igual que §5.6 (el ejercicio necesita la hora SNTP). Los contratos de §15 y clima:FR-CON-*
+botón, red, tensiones, reloj, pulsos del medidor) y que se observan por GPIO o por las
+líneas A1–A8. Los contratos cuyo estímulo, cuya precondición o cuya observación es un
+mensaje MQTT (órdenes, `…/state`, eventos, parámetros fijados por `config/set`, como
+`casa_cerrada`=false o `i_seco_a` calibrado) se cierran en la Fase 2, igual que §5.6 (el ejercicio necesita la hora SNTP). Los contratos de §15 y clima:FR-CON-*
 heredados, en verde.
 
 **Necesita del banco** (capacidades nuevas, numeradas por el propietario; se
@@ -300,6 +308,8 @@ de fin de línea, shunt, transductores y pinza reales):
 | CR-TB-20 | `bench-tensiones` | Tensión programable de 0–5 V en la entrada de presión y tensión equivalente de Vbat |
 | CR-TB-21 | `bench-senal-pinza` | Senoide de 60 Hz de amplitud programable (0–1 V RMS) en la entrada de la pinza |
 | CR-TB-22 | `bench-salidas-dut` | Lee IN1, IN2, el relé de la bomba, el zumbador y los dos LED con marca de tiempo |
+| CR-TB-23 | `bench-broker-blackhole` | Descarta (DROP, sin RST) el tráfico del DUT al puerto 1883 (FR-CON-A2; H-94 del piloto) |
+| CR-TB-24 | `bench-dhcp-off` | Apaga solo el DHCP del AP del banco con el AP arriba (FR-CON-A1; H-94 del piloto) |
 | CR-TB-27 | `bench-pulsos-medidor` | Tren de cierres de contacto seco en GPIO18 con duración, periodo y rebote programables (H-96) |
 
 ### 3.2 Fase 2 — Telemetría, órdenes y configuración
@@ -308,7 +318,8 @@ de fin de línea, shunt, transductores y pinza reales):
 (§16), publicación de energía y batería (§7), ciclado (§6.6), publicación y alertas
 del medidor testigo (§6.7) y observabilidad (§20).
 
-**Salida:** contratos de §13, §14, §16, §7 (publicación), §20 y FR-SEC-A1 en verde en
+**Salida:** contratos de §13, §14, §16, §7 (publicación), §6.6, §6.7 (FR-MED-04…09), §10
+(FR-HER-01, FR-CON-A1/A2; los de bench⁺ cuando existan CR-TB-23/24), §20 y FR-SEC-A1 en verde en
 bench; contratos heredados clima:FR-MQTT-*, clima:FR-HA-* y clima:FR-TIME-* en verde.
 Los casos marcados «Fase 3» (OTA en FR-FUG-02, FR-HER-02 y FR-PER-02) y FR-SEC-A2 se
 cierran en la Fase 3, porque necesitan la OTA.
@@ -576,6 +587,7 @@ envía en cada ciclo mientras se cumple su condición. V14 deja `cerrada_por`=`n
 | FR-EJE-01, FR-EJE-02 | `ejercicio_dias`=1, hora = ahora + 2 min; el banco responde a los finales con 3 s de retardo | Cierre y apertura; `t_cierre_ms` ≈ 3000 ± 300 | Quedarse cerrada sin fuga | bench |
 | FR-EJE-03 | Durante CERRANDO del ejercicio, sonda 1 `mojada` | Termina CERRADA con `bloqueo_fuga`=1 | Reapertura | bench |
 | FR-EJE-04 | Orden `ejercicio` con todo seco | Ciclo completo | Rechazo sin motivo | bench |
+| FR-EJE-04 | Lógica pura: `posponer_ejercicio` a los 29 días | El siguiente ejercicio, `ejercicio_dias` después de la orden | Ejercicio al día 30 | host |
 
 ## 6. Bomba y cisterna (A-12)
 
@@ -750,13 +762,15 @@ puede no contar bien (< 0,25 GPM): por eso hay un umbral por hora y otro diario 
 | FR-MED-01 | El banco da 1000 cierres de 100 ms cada 200 ms, con 3 rebotes de 2 ms en cada flanco; el Wi-Fi cae a la mitad | `pulsos` = 1000 exactos | Otro número; conteo parado sin Wi-Fi | bench |
 | FR-MED-02 | Lógica pura: 10 pulsos a 1,0 gal; cambio a 0,5; 10 pulsos más | 37,85 L y luego 56,78 L (± 0,01 L) | Recalcular los 10 primeros; total que baja | host |
 | FR-MED-03 | Lógica pura con reloj simulado: pulsos seguidos 5 min; 10 min sin pulsos | ≤ 1 escritura cada 60 s; 0 escrituras sin cambios | Escritura por pulso; escrituras sin cambios | host |
-| FR-MED-03 | El banco da 300 pulsos (uno cada 200 ms); reinicio por `esp_restart` (orden). Luego 300 más, 90 s de espera y corte de alimentación | Tras el reinicio: 300 exactos. Tras el corte: 600 exactos; `nvs=1` en la línea A8 | Total menor que el guardado; total a cero | bench |
+| FR-MED-03 | El banco da 300 pulsos (uno cada 200 ms); reinicio con el comando serie `reiniciar` (E13, imagen de banco). Luego 300 más, 90 s de espera y corte de alimentación | Tras el reinicio: 300 exactos. Tras el corte: 600 exactos; `nvs=1` en la línea A8 | Total menor que el guardado; total a cero | bench |
 | FR-MED-04 | Lógica pura: 50 L en los últimos 5 min | `caudal_lh` = 600 | Otro valor | host |
 | FR-MED-04 | Suscriptor a `medidor`; 5 min con un pulso cada 6 s a 1,0 gal | 5 ± 1 publicaciones; `caudal_lh` ≈ 2271 ± 5 % al final; `total_l` creciente | Total que baja; sin publicaciones | bench |
 | FR-MED-05, FR-MED-06 | Lógica pura: `casa_cerrada` × periodo (sin, dentro, en el margen, vencido) × litros (19, 21) | Evento `motivo`=`hora` solo con true, fuera de periodo y 21 L; uno por episodio | Evento con false, dentro del periodo o en el margen; dos en un episodio | host |
-| FR-MED-09 | Lógica pura con reloj simulado: 2 L/h durante 26 h (por debajo del umbral por hora); igual con `casa_cerrada`=false; igual dentro de periodos permitidos; 30 h seguidas | Con true: un evento `diario` al pasar de 50 L (hora 26) y ninguno más antes de 24 h desde el aviso; con false o dentro de periodos, ninguno | Evento con false; dos en 24 h; `motivo`=`hora` | host |
+| FR-MED-09 | Lógica pura con reloj simulado: 2,5 L/h durante 30 h (por debajo del umbral por hora); igual con `casa_cerrada`=false; igual dentro de periodos permitidos | Con true: un evento `diario` al pasar de 50 L (hora 20) y ninguno más antes de 24 h desde el aviso; con false o dentro de periodos, ninguno | Evento con false; dos en 24 h; `motivo`=`hora` | host |
+| FR-MED-09 | Lógica pura: 40 L acumulados en 24 h y reinicio | La suma de 24 h vuelve a 0 tras el reinicio | Suma conservada | host |
 | FR-MED-09 | `casa_cerrada`=true, `consumo_alerta_l`=1000, `consumo_diario_l`=10; el banco da 3 pulsos (11,4 L a 1,0 gal) | Un `consumo_casa_cerrada` con `motivo`=`diario` | `motivo`=`hora`; ningún evento | bench |
 | FR-MED-05 | `casa_cerrada`=true; broker apagado; 25 L en 10 min; broker encendido a los 3 min | `consumo_casa_cerrada` desde la cola, con `edad_s` | Evento perdido | bench |
+| FR-MED-06 | Lógica pura: periodo hasta t+90; orden de 10 min en t+20; reinicio dentro del periodo | El periodo sigue hasta t+90 (no se acorta); tras el reinicio, sin periodo | Periodo acortado; periodo que sobrevive al reinicio | host |
 | FR-MED-06 | `permitir_consumo` 30 min; 25 L a los 10 min; `min`=0, `min`=721, `{"accion":5}` | Sin evento; las tres órdenes inválidas se rechazan con `orden_rechazada` | Evento dentro del periodo; orden inválida aceptada | bench |
 | FR-MED-07 | Válvula ABIERTA, permiso PERMITIDA; provocar `consumo_casa_cerrada` | Válvula y permiso sin cambios | Movimiento o corte | bench |
 | FR-MED-08 | Lógica pura: nivel de 100 → 112 cm sin pulsos; con 1 pulso; nivel en falla | Un `medidor_falla` en el primer caso; ninguno en los otros | Evento con pulsos o con el nivel en falla | host |
@@ -923,7 +937,7 @@ repositorio.
 | FR-SON-01 | El banco presenta 10 kΩ, 3 kΩ, abierto y corto en cada canal | `seca`, `mojada`, `abierta`, `corto` | Otra clase | bench |
 | FR-SON-02 | Lazo 6 abierto 6 s | Un `falla_sonda` (sonda 6, `abierta`); válvula sin movimiento | Cierre | bench |
 | FR-SON-03 | Sonda 8 inactiva y en corto | Estado `inactiva`; sin eventos | Evento o cierre | bench |
-| FR-SON-04 | El banco baja A3 a 2,5 V durante 6 s; luego la devuelve a 3,3 V | Un `falla_vref` a 5 s ± 1 s; `son: vref nominal`; LED rojo 1 Hz; sin `falla_vref` repetidos; al volver, LED según el resto de condiciones | Ningún evento; eventos repetidos sin cambio; reinicio | bench |
+| FR-SON-04 | `casa_cerrada`=false; el banco baja A3 a 2,5 V durante 6 s; luego la devuelve a 3,3 V (con `casa_cerrada`=true, lo mismo y además el cierre de FR-SON-05) | Un `falla_vref` a 5 s ± 1 s; `son: vref nominal`; LED rojo 1 Hz; sin `falla_vref` repetidos; al volver, LED según el resto de condiciones | Ningún evento; eventos repetidos sin cambio; reinicio | bench |
 | FR-SON-05 | Lógica pura: `casa_cerrada` × número de sondas activas en falla (0–8) × referencia (ok/falla) × estado de la válvula | Cierre solo con `casa_cerrada`=true y (≥ 2 en falla o referencia en falla); `bloqueo_fuga` sin cambio; V25 rechaza la reapertura | Cierre con 1 sonda en falla; cierre con `casa_cerrada`=false; reapertura con `g_ciego` | host |
 | FR-SON-05 | ABIERTA, **broker apagado y Wi-Fi caído**; `casa_cerrada`=true; el banco abre los lazos 2 y 7 durante 6 s. Repetir con la referencia en falla. Repetir con `casa_cerrada`=false | Con true: IN1 en alto a 5 s + 500 ms del segundo lazo (o de la referencia); `cerrada_por`=`sondas`. Con false: solo `falla_sonda`/`falla_vref`, sin movimiento | Cierre con false; esperar a la red; `bloqueo_fuga`=1 | bench |
 | FR-IO-04 | Banco: senoide de 60 Hz de 0,5 V RMS en GPIO4 | 15 A ± 1,5 A | Error mayor | bench |
@@ -968,7 +982,7 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 - **FR-PUB-04** [Must] [user] H-93 (P23): un evento crítico (`fuga`, `falla_valvula`,
   `movimiento_manual`, `falla_sonda`, `falla_adc`, `falla_vref`, `bomba_seco`,
   `bomba_bloqueada`, `ciclado_anormal`, `bateria_baja`, `bateria_critica`,
-  `flotador_falla`) generado fuera de OPERATIVO deberá guardarse en una cola en RAM y
+  `flotador_falla`, `consumo_casa_cerrada`) generado fuera de OPERATIVO deberá guardarse en una cola en RAM y
   publicarse al entrar en OPERATIVO, después de los tópicos de FR-PUB-02, en el orden en
   que ocurrió, con `edad_s` (segundos del reloj monótono desde que ocurrió) y con `ts` solo
   si la hora era válida al ocurrir. La cola no sobrevive a un reinicio: tras un reinicio,
@@ -1090,7 +1104,7 @@ Heredados del portal (clima §17, sin cambios): `wifi_ssid`, `wifi_pass`, `mqtt_
 `mqtt_port`, `mqtt_user`, `mqtt_pass`, `zona`, `sitio`, más las constantes de build.
 Se heredan clima:FR-CFG-01 y clima:C-CFG-01.
 
-Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; P-valores propuestos):
+Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; valores de §4.4):
 
 | Nombre | Tipo | Por defecto | Rango | Ref. |
 |---|---|---|---|---|
@@ -1269,8 +1283,10 @@ casa. Se verifican en la puesta en marcha (§3.5) y entran en la auditoría S2.
 
 ## Apéndice A — Constantes
 
-Ver §4.4 (D1–D18, P1–P27, H-93) y §19. Todo valor numérico normativo de este documento
-procede de una de esas dos tablas.
+Ver §4.4 (D1–D18, P1–P34, H-93, H-95, H-96) y §19. Los valores numéricos normativos salen de
+esas dos tablas, de las restricciones de §2.2 (por ejemplo la referencia de los lazos,
+3,0–3,6 V y 5 s) o del propio requisito cuando el propietario lo fijó en él (por ejemplo
+FR-BOM-10).
 
 ## Relacionado
 
