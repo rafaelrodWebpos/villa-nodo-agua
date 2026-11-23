@@ -37,6 +37,28 @@ def _cortadas(textos):
     return [t for t in textos if _DOS_MARCAS.search(t) or ("nodo: con: " in t and not t.rstrip().endswith(")"))]
 
 
+HUECO_BANCO_MS = (4400, 8700)   # hueco de la captura al reabrir el proxy tras el reset (#89)
+
+
+def _caidas_en_hueco(textos):
+    """Estimación (ms del DUT) de cada wifi_down que falta entre dos «wifi: intento» seguidos
+    (el siguiente intento menos su backoff), si cae en el hueco conocido del banco y ese tramo
+    no tiene NINGUNA línea. Decisión del propietario (2026-11-23): solo entonces es not done."""
+    marcas = [_ms(t) for t in textos if _ms(t) is not None]
+    if any(HUECO_BANCO_MS[0] <= m <= HUECO_BANCO_MS[1] for m in marcas):
+        return []           # hay otras líneas en el tramo: si solo falta esa, es FAIL
+    intentos = [(k, t) for k, t in enumerate(textos) if "wifi: intento " in t]
+    fuera = []
+    for (a, ta), (b, tb_) in zip(intentos, intentos[1:]):
+        if any(CAIDA in t for t in textos[a + 1:b]):
+            continue
+        n = int(re.search(r"wifi: intento (\d+)", ta).group(1))
+        est = _ms(tb_) - BACKOFF_S[min(n - 1, len(BACKOFF_S) - 1)] * 1000
+        if HUECO_BANCO_MS[0] <= est <= HUECO_BANCO_MS[1]:
+            fuera.append(est)
+    return fuera
+
+
 def test_tc_con_03_wifi_backoff(testbench, dut_slot, dut_mac, firmware, run_dir, tmp_path):
     """TC-CON-03 · FR-CON-02 (fila Wi-Fi), T09, T10 — AP apagado desde el arranque: 10 intervalos del backoff."""
     tb = testbench
@@ -93,6 +115,13 @@ def test_tc_con_03_wifi_backoff(testbench, dut_slot, dut_mac, firmware, run_dir,
             ini = next((k for k, t in enumerate(textos) if "con: ARRANQUE -> CONECTANDO_WIFI" in t), 0)
             fin = max((k for k, t in enumerate(textos) if "wifi: intento " in t), default=len(textos) - 1)
             malas = _cortadas(textos[ini:fin + 1])
+            hueco = _caidas_en_hueco(textos[ini:fin + 1])
+            if hueco and not malas:
+                c.note("", f"- wifi_down ausente estimado a {hueco} ms, dentro del hueco del banco "
+                           f"{HUECO_BANCO_MS} ms sin ninguna línea (upstream #89)")
+                pytest.skip(f"not done: {error}; el wifi_down que falta (≈ {hueco[0]} ms) cae en el hueco de "
+                            f"la captura del banco {HUECO_BANCO_MS} ms, sin ninguna línea en ese tramo "
+                            f"(SensorsIot/Embedded-AI-Harness#89)")
             if malas:
                 c.note("", f"- líneas cortadas o mezcladas por la captura del banco (upstream #89): {malas}")
                 pytest.skip(f"not done: {error}, con {len(malas)} línea(s) cortada(s) o mezclada(s) por la "

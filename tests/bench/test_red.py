@@ -17,7 +17,7 @@ import time
 import pytest
 
 from benchlib import Registro, case
-from test_mqtt import configurado
+from test_mqtt import _ciclo, _del_nodo, _nodo, _suscribir, configurado
 
 T08 = "con: CONECTANDO_WIFI -> CONECTANDO_BROKER (wifi_up)"
 T11 = "con: CONECTANDO_BROKER -> OPERATIVO (mqtt_up)"
@@ -115,11 +115,23 @@ def _captura_arranque(tb, dut_slot, dut_mac, banco, c, segundos=240):
     """Arranque y 3 ciclos con la captura en marcha; devuelve los flujos UDP del DUT."""
     banco.broker_on()
     banco.ap_on()
-    tb.capture_start(dut_mac.lower(), segundos)
+    nodo = _nodo(dut_mac)
+    base = f"sitio1/zona1/{nodo}"
     reg = Registro(tb, dut_slot, time.time())
-    tb.serial_reset(dut_slot)
     try:
-        assert reg.esperar(re.escape(T11), 150), "sin T11"
+        # OPERATIVO se confirma en el broker (status online en vivo), como TC-CON-08: la línea T11
+        # de la consola puede caer en el hueco de la captura tras el reset (upstream #89;
+        # decisión del propietario, 2026-11-23)
+        with _suscribir(tb, nodo) as sub:
+            tb.capture_start(dut_mac.lower(), segundos)
+            t_reset = time.time()
+            tb.serial_reset(dut_slot)
+            online = None
+            while online is None and time.time() < t_reset + 150:
+                time.sleep(2)
+                online = _ciclo(_del_nodo(sub.mensajes(), nodo, t_reset), base)
+        assert online, "sin status online en vivo en el broker en 150 s tras el reset"
+        c.note(f"- status online en el broker a {online['t'] - t_reset:.1f} s del reset")
     finally:
         # La consola queda en la evidencia también si falla (decisión del propietario, 2026-11-23)
         try:
