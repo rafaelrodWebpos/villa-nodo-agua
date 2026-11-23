@@ -3,11 +3,12 @@
  *   FR-CON-A2 (P25): Wi-Fi con IP y broker inalcanzable durante 10 min → una reasociación
  *                    del Wi-Fi, sin reiniciar, como mucho una por cada 10 min.
  * Núcleo puro con reloj explícito (ms monótonos); el adaptador le pasa los eventos Wi-Fi,
- * IP y MQTT y lo consulta una vez por segundo. IP_LOST lo trata el adaptador directamente
- * (desasociar → wifi_down). */
+ * IP y MQTT y lo consulta una vez por segundo. IP_LOST pasa por con_vigia_ip_perdida: solo
+ * cuenta en los estados con IP (FSD 0.8.2, P24). */
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
+#include "conectividad.h"
 
 #define CON_SIN_IP_MS      60000u     /* P24 */
 #define CON_SIN_BROKER_MS  600000u    /* P25 */
@@ -30,3 +31,8 @@ void con_vigia_sin_broker(con_vigia_t *v, uint32_t t_ms);
 void con_vigia_broker_ok(con_vigia_t *v);                    /* T11 */
 /* Una consulta: devuelve la acción que toca y la consume (una sola vez por cuenta) */
 con_vigia_accion_t con_vigia_tick(con_vigia_t *v, uint32_t t_ms);
+/* IP_EVENT_STA_LOST_IP (FR-CON-A1, P24): true = soltar la asociación (wifi_down). Solo en
+ * CONECTANDO_BROKER y OPERATIVO, que tienen IP; en los demás estados (sin IP) el aviso se
+ * ignora y no toca las cuentas: ESP-IDF lo emite 120 s después de cada desconexión aunque
+ * nunca haya habido IP. */
+bool con_vigia_ip_perdida(con_vigia_t *v, con_estado_t estado);

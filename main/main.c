@@ -236,12 +236,15 @@ static void al_evento(void *arg, esp_event_base_t base, int32_t id, void *datos)
         transicion(CON_EV_WIFI_UP, (con_guardas_t){0});
     } else if (base == IP_EVENT && id == IP_EVENT_STA_LOST_IP) {
         /* FR-CON-A1: IP perdida = wifi_down. Se suelta la asociación; el aviso de
-         * desconexión que sigue hace la transición (T09/T14/T16) sin duplicarla. */
+         * desconexión que sigue hace la transición (T09/T14/T16) sin duplicarla.
+         * Solo cuenta en los estados que tienen IP (CONECTANDO_BROKER, OPERATIVO). ESP-IDF
+         * avisa LOST_IP cuando vence su temporizador de IP perdida (120 s) aunque el nodo ya
+         * esté en CONECTANDO_WIFI; ahí ya es wifi_down, y soltar la asociación cortaría el
+         * intento en curso y movería el backoff (TC-CON-06, 2026-11-22). */
         xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
-        bool fuera = s_estado == CON_VALIDANDO || s_estado == CON_PORTAL || s_estado == CON_ESPERA;
-        con_vigia_desasociado(&s_vigia);
+        bool con_ip = con_vigia_ip_perdida(&s_vigia, s_estado);
         xSemaphoreGiveRecursive(s_lock);
-        if (!fuera) {
+        if (con_ip) {
             ESP_LOGW(TAG, "con: ip perdida (wifi_down)");
             esp_wifi_disconnect();
         }

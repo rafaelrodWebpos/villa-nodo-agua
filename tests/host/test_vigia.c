@@ -59,5 +59,20 @@ int main(void)
        "desborde del reloj");
 
     printf("vigia: %d fallos\n", fallos);
+    /* FSD 0.8.2 (P24): IP_LOST solo suelta la asociación en los estados con IP. Sin haber
+     * tenido IP (ESP-IDF lo avisa 120 s después de cada desconexión) no la suelta ni toca la
+     * cuenta de «asociado sin IP» (TC-CON-06, 2026-11-22). */
+    for (int e = 0; e < CON_N_ESTADOS; e++) {
+        con_vigia_iniciar(&v);
+        con_vigia_asociado(&v, 0);
+        bool suelta = con_vigia_ip_perdida(&v, (con_estado_t)e);
+        bool con_ip = e == CON_CONECTANDO_BROKER || e == CON_OPERATIVO;
+        OK(suelta == con_ip, "IP_LOST en el estado %d: suelta=%d", e, suelta);
+        if (!con_ip) OK(con_vigia_tick(&v, 60000) == CON_VIG_SIN_IP, "IP_LOST sin IP anuló la cuenta de 60 s (estado %d)", e);
+    }
+    con_vigia_iniciar(&v);
+    con_vigia_sin_broker(&v, 0);
+    OK(con_vigia_ip_perdida(&v, CON_CONECTANDO_BROKER), "IP_LOST en CONECTANDO_BROKER no suelta");
+    OK(primera(&v, 0, 1200000, CON_VIG_REASOCIAR) == 0, "IP_LOST con IP anula la cuenta sin broker (desasociado)");
     return fallos != 0;
 }

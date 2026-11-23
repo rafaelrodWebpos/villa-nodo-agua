@@ -873,12 +873,13 @@ tests:
     expect: >
       fila Wi-Fi de FR-CON-02 con el AP apagado desde el arranque (FSD 0.9.3, §3.1): los 10 primeros intervalos desde «con: … -> CONECTANDO_WIFI (wifi_down)» hasta el siguiente «wifi: intento <n>» dentro de ±10 % de 1, 2, 4, 8, 16, 32, 60, 60, 60, 60 s; sin ráfagas (< 1 s), sin reinicio y sin AP
     impl: tests/bench/test_con.py::test_tc_con_03_wifi_backoff
-    status: not_done
-    commit: ee66859
-    date: 2026-11-22
-    ci_run: 45085085658
-    evidence: test-results/20261123T010218Z-ee66859/
-    diagnostico: "banco: la captura serie mezcla y trunca la línea wifi_down del intento 2 (~6,8 s tras el reset), igual en 3 corridas con ee66859 y con la imagen vieja 3e3ffe7 (D: «(wifi_dowI (8786) nodo: wifi: inten»); upstream #89. El backoff del firmware es correcto (intento 3 a +2 s del wifi_down no visto). Diagnóstico con 3e3ffe7 en test-results/20261123T041844Z-ee66859/"
+    status: blocked
+    commit: 673bbe8
+    date: 2026-11-23
+    ci_run: 45156827479
+    evidence: test-results/20261123T121706Z-673bbe8/
+    blocked_by: "SensorsIot/Embedded-AI-Harness#89 — la captura serie pierde o mezcla líneas al reabrir el proxy tras el reset (4,4–8,7 s)"
+    diagnostico: "decisión del propietario (2026-11-23): bloqueada por #89. Evidencia: falta el wifi_down del intento 2 (~6,8 s tras el reset) en 4 corridas con ee66859/673bbe8, sin ninguna línea en el tramo; con la imagen 3e3ffe7 la misma línea llegó mezclada (test-results/20261123T041844Z-ee66859/). El backoff del firmware es correcto (intento 3 a +2 s del wifi_down no visto). La prueba da not done si la línea cortada o mezclada está en el tramo medido, o si el wifi_down que falta cae en el hueco 4,4–8,7 s sin ninguna línea; si no, FAIL"
 
   - id: TC-CON-06
     shape: atomic
@@ -886,18 +887,18 @@ tests:
     wave: 1
     phase: 1
     tier: bench
-    verifies: [clima:FR-CON-06]
+    verifies: [clima:FR-CON-06, FR-CON-A1]
     needs: [bench-driver, bench-flash, bench-wifi-ap, bench-portal-driver, bench-serial-monitor, dut-board]
     origin: villa-nodo-clima-piloto@ddf8016
     expect: >
       aprovisionado contra un AP desechable del banco y con ese AP apagado desde el arranque (Fase 1; el corte con el nodo ya conectado pasa por T14, Fase 2): en 15 min ninguna línea con: con destino distinto de CONECTANDO_WIFI y el AP agua-* del DUT no aparece en 5 escaneos
     impl: tests/bench/test_con.py::test_tc_con_06_never_portal
-    status: failed
-    commit: ee66859
-    date: 2026-11-22
-    ci_run: 45085085658
-    evidence: test-results/20261123T000748Z-ee66859/
-    diagnostico: "firmware: el manejo de LOST_IP de H-95 actúa en CONECTANDO_WIFI; ESP-IDF 6.0.3 avisa LOST_IP 120 s después de cada esp_netif_down aunque nunca hubo IP (esp_netif_lwip.c), y el nodo escribe «con: ip perdida» y suelta la asociación cada 120 s. Propuesta en la rama fix-lost-ip (sin fusionar, pendiente de aprobación)"
+    status: successful
+    commit: 673bbe8
+    date: 2026-11-23
+    ci_run: 45156827479
+    evidence: test-results/20261123T121706Z-673bbe8/
+
 
   - id: TC-CON-07
     shape: atomic
@@ -1050,11 +1051,11 @@ tests:
       imagen de banco; captura del tráfico del DUT en el arranque y 3 ciclos: los datagramas al puerto 5555 van todos por unicast a 192.168.4.1 (control positivo: > 10); ninguno por broadcast ni a otro destino
     impl: tests/bench/test_red.py::test_tc_log_08_udp_log_unicast_only
     status: failed
-    commit: ee66859
-    date: 2026-11-22
-    ci_run: 45085085658
-    evidence: test-results/20261123T010218Z-ee66859/
-    diagnostico: "sin T11 en 150 s; la prueba no guarda la consola al fallar: no se sabe si es el nodo o una línea perdida del banco (#89). Por diagnosticar"
+    commit: 673bbe8
+    date: 2026-11-23
+    ci_run: 45156827479
+    evidence: test-results/20261123T121706Z-673bbe8/
+    diagnostico: "sin T11 en 150 s. La consola guardada termina la asociación a 4,3 s y no muestra IP, wifi_up ni MQTT, pero el SNTP arranca y sigue (solo ocurre tras T08): wifi_up y T11 cayeron en el hueco de la captura (#89). Propuesta: esperar el status online en el broker en vez de T11 en la consola. Desde 2026-11-23 la prueba confirma OPERATIVO con el status online del broker, como TC-CON-08; repetir"
 
   - id: TC-LOG-04
     shape: atomic
@@ -1069,11 +1070,11 @@ tests:
       imagen de producción en OPERATIVO, arranque y 3 ciclos con el tráfico UDP capturado: solo DHCP, DNS y SNTP; ningún datagrama al 5555 ni a otro destino
     impl: tests/bench/test_red.py::test_tc_log_04_no_udp_log_in_production
     status: failed
-    commit: ee66859
-    date: 2026-11-22
-    ci_run: 45085044807
-    evidence: test-results/20261123T041446Z-ee66859/
-    diagnostico: "imagen de producción 0.0.0-ee66859 (run 45085044807): sin T11 en 150 s; sin consola guardada. Por diagnosticar"
+    commit: 673bbe8
+    date: 2026-11-23
+    ci_run: 45156832063
+    evidence: test-results/20261123T131009Z-673bbe8/
+    diagnostico: "igual que TC-LOG-08 con la imagen de producción: T11 en el hueco de la captura (#89); SNTP en marcha tras T08. Desde 2026-11-23 la prueba confirma OPERATIVO con el status online del broker, como TC-CON-08; repetir"
 
   - id: TC-LOG-07
     shape: atomic
@@ -1172,6 +1173,11 @@ tests:
       Si el AP o el broker cambian de manos (otro uso del banco), not done sin tocar lo ajeno.
       NODO_WDT_HUMO=1: corrida de humo de 15 min con un corte de broker, no cuenta como resultado.
       Análisis en tests/bench/estabilidad.py, probado en tests/host/test_estabilidad.py
+    cuando: >
+      regla del propietario (2026-11-23): la 24 h se corre solo en la primera versión completa del nodo,
+      antes de instalarlo (S2) y tras cambios grandes (nueva ESP-IDF o dependencia, o cambios en Wi-Fi,
+      MQTT, reloj o watchdog). Para cambios pequeños basta la regresión corta (journey + bloques de
+      testing/banco-semana-*.md que toquen lo cambiado)
     impl: tests/bench/test_wdt.py::test_tc_wdt_01_24h_stability
     status: not_run
     humo: >
@@ -1537,7 +1543,8 @@ tests:
     expect: >
       reloj simulado: asociado sin IP 59 s → nada, 60 s → wifi_down una vez; con IP o desasociado antes, nada;
       10 min sin broker → una reasociación, la siguiente como pronto 10 min después; broker de vuelta o Wi-Fi
-      caído anulan la cuenta; desborde del reloj
+      caído anulan la cuenta; desborde del reloj; IP_LOST en cada estado: solo suelta la asociación en CONECTANDO_BROKER y OPERATIVO, y sin IP no toca la
+      cuenta de 60 s (FSD 0.8.2)
     impl: tests/host/test_vigia.c (components/conectividad/conectividad_vigia.c)
     status: not_run
     rama: integracion-6.0.3-h95 ab3ddb2 — en verde en local (ctest), 2026-11-21; pasa a CI al mezclar a main
@@ -1640,10 +1647,10 @@ tests:
       y la reasociación; no sustituye a TC-CON-A4 (el DROP cambia los tiempos de TCP)
     impl: tests/bench/test_mqtt.py::test_tc_con_a5_reasociar_sin_broker
     status: successful
-    commit: ee66859
-    date: 2026-11-22
-    ci_run: 45085085658
-    evidence: test-results/20261123T010218Z-ee66859/
+    commit: 673bbe8
+    date: 2026-11-23
+    ci_run: 45156827479
+    evidence: test-results/20261123T121706Z-673bbe8/
 
 
   # --- H-96 (FSD 0.8.1, P28–P34 aceptados): medidor testigo en GPIO18 (rama integracion-6.0.3-h95) ---

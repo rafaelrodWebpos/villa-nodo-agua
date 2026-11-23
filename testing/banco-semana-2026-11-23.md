@@ -20,10 +20,10 @@ salen de las corridas del 2026-11-15/19 en main. Hay que medirlas de nuevo.
 | 4 | **Nueva: FR-CON-A2** | **TC-CON-A5** (broker parado 25 min con el AP arriba: reasociaciones a 10 y 20 min, sin reinicio) | 35 min | La única prueba de H-95 que el banco ya puede correr. Ejecutable: `tests/bench/test_mqtt.py::test_tc_con_a5_reasociar_sin_broker` |
 | 5 | Portal y seguridad | TC-POR-02, 05, 07, 09, 11, 12; TC-CON-14 | 30 min | Regresión del portal con 6.0.3 |
 | 6 | MQTT, log y HA | TC-MQTT-05, TC-LOG-04, TC-LOG-07, TC-LOG-08, TC-HA-A1 | 25 min | Regresión de MQTT, del log UDP y de Discovery |
-| 7 | Hora | TC-TIME-06; bench⁺: TC-TIME-01, TC-TIME-04 | 20 min | SNTP con 6.0.3; las dos de bench⁺ necesitan Internet del AP |
+| 7 | Hora | TC-TIME-06; bench⁺: TC-TIME-01, TC-TIME-04 | 2 h 20 min (TC-TIME-04 bloquea SNTP 2 h) | SNTP con 6.0.3; las dos de bench⁺ necesitan Internet del AP |
 | 8 | Estabilidad | **TC-WDT-01, 24 h**, con la imagen de integración | 24 h + 5 min | Lo último, en una ventana larga (fin de semana): la 24 h de esta tarde corre sobre main (3e3ffe7) y no cubre el firmware nuevo |
 
-**Total sin la 24 h: ≈ 3 h 10 min**, que pueden repartirse en dos sesiones: bloques 0–4 y
+**Total sin la 24 h: ≈ 5 h 10 min** (medido el 2026-11-22: TC-TIME-04 sola dura 2 h), que pueden repartirse en dos sesiones: bloques 0–4 y
 bloques 5–7.
 
 ## Declaradas pero bloqueadas (no se corren esta semana)
