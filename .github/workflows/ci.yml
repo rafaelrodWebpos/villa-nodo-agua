@@ -24,6 +24,8 @@ jobs:
         run: python3 tests/host/test_grabado.py
       - name: TC-WDT-01 análisis de reinicios (banco frente a nodo)
         run: python3 tests/host/test_estabilidad.py
+      - name: H-62 límite de esperas del hook de la sesión de IA
+        run: python3 tests/host/test_limite_espera.py
 
   test-plan:            # un plan que no carga pone la CI en rojo
     runs-on: ubuntu-latest
