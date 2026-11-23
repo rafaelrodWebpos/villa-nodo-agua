@@ -142,6 +142,46 @@ static void val(void)
         e = (val_entrada_t){ VEV_ABRIR, C, true, 0, false };                 /* sin g_ciego: V08 */
         a = val_evento(&v, &e);
         OK(a.fila == 8 && v.estado == VAL_ABRIENDO && v.cerrada_por == VCP_NINGUNO, "sin ciego: V08");
+        /* FSD 0.8.4 (propietario, 2026-11-23): V13, V14 y V16 no reabren ni mueven con g_ciego;
+         * el propietario siempre puede reabrir a mano: con la palanca (V24 no vuelve a cerrar,
+         * P12) o desde HA con confirmación (casa_cerrada=false → sin g_ciego → V08) */
+        val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_FALLA;
+        e = (val_entrada_t){ VEV_ABRIR, 0, true, 0, true };
+        a = val_evento(&v, &e);
+        OK(a.fila == 16 && a.rechazo == VRECH_SONDAS_EN_FALLA && v.estado == VAL_FALLA, "V16 abrir con g_ciego: rechazo");
+        e.evento = VEV_PULSACION_LARGA; a = val_evento(&v, &e);
+        OK(a.fila == 16 && a.patron_rechazo && v.estado == VAL_FALLA, "V16 pulsación con g_ciego: rechazo");
+        e.evento = VEV_CERRAR; a = val_evento(&v, &e);
+        OK(a.fila == 16 && v.estado == VAL_CERRANDO, "V16 cerrar con g_ciego: sí");
+        val_iniciar(&v, false, VCP_EJERCICIO, T_MAX_S); v.estado = VAL_CERRADA;
+        e = (val_entrada_t){ VEV_FINALES, C, true, 0, true };
+        OK(val_evento(&v, &e).fila == 0 && v.estado == VAL_CERRADA, "V14 con g_ciego: no reabre");
+        val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_ABIERTA;
+        e = (val_entrada_t){ VEV_EJERCICIO, VFIN_ABIERTA, true, 0, true };
+        OK(val_evento(&v, &e).fila == 0 && v.estado == VAL_ABIERTA, "V13 con g_ciego: no empieza el ejercicio");
+        /* palanca: CERRADA (por sondas) → abierta a mano con g_ciego; V24 ya no cierra */
+        val_iniciar(&v, false, VCP_SONDAS, T_MAX_S); v.estado = VAL_CERRADA;
+        e = (val_entrada_t){ VEV_FINALES, VFIN_ABIERTA, true, 0, true };
+        a = val_evento(&v, &e);
+        OK(a.fila == 15 && v.estado == VAL_ABIERTA && a.evento == VPUB_MOVIMIENTO_MANUAL, "palanca: V15 a ABIERTA");
+        e = (val_entrada_t){ VEV_CIEGO, VFIN_ABIERTA, true, 100, true };
+        for (int k = 0; k < 5; k++) { a = val_evento(&v, &e); OK(a.fila == 0 && a.motor == VMOT_SIN_CAMBIO, "palanca: V24 no vuelve a cerrar"); }
+        e = (val_entrada_t){ VEV_FUGA, VFIN_ABIERTA, false, 200, true };
+        a = val_evento(&v, &e);
+        OK(a.fila == 4 && v.estado == VAL_CERRANDO && v.bloqueo_fuga, "palanca: la fuga siempre gana (V04)");
+        val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_ABIERTA;
+        e = (val_entrada_t){ VEV_FINALES, 0, true, 0, true };
+        OK(val_evento(&v, &e).fila == 15 && v.estado == VAL_DESCONOCIDA, "palanca a medio camino: V15");
+        e = (val_entrada_t){ VEV_CIEGO, 0, true, 100, true };
+        OK(val_evento(&v, &e).fila == 0, "palanca en DESCONOCIDA: V24 no actúa");
+        /* después de que el nodo mueva el motor, V24 vuelve a valer */
+        val_iniciar(&v, false, VCP_SONDAS, T_MAX_S); v.estado = VAL_ABIERTA; v.palanca = true;
+        e = (val_entrada_t){ VEV_CERRAR, VFIN_ABIERTA, true, 0, true }; val_evento(&v, &e);
+        OK(!v.palanca, "una orden que mueve el motor borra la marca de la palanca");
+        /* HA con confirmación: casa_cerrada=false → sin g_ciego → V08 */
+        val_iniciar(&v, false, VCP_SONDAS, T_MAX_S); v.estado = VAL_CERRADA;
+        e = (val_entrada_t){ VEV_ABRIR, C, true, 0, false };
+        OK(val_evento(&v, &e).fila == 8 && v.estado == VAL_ABRIENDO, "HA con casa_cerrada=false: V08 reabre");
         /* V23 no reabre con g_ciego */
         val_iniciar(&v, false, VCP_BATERIA, T_MAX_S); v.estado = VAL_CERRADA;
         e = (val_entrada_t){ VEV_BATERIA_REAPERTURA, C, true, 0, true };
@@ -157,9 +197,9 @@ static void val(void)
     int pares = 0, ignorados = 0;
     for (int s = 0; s < VAL_N_ESTADOS; s++) for (int ev = 0; ev < VEV_N_EVENTOS; ev++)
     for (int fin = 0; fin < 4; fin++) for (int seco = 0; seco < 2; seco++) for (int cp = 0; cp <= VCP_SONDAS; cp++)
-    for (int bl = 0; bl < 2; bl++) for (int ci = 0; ci < 2; ci++) {
+    for (int bl = 0; bl < 2; bl++) for (int ci = 0; ci < 2; ci++) for (int pa = 0; pa < 2; pa++) {
         val_iniciar(&v, bl, (val_cerrada_por_t)cp, T_MAX_S);
-        v.estado = (val_estado_t)s; v.t_inicio_ms = 0;
+        v.estado = (val_estado_t)s; v.t_inicio_ms = 0; v.palanca = pa;
         val_t antes = v;
         val_entrada_t e = { (val_evento_t)ev, (uint8_t)fin, seco, ev == VEV_TICK ? 30001u : 100u, ci };
         val_accion_t a = val_evento(&v, &e);

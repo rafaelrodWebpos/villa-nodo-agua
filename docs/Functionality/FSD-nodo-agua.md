@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.8.3
+fsd_version: 0.8.4
 repository: villa-nodo-agua (público)
 baseline_commit: c3e5053 (Load defined, 2026-11-14); cada versión, el commit que la introduce
 applicable_firmware_version: ninguna todavía
@@ -81,6 +81,12 @@ change_history:
     FR-PUB-04 (ya lo decía FR-MED-05); contratos de FR-MED-09 (tasa), FR-SON-04
     (`casa_cerrada`), FR-MED-03 (comando `reiniciar` de E13), FR-MED-06/09 y FR-EJE-04
     (casos que faltaban), C-HW-33 en campo; se quita «propuesta» de textos ya aceptados.
+  - 0.8.4 (2026-11-23): decisiones del propietario. `galones_por_pulso` 1,0 de fábrica,
+    configurable, calibrado en la obra con una cubeta de 5 galones (C-INS-03). FR-VIG-01: aviso
+    en ≤ 20 min. FR-VIG-02: aviso en ≤ 1 min. V13, V14 y V16 no mueven ni reabren con `g_ciego`;
+    el propietario siempre puede reabrir a mano: con la palanca (V24 ya no vuelve a cerrar
+    una posición puesta a mano, P12) o desde HA con confirmación (`casa_cerrada`=false y
+    `abrir`, con el evento y el aviso de FR-CFG-A5/FR-VIG-02).
 ```
 
 ## Convenciones de este documento
@@ -430,7 +436,7 @@ reforzada de nodo crítico (S4, D14). Después, la puesta en marcha en el sitio
 | P26 | Bucle de reinicios: k = **3** reinicios en **10 min** | aceptado [user] H-93; el requisito va en la próxima ronda | próxima ronda |
 | H-96 | Medidor testigo DAE AS200U-75P entre el medidor de la empresa de agua y la cisterna, leído por una entrada del nodo, sin la nube de DAE | aprobado [user] 2026-11-21 | §6.7, C-HW-32/33 |
 | P28 | Entrada del medidor en **GPIO18**: libre, fuera de la lista de clima:C-HW-07, sin función de arranque ni de JTAG. Contacto seco a GND con pull-up externa de 10 kΩ, 1 kΩ en serie y 100 nF. Alternativa: GPIO21 | aceptado [user] H-96 | C-HW-30, C-HW-32 |
-| P29 | Pulso válido = contacto cerrado ≥ 50 ms tras ≥ 50 ms abierto (el mismo antirrebote de FR-IO-05); conteo exacto hasta 5 pulsos/s. `galones_por_pulso` de fábrica **1,0, a confirmar con el manual del AS200U-75P** y calibrar en la obra con un balde de 5 galones; rango 0,1–100 | aceptado [user] H-96 | FR-MED-01/02 |
+| P29 | Pulso válido = contacto cerrado ≥ 50 ms tras ≥ 50 ms abierto (el mismo antirrebote de FR-IO-05); conteo exacto hasta 5 pulsos/s. `galones_por_pulso` de fábrica **1,0**, configurable, rango 0,1–100; se calibra en la obra con una cubeta de 5 galones (C-INS-03) [user, 2026-11-23] | aceptado [user] H-96 | FR-MED-01/02 |
 | P30 | Total y pulsos en NVS **como mucho una vez cada 60 s** y solo si cambiaron, y además antes de un reinicio ordenado. Ante un reinicio inesperado se pierden como mucho los pulsos de los últimos 60 s. Desgaste: ≤ 1440 escrituras al día con flujo continuo, repartidas por el nivelado de la NVS | aceptado [user] H-96 | FR-MED-03 |
 | P31 | Caudal = litros de los últimos **5 min** × 12, en L/h, publicado con las medidas cada 60 s (P8) | aceptado [user] H-96 | FR-MED-04 |
 | P32 | Alerta con `casa_cerrada`=true: más de **20 L** en **60 min** fuera de un periodo permitido. **HA abre el periodo** con `medidor/set` al empezar el riego o el relleno de la piscina (1–720 min), y el periodo se alarga **120 min** después, porque la cisterna se rellena cuando la boya abre, que puede ser después del riego. Alternativa: franjas horarias fijas en §19 (necesitan hora válida) | aceptado [user] H-96 | FR-MED-05/06 |
@@ -494,10 +500,10 @@ Todas las filas son [Must]. Procedencia: [user] D1, D5, D12, D18; [derived] el r
 | V10 | CERRADA | pulsación larga | `g_seco` | ABRIENDO | igual que V08 | ≤ 500 ms |
 | V11 | CERRADA | pulsación larga | no `g_seco` | CERRADA | patrón de rechazo (§8) | — |
 | V12 | ABRIENDO | final «abierta» | — | ABIERTA | parar el motor | ≤ P3 |
-| V13 | ABIERTA | ejercicio vencido | `g_seco`, `bloqueo_fuga`=0 | CERRANDO | `cerrada_por`=`ejercicio` | — |
-| V14 | CERRADA | final «cerrada» confirmado | `cerrada_por`=`ejercicio` y `g_seco` | ABRIENDO | registrar tiempo de carrera | — |
+| V13 | ABIERTA | ejercicio vencido | `g_seco`, `bloqueo_fuga`=0 y no `g_ciego` | CERRANDO | `cerrada_por`=`ejercicio` | — |
+| V14 | CERRADA | final «cerrada» confirmado | `cerrada_por`=`ejercicio`, `g_seco` y no `g_ciego` | ABRIENDO | registrar tiempo de carrera | — |
 | V15 | ABIERTA / CERRADA | cambia un final sin orden | — | solo «abierta» → ABIERTA; solo «cerrada» → CERRADA; ninguno → DESCONOCIDA; los dos → FALLA | evento `movimiento_manual` (P12); con los dos, `falla_valvula` | — |
-| V16 | FALLA | orden `cerrar` u `abrir` válida, o pulsación larga | según V05/V08/V10 | CERRANDO / ABRIENDO | un reintento por orden | P3 |
+| V16 | FALLA | orden `cerrar` u `abrir` válida, o pulsación larga | según V05/V08/V10; para abrir, además no `g_ciego` (si no, rechazo `sondas_en_falla` y, con la pulsación, patrón de rechazo, como V25) | CERRANDO / ABRIENDO | un reintento por orden | P3 |
 | V17 | CERRADA | fuga confirmada | — | CERRADA | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | — |
 | V18 | ABRIENDO | fuga confirmada | — | CERRANDO | como V04 | ≤ P2 |
 | V19 | CERRANDO, ABRIENDO | orden de válvula | — | sin cambio | rechazar `ocupado` (P15) | — |
@@ -512,12 +518,17 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 | V21 | CERRANDO | fuga confirmada | — | CERRANDO (sigue cerrando) | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | — |
 | V22 | ABIERTA, DESCONOCIDA | batería `critica` y red `ausente` (FR-ENE-04) | — | CERRANDO | `cerrada_por`=`bateria` | ≤ 500 ms |
 | V23 | CERRADA | reapertura por batería cumplida (FR-ENE-05) | `cerrada_por`=`bateria`, `bloqueo_fuga`=0, `g_seco` y no `g_ciego` (H-93) | ABRIENDO | `cerrada_por`=`ninguno` | ≤ 500 ms |
-| V24 | ABIERTA, DESCONOCIDA | `g_ciego` (FR-SON-05) | — | CERRANDO | `cerrada_por`=`sondas`; `bloqueo_fuga` sin cambio | ≤ 500 ms |
+| V24 | ABIERTA, DESCONOCIDA | `g_ciego` (FR-SON-05) | la posición no la puso la palanca (V15) sin que el nodo haya movido el motor después | CERRANDO | `cerrada_por`=`sondas`; `bloqueo_fuga` sin cambio | ≤ 500 ms |
 | V25 | CERRADA | orden `abrir` válida o pulsación larga | `g_seco` y `g_ciego` | CERRADA | rechazar `sondas_en_falla`; con la pulsación, patrón de rechazo (§8) | — |
 
 Filas V20–V23 [user, 2026-11-15]. Filas V24 y V25 [user] H-93; V24 es de nivel, como V22.
 V25 tiene prioridad sobre V08 y V10: mientras se cumple `g_ciego` no se reabre, porque V24
-volvería a cerrar. No hay reapertura automática cuando `g_ciego` deja de cumplirse: la
+volvería a cerrar. **El propietario siempre puede reabrir a mano** [user, 2026-11-23]: con la
+palanca (V15; V24 no vuelve a cerrar esa posición hasta que el nodo mueva el motor por otra
+causa, P12 y FR-VAL-10; la marca vive en RAM, así que tras un reinicio con `g_ciego` V24
+vuelve a cerrar) o desde HA con una confirmación que pone `casa_cerrada`=false y manda
+`abrir` (V08), con el evento y el aviso de FR-CFG-A5 y FR-VIG-02. Una fuga confirmada cierra
+igual (V04). No hay reapertura automática cuando `g_ciego` deja de cumplirse: la
 reapertura es la de D5 (remota con todo seco, o en persona); con la llegada, HA pone
 `casa_cerrada`=false y la reapertura vuelve a ser posible [derived]. **Una fuga confirmada siempre gana:** en ABIERTA,
 DESCONOCIDA, ABRIENDO, CERRANDO, FALLA y CERRADA (V04, V18, V21, V20, V17) la válvula
@@ -1127,7 +1138,7 @@ Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; valores de §4.4):
 | `t_seco_s` | entero | 10 | 3–60 | P6 |
 | `ciclado_max` | entero | 6 | 3–30 | P7 |
 | `ciclado_ventana_min` | entero | 60 | 10–240 | P7 |
-| `galones_por_pulso` | decimal | 1,0 (a confirmar con el manual) | 0,1–100 | P29 |
+| `galones_por_pulso` | decimal | 1,0 (se calibra en la obra, C-INS-03) | 0,1–100 | P29 |
 | `consumo_alerta_l` | entero | 20 | 5–1000 | P32 |
 | `consumo_ventana_min` | entero | 60 | 10–1440 | P32 |
 | `consumo_margen_min` | entero | 120 | 0–720 | P32 |
@@ -1262,22 +1273,28 @@ casa. Se verifican en la puesta en marcha (§3.5) y entran en la auditoría S2.
   respaldado (inversor o UPS), igual que el nodo (C-HW-20).
 - **C-INS-02** [Must] [user] H-93: en producción, `mqtt_host` debe ser una dirección IPv4
   (no un nombre) y el router debe tener reservas DHCP para el nodo y para la Pi del broker.
-- **FR-VIG-01** [Must] [user] H-93 (A-16 del propietario): si durante **15 min** no hay
-  constancia, fuera de la casa, de que el nodo publica su `status` en vivo, el propietario
-  deberá recibir un aviso en el teléfono por un canal que no dependa de la Pi ni de la
+- **C-INS-03** [Must] [user] H-96 (P29, 2026-11-23): al instalar el medidor testigo, se pasan
+  5 galones medidos con una cubeta y se ajusta `galones_por_pulso` (§19) hasta que el total del
+  nodo coincida con ± 2 % (el error del medidor, ±1,5 %, más la lectura de la cubeta).
+- **FR-VIG-01** [Must] [user] H-93 (A-16 del propietario): si durante **15 min** un servicio
+  externo a la casa no recibe el latido que confirma que el nodo publica su `status` en vivo,
+  el propietario deberá recibir un aviso en el teléfono, en **≤ 20 min** desde el último latido
+  [user, 2026-11-23], por un canal que no dependa de la Pi ni de la
   conexión a internet de la casa (por ejemplo, un servicio externo que espera un latido y
   avisa cuando falta). La caída de la Pi, del switch, del router o de internet deberá
   producir el mismo aviso.
 - **FR-VIG-02** [Must] [user] (condición del riesgo de P22, 2026-11-21): cada evento
   `casa_cerrada` del nodo (FR-CFG-A5) deberá producir un aviso de HA al propietario con el
-  valor nuevo y la hora, también cuando el cambio lo hizo una escena.
+  valor nuevo y la hora, en **≤ 1 min** [user, 2026-11-23], también cuando el cambio lo hizo una
+  escena.
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
 | C-INS-01 | Puesta en marcha: quitar la luz general | `valvula/state` y `status` siguen llegando a HA durante 30 min de apagón | HA sin datos del nodo durante el apagón | field |
+| C-INS-03 | Instalación: cubeta de 5 galones (18,93 L) por el medidor; leer `total_l` antes y después | Diferencia de 18,93 L ± 2 % tras el ajuste; valor de `galones_por_pulso` anotado en la instalación | Calibración sin anotar; error > 2 % | field |
 | C-INS-02 | Revisión de la configuración de producción (S2) y del router; luego apagar el DNS del router 10 min | `mqtt_host` es IPv4; reservas presentes; el nodo sigue en OPERATIVO | Un nombre en `mqtt_host`; salida de OPERATIVO | field |
-| FR-VIG-02 | HA de la casa; cambiar `casa_cerrada` con la escena «Casa cerrada», con «Preparar llegada» y con un `config/set` manual desde otro cliente | Un aviso en el teléfono por cada cambio, con el valor nuevo | Un cambio sin aviso | field |
-| FR-VIG-01 | Cuatro cortes, uno cada vez: switch de la Pi, la Pi, el internet de la casa (desconectar el módem) y el nodo | En cada uno, aviso en el teléfono en ≤ 15 min más el periodo de comprobación del canal (que queda anotado en la instalación) | Ningún aviso; aviso que llega por la Pi | field |
+| FR-VIG-02 | HA de la casa; cambiar `casa_cerrada` con la escena «Casa cerrada», con «Preparar llegada» y con un `config/set` manual desde otro cliente | Un aviso en el teléfono por cada cambio en ≤ 1 min, con el valor nuevo y la hora del evento | Un cambio sin aviso; aviso a más de 1 min | field |
+| FR-VIG-01 | Cuatro cortes, uno cada vez: switch de la Pi, la Pi, el internet de la casa (desconectar el módem) y el nodo | En cada uno, aviso en el teléfono en ≤ 20 min desde el corte | Ningún aviso; aviso que llega por la Pi | field |
 
 ---
 
