@@ -1374,6 +1374,8 @@ tests:
     verifies: [V01, V02, V03, V04, V05, V06, V07, V08, V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, V24, V25, FR-VAL-06, FR-VAL-11, FR-EJE-03]
     needs: [hosted-ci]
     expect: >
+      FSD 0.8.4: V13, V14 y V16 no mueven ni reabren con g_ciego (V16 rechaza sondas_en_falla); tras la palanca
+      (V15) V24 no vuelve a cerrar hasta que el nodo mueva el motor; la fuga gana; casa_cerrada=false → V08.
       tabla de §5.3 (FSD 0.5.0) como prueba parametrizada: cada fila V01–V23 (con V03b) produce su estado, su acción (motor, rechazo, evento, marcas) y nada más; V07 solo al superar P3; completitud: en todas las combinaciones (estado × evento × finales × g_seco × marcas), o una fila admitida para ese par o el par se ignora sin ningún efecto; nunca IN1 e IN2 a la vez (el motor es un único valor); la fuga siempre gana: desde cualquier estado salvo ARRANQUE (imposible por construcción), fuga y final «cerrada» dejan CERRADA con bloqueo_fuga = 1 y cerrada_por = fuga, y nada sin g_seco la reabre (FR-EJE-03, parte host)
     impl: tests/host/test_tablas.c (val)
     status: successful

@@ -59,6 +59,8 @@ typedef struct {
     val_cerrada_por_t cerrada_por; /* persistente (§9) */
     uint32_t t_inicio_ms;          /* inicio del movimiento en curso */
     uint32_t t_carrera_max_ms;     /* P3: t_carrera_max_s × 1000 */
+    bool palanca;                  /* la posición la puso la palanca (V15) y el motor no se ha movido
+                                    * desde entonces: V24 no actúa (FR-VAL-10, P12; FSD 0.8.4). En RAM */
 } val_t;
 
 /* Estado inicial (ARRANQUE) con las marcas restauradas de NVS */

@@ -28,9 +28,9 @@ test -f docs/00-Overview.md && ls docs/Method/AI-Workflow.md docs/UserDocumentat
 python3 - "$F" <<'PY'
 import re,sys
 s=open(sys.argv[1],encoding='utf-8').read()
-ids=re.findall(r'^- \*\*((?:FR|NFR|C)-[A-Z]+-\d+)\*\* \[',s,re.M)+re.findall(r'^\| (C-[A-Z]+-\d+) \[',s,re.M)
+ids=re.findall(r'^- \*\*((?:FR|NFR|C)-[A-Z]+-[A-Z]?\d+)\*\* \[',s,re.M)+re.findall(r'^\| (C-[A-Z]+-[A-Z]?\d+) \[',s,re.M)
 cov=set(re.findall(r'^id: (\S+)',s,re.M))
-for row in re.findall(r'^\| ([A-Z]+-[A-Z]+-\d+(?:[/, ]+(?:[A-Z]+-[A-Z]+-)?\d+)*) \|',s,re.M):
+for row in re.findall(r'^\| ([A-Z]+-[A-Z]+-[A-Z]?\d+(?:[/, ]+(?:[A-Z]+-[A-Z]+-)?[A-Z]?\d+)*) \|',s,re.M):   # IDs con letra (FR-CON-A1), propietario 2026-11-23
     for x in re.split(r',\s*',row):
         if '/' in x: b,_,n=x.rpartition('-'); cov|={b+'-'+p for p in n.split('/')}
         else: cov.add(x)
