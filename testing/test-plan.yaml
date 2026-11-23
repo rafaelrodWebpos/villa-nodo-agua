@@ -188,10 +188,10 @@ tests:
       se graba en SLOT2 la imagen construida por la CI sobre el commit que se prueba, con los offsets de su flash_args y la NVS borrada; tras el reset aparecen la versión, NODO-BENCH-IMAGE (imagen de banco) e «Init complete»
     impl: tests/bench/test_jrn01.py::test_jrn_01_0_flash_ci_image
     status: successful
-    commit: 3766991
-    date: 2026-11-18
-    ci_run: 43754845133
-    evidence: test-results/20261119T002551Z-3766991/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010009Z-ee66859/
     observed: >
       paso 0 de banco_con_la_compra (SLOT2 tras soldarle los pines): imagen
       0.0.0-3e3ffe7-bench (drivers de E/S, tarea de protección), grabada con la defensa
@@ -211,10 +211,10 @@ tests:
       arranca sin configuración: el log muestra ARRANQUE -> PORTAL y el escaneo del banco ve el SSID abierto agua-xxxxxx (xxxxxx de la MAC) en ≤ 10 s
     impl: tests/bench/test_jrn01.py::test_jrn_01_1_portal_without_config
     status: successful
-    commit: 44d29c2
-    date: 2026-11-15
-    ci_run: 43709844065
-    evidence: test-results/20261115T162357Z-44d29c2/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010009Z-ee66859/
     observed: >
       repetido con FSD 0.4.0. SLOT2, imagen 0.0.0-26c3661-bench.
   - id: JRN-01.2
@@ -229,10 +229,10 @@ tests:
       el banco envía por el portal su AP, el broker y sitio1/zona1 (ficticios, NFR-SEC-01); el nodo reinicia y se une al AP del banco (con: CONECTANDO_WIFI -> CONECTANDO_BROKER)
     impl: tests/bench/test_jrn01.py::test_jrn_01_2_provision
     status: successful
-    commit: 44d29c2
-    date: 2026-11-15
-    ci_run: 43709844065
-    evidence: test-results/20261115T162357Z-44d29c2/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010009Z-ee66859/
     observed: >
       repetido con FSD 0.4.0. SLOT2, imagen 0.0.0-26c3661-bench.
   - id: JRN-01.3
@@ -247,10 +247,10 @@ tests:
       pasa a OPERATIVO; status retained con estado = online y las configuraciones de Discovery de §14 llegan retained, sin duplicados
     impl: tests/bench/test_jrn01.py::test_jrn_01_3_broker_status_discovery
     status: successful
-    commit: 44d29c2
-    date: 2026-11-15
-    ci_run: 43709844065
-    evidence: test-results/20261115T162357Z-44d29c2/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010009Z-ee66859/
     observed: >
       status y 21 configuraciones de Discovery retenidas (con estado_bateria), sin duplicados. SLOT2, imagen 0.0.0-26c3661-bench.
   - id: JRN-01.4
@@ -789,10 +789,10 @@ tests:
       con el DUT en PORTAL, el banco se une a su AP abierto y GET http://192.168.4.1/ devuelve 200 con los 8 campos de §17 (por su name) y sin ningún secreto relleno; la API del banco sigue respondiendo tras sta_join (ruta de eth0 intacta)
     impl: tests/bench/test_por.py::test_tc_por_02_get_form
     status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
   - id: TC-POR-05
     shape: atomic
     kind: standard
@@ -806,10 +806,10 @@ tests:
       con el DUT en PORTAL y valores ficticios, dos POST / inválidos (zona Zona#1; wifi_pass de 7) responden 200 con el error solo en su campo (err-<name>), el aviso general, los valores no secretos conservados y ningún secreto; el log muestra una con: PORTAL -> PORTAL (envío) por envío y ninguna nvs: config escrita; un reset vuelve a con: ARRANQUE -> PORTAL (fin_arranque)
     impl: tests/bench/test_por.py::test_tc_por_05_invalid_submit
     status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
   - id: TC-POR-07
     shape: atomic
     kind: standard
@@ -823,10 +823,10 @@ tests:
       unido al AP del DUT, GET /generate_204 y GET /hotspot-detect.html por el relé terminan en el formulario del portal (200, los 8 campos de §17) y nunca en 204. El relé sigue las redirecciones, así que el 302 en sí no se observa aquí (lo cubre TC-POR-06). Es la parte bench de la primera fila de FR-POR-02 (FSD 0.9.5); última ejecución verde también sobre 5f20820
     impl: tests/bench/test_por.py::test_tc_por_07_captive_redirects
     status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
   - id: TC-POR-09
     shape: atomic
     kind: standard
@@ -840,10 +840,10 @@ tests:
       con el DUT en PORTAL (P-NVS-ERASE si hace falta), un POST / válido con el SSID del AP desechable del banco y una clave errónea responde «Probando la conexión…»; con el AP del banco levantado, con: VALIDANDO -> PORTAL (wifi_down) llega en ≤ 20 s (+ 5 s) desde con: PORTAL -> VALIDANDO (envío), sin nvs: config escrita; el banco vuelve a unirse al AP del DUT y GET / muestra el aviso no-conecta con la red conservada y la clave vacía; un reset vuelve a con: ARRANQUE -> PORTAL (fin_arranque). SSID y clave aleatorios por ejecución, redactados en la evidencia
     impl: tests/bench/test_por.py::test_tc_por_09_wrong_password
     status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
   - id: TC-POR-11
     shape: atomic
     kind: standard
@@ -857,10 +857,10 @@ tests:
       configurado: en CONECTANDO_WIFI ningún SSID agua-* en el escaneo (con redes vistas como control) y, en CONECTANDO_BROKER con IP en la red del banco, GET http://<ip-dut>/ sin respuesta HTTP, con el relé llegando a la red del AP (control positivo)
     impl: tests/bench/test_por.py::test_tc_por_11_no_portal_when_configured
     status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
   - id: TC-CON-03
     shape: atomic
     kind: standard
@@ -873,11 +873,13 @@ tests:
     expect: >
       fila Wi-Fi de FR-CON-02 con el AP apagado desde el arranque (FSD 0.9.3, §3.1): los 10 primeros intervalos desde «con: … -> CONECTANDO_WIFI (wifi_down)» hasta el siguiente «wifi: intento <n>» dentro de ±10 % de 1, 2, 4, 8, 16, 32, 60, 60, 60, 60 s; sin ráfagas (< 1 s), sin reinicio y sin AP
     impl: tests/bench/test_con.py::test_tc_con_03_wifi_backoff
-    status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    status: not_done
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
+    diagnostico: "banco: la captura serie mezcla y trunca la línea wifi_down del intento 2 (~6,8 s tras el reset), igual en 3 corridas con ee66859 y con la imagen vieja 3e3ffe7 (D: «(wifi_dowI (8786) nodo: wifi: inten»); upstream #89. El backoff del firmware es correcto (intento 3 a +2 s del wifi_down no visto). Diagnóstico con 3e3ffe7 en test-results/20261123T041844Z-ee66859/"
+
   - id: TC-CON-06
     shape: atomic
     kind: standard
@@ -890,11 +892,13 @@ tests:
     expect: >
       aprovisionado contra un AP desechable del banco y con ese AP apagado desde el arranque (Fase 1; el corte con el nodo ya conectado pasa por T14, Fase 2): en 15 min ninguna línea con: con destino distinto de CONECTANDO_WIFI y el AP agua-* del DUT no aparece en 5 escaneos
     impl: tests/bench/test_con.py::test_tc_con_06_never_portal
-    status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    status: failed
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T000748Z-ee66859/
+    diagnostico: "firmware: el manejo de LOST_IP de H-95 actúa en CONECTANDO_WIFI; ESP-IDF 6.0.3 avisa LOST_IP 120 s después de cada esp_netif_down aunque nunca hubo IP (esp_netif_lwip.c), y el nodo escribe «con: ip perdida» y suelta la asociación cada 120 s. Propuesta en la rama fix-lost-ip (sin fusionar, pendiente de aprobación)"
+
   - id: TC-CON-07
     shape: atomic
     kind: standard
@@ -908,10 +912,10 @@ tests:
       fila bench de T07 (§6.6, fila T01–T10): con un primer envío válido hacia una red inexistente (VALIDANDO hasta T06), un segundo envío responde «ocupado» (id estado-ocupado), con una línea con: VALIDANDO -> VALIDANDO (envío), un solo «wifi: intento 1» y sin escribir la NVS
     impl: tests/bench/test_con.py::test_tc_con_07_busy_while_validating
     status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T000748Z-ee66859/
   - id: TC-CON-08
     shape: atomic
     kind: standard
@@ -925,10 +929,10 @@ tests:
       en OPERATIVO, broker del banco detenido hasta «mqtt: intento 10» y su fallo con el Wi-Fi activo: una línea T15; T12 y T13 por cada intento; los 10 primeros intervalos desde «con: … -> CONECTANDO_BROKER (mqtt_down)» hasta el siguiente «mqtt: intento <n>» dentro de ±10 % de 1, 2, 4, 8, 16, 32, 60, 60, 60, 60 s (fila MQTT de FR-CON-02); el intento ≤ 1 s tras T13 y nunca dos intentos sin resultado entre ellos; ni «wifi: intento» ni destino CONECTANDO_WIFI ni reinicio. Al arrancar el broker: T11, el primer mensaje en vivo del nodo es status online (FR-MQTT-06) y una medida válida llega en ≤ 75 s (FR-CON-04)
     impl: tests/bench/test_mqtt.py::test_tc_con_08_broker_outage
     status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T000748Z-ee66859/
   - id: TC-CON-09
     shape: atomic
     kind: standard
@@ -942,10 +946,10 @@ tests:
       con el broker parado, ≥ 4 fallos de unión con el AP apagado (último intervalo ≥ 8 s), AP arriba, T08 y dos «mqtt: intento»; al apagar el AP, «con: CONECTANDO_BROKER -> CONECTANDO_WIFI (wifi_down)» y el siguiente «wifi: intento» en ≤ 2 s (el backoff de Wi-Fi se reinició en T08); en 60 s ningún «mqtt: intento» más y sin reinicio
     impl: tests/bench/test_mqtt.py::test_tc_con_09_wifi_loss_connecting_broker
     status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T000748Z-ee66859/
   - id: TC-CON-10
     shape: atomic
     kind: standard
@@ -959,10 +963,10 @@ tests:
       en OPERATIVO, AP apagado 45 s: «con: OPERATIVO -> CONECTANDO_WIFI (wifi_down)» (no T15), siguiente «wifi: intento» en ≤ 2 s, sin reinicio; al levantar el AP, T11, el primer mensaje en vivo del nodo (sin contar el Last Will de la sesión anterior, que publica el broker) es status online y una medida válida llega en ≤ 90 s
     impl: tests/bench/test_mqtt.py::test_tc_con_10_wifi_loss_operativo
     status: successful
-    commit: 9e6a43e
-    date: 2026-11-14
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia en 9e6a43e)
-    evidence: test-results/20261115T030348Z-9e6a43e/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T000748Z-ee66859/
   - id: TC-CON-14
     shape: atomic
     kind: standard
@@ -976,10 +980,10 @@ tests:
       DUT configurado contra el AP desechable con clave; el banco levanta un AP abierto con el mismo SSID de prueba de la ejecución (nunca el de la casa, H-83) 180 s: ≥ 3 líneas wifi: intento (control positivo), ninguna T08 y la MAC del DUT no aparece entre las estaciones; después, con el AP con clave, T08 en ≤ 90 s
     impl: tests/bench/test_seguridad.py::test_tc_con_14_open_twin_rejected
     status: successful
-    commit: 7112486
-    date: 2026-11-15
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
-    evidence: test-results/20261115T034828Z-7112486/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
   - id: TC-POR-12
     shape: atomic
     kind: standard
@@ -992,11 +996,13 @@ tests:
     expect: >
       sin configuración (P-NVS-ERASE), reset: T02 y el AP agua-* visible; T24 («con: PORTAL -> ESPERA (portal_vence)») a 600 s ± 5 s de T02 en el reloj del DUT; «portal: dns detenido» (E14) a ≤ 5 s de T24 (N-01, FSD 0.9.9); el AP fuera en 3 escaneos seguidos; med: después del cierre; ninguna «nvs: config escrita» ni reinicio tras T02 (retroceso del reloj, consola.py); tras otro reset, el AP vuelve — «la medición sigue» (→ «la protección sigue», FR-HER-01) se comprueba con la línea A4 cuando haya E/S
     impl: tests/bench/test_seguridad.py::test_tc_por_12_portal_closes_after_10_min
-    status: successful
-    commit: 7112486
-    date: 2026-11-15
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
-    evidence: test-results/20261115T034828Z-7112486/
+    status: not_done
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
+    diagnostico: "banco: Connection reset by peer (Errno 104) en GET /api/serial/output"
+
   - id: TC-TIME-06
     shape: atomic
     kind: standard
@@ -1010,10 +1016,10 @@ tests:
       AP del banco sin salida a Internet; DUT con IP durante 5 min: la primera «sntp: inicio <srv>» llega ≤ 15 s después de wifi_up y los intervalos entre líneas consecutivas (marcas del DUT) son ≤ 15 s, también tras un «sntp: fallo»
     impl: tests/bench/test_time.py::test_tc_time_06_sntp_retry_without_time
     status: successful
-    commit: 7112486
-    date: 2026-11-15
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
-    evidence: test-results/20261115T034828Z-7112486/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
   - id: TC-MQTT-05
     shape: atomic
     kind: standard
@@ -1027,10 +1033,10 @@ tests:
       DUT aprovisionado con usuario y clave MQTT; broker con autenticación que no acepta sus credenciales 90 s: ≥ 3 intentos con backoff creciente y ningún T11; broker con sus credenciales: T11; ninguna clave en la consola
     impl: tests/bench/test_red.py::test_tc_mqtt_05_broker_authentication
     status: successful
-    commit: 7112486
-    date: 2026-11-15
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
-    evidence: test-results/20261115T034828Z-7112486/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
   - id: TC-LOG-08
     shape: atomic
     kind: standard
@@ -1043,11 +1049,13 @@ tests:
     expect: >
       imagen de banco; captura del tráfico del DUT en el arranque y 3 ciclos: los datagramas al puerto 5555 van todos por unicast a 192.168.4.1 (control positivo: > 10); ninguno por broadcast ni a otro destino
     impl: tests/bench/test_red.py::test_tc_log_08_udp_log_unicast_only
-    status: successful
-    commit: 7112486
-    date: 2026-11-15
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
-    evidence: test-results/20261115T034828Z-7112486/
+    status: failed
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
+    diagnostico: "sin T11 en 150 s; la prueba no guarda la consola al fallar: no se sabe si es el nodo o una línea perdida del banco (#89). Por diagnosticar"
+
   - id: TC-LOG-04
     shape: atomic
     kind: standard
@@ -1060,11 +1068,13 @@ tests:
     expect: >
       imagen de producción en OPERATIVO, arranque y 3 ciclos con el tráfico UDP capturado: solo DHCP, DNS y SNTP; ningún datagrama al 5555 ni a otro destino
     impl: tests/bench/test_red.py::test_tc_log_04_no_udp_log_in_production
-    status: successful
-    commit: 7112486
-    date: 2026-11-15
-    ci_run: 43673985317   # build.yml push, imagen de producción 0.0.0-7112486
-    evidence: test-results/20261115T042523Z-7112486/
+    status: failed
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085044807
+    evidence: test-results/20261123T041446Z-ee66859/
+    diagnostico: "imagen de producción 0.0.0-ee66859 (run 45085044807): sin T11 en 150 s; sin consola guardada. Por diagnosticar"
+
   - id: TC-LOG-07
     shape: atomic
     kind: standard
@@ -1077,10 +1087,10 @@ tests:
       imagen de banco con IP (AP del banco, sin broker): E11 «UDP logging -> host:port» en el receptor del banco y cada línea serie desde T08 con copia UDP en ≤ 1 s durante 3 ciclos (la fila de FR-LOG-02 que el piloto comprueba en su JRN-01.3)
     impl: tests/bench/test_red.py::test_tc_log_07_udp_copy
     status: successful
-    commit: 7112486
-    date: 2026-11-15
-    ci_run: 43670049284   # imagen de banco 0.0.0-46989e0 (el firmware no cambia hasta 7112486)
-    evidence: test-results/20261115T034828Z-7112486/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
   - id: TC-HA-A1
     shape: atomic
     kind: standard
@@ -1092,13 +1102,15 @@ tests:
     expect: >
       HA de prueba nuevo (scripts/ha/ha_prueba.py) con la integración MQTT al broker del banco: 1 dispositivo «Agua sitio1 zona1» con las 21 entidades de §14 (valve 1, switch 1, binary_sensor 10, sensor 6, button 2, event 1; FSD 0.4.0: sin % de batería), ninguna unavailable salvo los sensores de medida (expire_after, sin valor hasta tener E/S), tras conectar y tras cada uno de 3 reinicios del DUT, sin duplicados
     impl: tests/bench/test_ha.py::test_tc_ha_a1_home_assistant_entities
-    status: successful
-    commit: 356e4a9
-    date: 2026-11-15
-    ci_run: 43709844065
-    evidence: test-results/20261115T163630Z-356e4a9/
+    status: not_done
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
     observed: >
       HA 2026.10.4 de prueba: 1 dispositivo con 21 entidades, sin duplicados tras 3 reinicios. Corrida roja previa por un defecto del test (5 sensores esperados en vez de 6): test-results/20261115T162952Z-44d29c2/. SLOT2, imagen 0.0.0-26c3661-bench.
+    diagnostico: "no estaba levantado el Home Assistant de prueba (scripts/ha/ha_prueba.py up)"
+
   - id: TC-TIME-01
     shape: atomic
     kind: standard
@@ -1112,10 +1124,10 @@ tests:
       AP con salida a Internet desde que se levanta: «sntp: sincronizado» ≤ 30 s después de wifi_up (marcas del DUT) y hora_valida = true en el primer status posterior
     impl: tests/bench/test_bench_plus.py::test_tc_time_01_sntp_sync
     status: successful
-    commit: 4a4510b
-    date: 2026-11-15
-    ci_run: 43670049284
-    evidence: test-results/20261115T044204Z-4a4510b/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
     observed: >
       SLOT2, imagen de banco 0.0.0-46989e0-bench: status.hora_valida pasa a true tras SNTP del banco.
   - id: TC-TIME-04
@@ -1131,10 +1143,10 @@ tests:
       hora válida; SNTP bloqueado 2 h: hora_valida = true en todos los status (≥ 115), «sntp: fallo» en la resincronización, ninguna sincronización ni reinicio durante el bloqueo; «todas las medidas llevan ts» se añade con los drivers de E/S
     impl: tests/bench/test_bench_plus.py::test_tc_time_04_resync_failure_keeps_time
     status: successful
-    commit: 4a4510b
-    date: 2026-11-15
-    ci_run: 43670049284
-    evidence: test-results/20261115T044204Z-4a4510b/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
     observed: >
       SLOT2: 2 h con SNTP bloqueado, status.hora_valida sigue true (2 passed en 2:04:45 con TC-TIME-01).
 
@@ -1231,10 +1243,10 @@ tests:
       imagen de banco en OPERATIVO; «wdt-test» por el USB-Serial/JTAG (E13-USJ) → «wdt: bloqueando ciclo» y `boot: … reset=task_wdt` en ≤ 32 s; nunca colgado sin reinicio. La tarea vigilada es el ciclo hasta que exista la tarea de protección (NFR-WDT-A1, con la E/S)
     impl: tests/bench/test_e13.py::test_tc_wdt_02_task_watchdog
     status: successful
-    commit: 26c3661
-    date: 2026-11-15
-    ci_run: 43709844065
-    evidence: test-results/20261115T114047Z-26c3661/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T000748Z-ee66859/
     observed: >
       SLOT2, imagen 0.0.0-26c3661-bench: «wdt-test» escrito por el USB-Serial/JTAG (E13-USJ) → «wdt: bloqueando ciclo» y boot: con reset=task_wdt.
   - id: TC-TIME-08
@@ -1250,10 +1262,10 @@ tests:
       hora sincronizada; SNTP bloqueado y «reiniciar» por el USB-Serial/JTAG → `boot: … reset=sw`, hora_valida = false en ≥ 2 status tras el reinicio y ninguna «sntp: sincronizado»
     impl: tests/bench/test_e13.py::test_tc_time_08_reboot_without_sntp
     status: successful
-    commit: 44d29c2
-    date: 2026-11-15
-    ci_run: 43709844065
-    evidence: test-results/20261115T162357Z-44d29c2/
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T000748Z-ee66859/
     observed: >
       «reiniciar» por el USB-Serial/JTAG con SNTP bloqueado → reset=sw y hora_valida = false en los status siguientes, sin sincronizar. SLOT2, imagen 0.0.0-26c3661-bench.
 
@@ -1627,7 +1639,12 @@ tests:
       dos reasociaciones a 10 y 20 min ± 30 s, sin reinicio, OPERATIVO ≤ 75 s tras arrancar el broker. Prueba la cuenta de 10 min
       y la reasociación; no sustituye a TC-CON-A4 (el DROP cambia los tiempos de TCP)
     impl: tests/bench/test_mqtt.py::test_tc_con_a5_reasociar_sin_broker
-    status: not_run
+    status: successful
+    commit: ee66859
+    date: 2026-11-22
+    ci_run: 45085085658
+    evidence: test-results/20261123T010218Z-ee66859/
+
 
   # --- H-96 (FSD 0.8.1, P28–P34 aceptados): medidor testigo en GPIO18 (rama integracion-6.0.3-h95) ---
   - id: TC-MED-A1

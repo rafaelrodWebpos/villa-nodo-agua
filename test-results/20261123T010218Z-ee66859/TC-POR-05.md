@@ -1,0 +1,16 @@
+# TC-POR-05 — Envío inválido por el portal
+
+- Precondiciones: reset; el DUT debe arrancar en PORTAL
+- DUT en PORTAL: `agua-7f9af8`, fw `0.0.0-ee66859-bench`
+- El banco se une al AP abierto agua-7f9af8 (intento 1)
+- sta_join intento 1: ip del banco `192.168.4.2` (01:36:48.571 → 01:37:00.094 UTC)
+- POST / con zona con mayúscula y #
+- POST / con wifi_pass de 7 caracteres
+- zona con mayúscula y #: HTTP 200 en 0.08 s (ida y vuelta por el relé); errores ['zona']
+- wifi_pass de 7 caracteres: HTTP 200 en 0.10 s (ida y vuelta por el relé); errores ['wifi_pass']
+- Reset: el DUT debe volver a PORTAL sin configuración escrita
+- log: `TC-POR-05-log.log` (127 líneas)
+- `con: PORTAL -> PORTAL (envío)`: 2 de 2 envíos
+- `portal: POST / -> errores`: 2 de 2
+
+**Resultado: PASS** — 2 envíos inválidos: error en su campo, sin NVS; reset → PORTAL

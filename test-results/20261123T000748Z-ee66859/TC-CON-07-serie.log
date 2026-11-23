@@ -1,0 +1,26 @@
+I (13325) wifi:new:<1,0>, old:<1,1>, ap:<1,1>, sta:<255,255>, prof:1, snd_ch_cfg:0x0
+I (13335) wifi:station: <mac> join, AID=1, bgn, 20
+I (13435) wifi:<ba-add>idx:2 (ifx:1, <mac>), tid:7, ssn:0, winSize:64
+I (13985) wifi:<ba-add>idx:3 (ifx:1, <mac>), tid:0, ssn:0, winSize:64
+I (15105) esp_netif_lwip: DHCP server assigned IP to a client, IP is: 192.168.4.2
+I (21415) wifi:mode : sta (b8:f8:62:7f:9a:f8) + softAP (b8:f8:62:7f:9a:f9)
+I (21415) wifi:enable tsf
+I (21435) nodo: wifi: intento 1
+I (21445) nodo: con: PORTAL -> VALIDANDO (envío)
+I (21445) portal: POST / -> probando
+I (21485) nodo: con: VALIDANDO -> VALIDANDO (envío)
+I (21485) portal: POST / -> ocupado
+I (21585) wifi:station: <mac> leave, AID = 1, reason = 8, bss_flags is 33721443, bss:0x3fca72f8
+I (21585) wifi:<ba-del>idx:3, tid:0
+I (21585) wifi:<ba-del>idx:2, tid:7
+I (21595) wifi:new:<1,1>, old:<1,0>, ap:<1,1>, sta:<0,0>, prof:1, snd_ch_cfg:0x0
+I (21595) wifi:scan in process, ignore set current channel
+I (25305) nodo: wifi: intento 2
+I (29165) nodo: wifi: intento 3
+I (30795) nodo: val: CERRANDO -> FALLA (tick)
+W (30795) nodo: evento: falla_valvula
+I (33015) nodo: wifi: intento 4
+I (36875) nodo: wifi: intento 5
+I (40735) nodo: wifi: intento 6
+I (41445) wifi:mode : softAP (b8:f8:62:7f:9a:f9)
+I (41455) nodo: con: VALIDANDO -> PORTAL (wifi_down)
