@@ -3,6 +3,8 @@ establece su precondición con los procedimientos de benchlib."""
 import re
 import time
 
+import pytest
+
 from benchlib import _parse_flash_args, aprovisionar, case, esperar_lineas, primera, ultimo_arranque
 
 BACKOFF_S = [1, 2, 4, 8, 16, 32, 60, 60, 60, 60]   # FR-CON-02
@@ -24,6 +26,15 @@ def _unicas(vistas):
             vistas_t.add(t)
             out.append(e)
     return out
+
+
+_DOS_MARCAS = re.compile(r"[IWE] \(\d+\).*[IWE] \(\d+\)")
+
+
+def _cortadas(textos):
+    """Líneas que la captura del banco mezcló (dos marcas «I (ms)» en una) o cortó (una línea
+    con: sin el «)» final del evento). Upstream SensorsIot/Embedded-AI-Harness#89."""
+    return [t for t in textos if _DOS_MARCAS.search(t) or ("nodo: con: " in t and not t.rstrip().endswith(")"))]
 
 
 def test_tc_con_03_wifi_backoff(testbench, dut_slot, dut_mac, firmware, run_dir, tmp_path):
@@ -67,10 +78,23 @@ def test_tc_con_03_wifi_backoff(testbench, dut_slot, dut_mac, firmware, run_dir,
         t10 = sum("con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)" in t for t in textos)
         c.note("", "## Resultado", "", f"- líneas T09: {t09}, T10: {t10}",
                *[f"- intervalo {k + 1}: {v} s (esperado {BACKOFF_S[k]} s ± 10 %)" for k, v in enumerate(intervalos)])
-        assert len(intervalos) == len(BACKOFF_S), f"solo {len(intervalos)} intervalos medidos"
+        error = None
+        if len(intervalos) != len(BACKOFF_S):
+            error = f"solo {len(intervalos)} intervalos medidos"
         for k, (v, e) in enumerate(zip(intervalos, BACKOFF_S)):
-            assert v >= 0.9, f"intervalo {k + 1} en ráfaga: {v} s"   # ráfaga: < 1 s (−10 %)
-            assert abs(v - e) <= e * TOLERANCIA, f"intervalo {k + 1}: {v} s fuera de {e} s ± 10 %"
+            if error is None and v < 0.9:
+                error = f"intervalo {k + 1} en ráfaga: {v} s"   # ráfaga: < 1 s (−10 %)
+            elif error is None and abs(v - e) > e * TOLERANCIA:
+                error = f"intervalo {k + 1}: {v} s fuera de {e} s ± 10 %"
+        if error:
+            # Decisión del propietario (2026-11-23): not done solo si la consola muestra en el
+            # tramo medido una línea cortada o mezclada por el banco (#89); si no, FAIL.
+            malas = _cortadas(textos)
+            if malas:
+                c.note("", f"- líneas cortadas o mezcladas por la captura del banco (upstream #89): {malas}")
+                pytest.skip(f"not done: {error}, con {len(malas)} línea(s) cortada(s) o mezclada(s) por la "
+                            f"captura serie del banco (SensorsIot/Embedded-AI-Harness#89): {malas[0][:120]}")
+            pytest.fail(error)
         c.passed(f"10 intervalos del backoff dentro de ±10 %: {intervalos}")
 
 

@@ -118,7 +118,14 @@ def _captura_arranque(tb, dut_slot, dut_mac, banco, c, segundos=240):
     tb.capture_start(dut_mac.lower(), segundos)
     reg = Registro(tb, dut_slot, time.time())
     tb.serial_reset(dut_slot)
-    assert reg.esperar(re.escape(T11), 150), "sin T11"
+    try:
+        assert reg.esperar(re.escape(T11), 150), "sin T11"
+    finally:
+        # La consola queda en la evidencia también si falla (decisión del propietario, 2026-11-23)
+        try:
+            c.save_log("serie", [c._r(e["text"]) for e in reg.leer()])
+        except Exception as e:  # el banco puede no responder: no tapar el fallo original
+            c.note(f"- no se pudo guardar la consola: {type(e).__name__}: {e}")
     fin = time.time() + segundos + 30
     r = {}
     while time.time() < fin:
