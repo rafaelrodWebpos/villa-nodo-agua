@@ -1181,7 +1181,16 @@ tests:
       MQTT, reloj o watchdog). Para cambios pequeños basta la regresión corta (journey + bloques de
       testing/banco-semana-*.md que toquen lo cambiado)
     impl: tests/bench/test_wdt.py::test_tc_wdt_01_24h_stability
-    status: not_run
+    status: successful
+    commit: 7e30339   # firmware de main d9239fa (7e30339 solo añade resultados)
+    date: 2026-11-24
+    ci_run: 45202669354   # imagen de banco 0.0.0-d9239fa
+    evidence: test-results/20261123T182125Z-7e30339/
+    intento_5: >
+      2026-11-23 14:23:29 → 2026-11-24 14:23:29 (UTC−4), ES32-A (SLOT2), imagen 0.0.0-d9239fa-bench (ESP-IDF 6.0.3 + H-95 +
+      fix-lost-ip + FSD 0.8.4), banco 6dffd70: PASS. 5 cortes recuperados (broker 3,4–3,6 s, Wi-Fi 26,1–26,3 s), 0 reinicios
+      del nodo ni del banco, ningún hueco entre status, ningún task_wdt. Un transitorio del banco (22:09:06, serial/output,
+      recuperado al primer reintento)
     humo: >
       2026-11-18 20:36–20:51 (UTC−4), cac68f1, imagen 0.0.0-3e3ffe7-bench, SLOT2: corrida de humo
       de 15 min con un corte de broker: PASS (13 status, 0 reinicios, vuelta 3,4 s);

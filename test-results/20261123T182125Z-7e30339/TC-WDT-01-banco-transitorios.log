@@ -1,0 +1,2 @@
+2026-11-23 22:09:06 -0400 GET /api/serial/output intento 1: CommandTimeout: GET /api/serial/output?slot=SLOT2&lines=500&since=1795486111.8304062: [Errno 104] Connection reset by peer
+2026-11-23 22:09:11 -0400 GET /api/serial/output recuperado
