@@ -7,6 +7,7 @@ typedef struct {
     bool (*hora)(int *hora_local, uint32_t *ahora_s);   /* hora válida (clima:FR-TIME-02) */
     bool (*conectado)(void);                            /* OPERATIVO (LED, prioridad 4) */
     volatile bool *wdt_bloquear;                        /* E13 wdt-test (NFR-WDT-A1) */
+    void (*reentrada_portal)(void);                     /* FR-LOC-06: borra Wi-Fi/MQTT/zona/sitio y reinicia */
 } proteccion_ganchos_t;
 
 /* Tras nvs_flash_init: restaura los bloqueos (FR-PER-02), escanea el I²C (A7) y arranca

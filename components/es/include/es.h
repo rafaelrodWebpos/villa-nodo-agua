@@ -66,13 +66,14 @@ void es_puente(es_motor_t m, bool *in1, bool *in2);
 /* RMS de la componente alterna (se resta la media, que es la polarización) → amperios */
 float es_rms_amperios(const int16_t *mv, int n);
 
-/* ---- Botón (FR-LOC-02/03) ---- */
-#define ES_PULSACION_CORTA_MS 1000u
-#define ES_PULSACION_LARGA_MS 3000u
-typedef enum { ES_BOTON_NADA, ES_BOTON_CORTA, ES_BOTON_LARGA } es_boton_ev_t;
-typedef struct { bool pulsado, larga; uint32_t desde_ms; } es_boton_t;
-/* Con el valor ya filtrado: larga al cumplir 3 s pulsado (una vez); corta al soltar
- * antes de 1 s; entre 1 y 3 s no hace nada. */
+/* ---- Botón (FR-LOC-02/03/06) ---- */
+#define ES_PULSACION_CORTA_MS  1000u
+#define ES_PULSACION_LARGA_MS  3000u
+#define ES_PULSACION_PORTAL_MS 10000u
+typedef enum { ES_BOTON_NADA, ES_BOTON_CORTA, ES_BOTON_LARGA, ES_BOTON_PORTAL } es_boton_ev_t;
+typedef struct { bool pulsado; uint32_t desde_ms; } es_boton_t;
+/* Con el valor ya filtrado, todo se evalúa al soltar (FSD 0.8.6–0.8.7): < 1 s corta;
+ * ≥ 3 s y < 10 s larga (FR-LOC-03); ≥ 10 s vuelta al portal (FR-LOC-06); entre 1 y 3 s nada. */
 es_boton_ev_t es_boton(es_boton_t *b, uint32_t t_ms, bool pulsado);
 
 /* ---- Formas de onda (§8.2, P17) ---- */
