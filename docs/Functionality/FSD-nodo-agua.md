@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.8.9
+fsd_version: 0.8.10
 repository: villa-nodo-agua (público)
 baseline_commit: c3e5053 (Load defined, 2026-11-14); cada versión, el commit que la introduce
 applicable_firmware_version: ninguna todavía
@@ -127,6 +127,10 @@ change_history:
     Fase 1. S-03: contrato y rango de «`i_seco_a` no se vacía». S-04: secuencia del contrato
     host de FR-BOM-10. S-05: episodio de V22/V24. S-06: tolerancias de la fila de banco de
     FR-BOM-10. S-07: `hasta_min` = `min` + `consumo_margen_min`. S-08: FR-VIG-02/03/04 en §21.1.
+  - 0.8.10 (2026-11-28): decisiones del propietario sobre la 6.ª revisión
+    (testing/revision-load-defined-2026-11-28f.md). U-02: V22 respeta la palanca igual que V24
+    (FR-ENE-04 con esa excepción). U-03: un final tardío tras V07 cuenta como palanca y la
+    válvula queda CERRADA hasta una orden; riesgo aceptado por escrito.
 ```
 
 ## Convenciones de este documento
@@ -556,12 +560,17 @@ Todas las filas son [Must]. Procedencia: [user] D1, D5, D12, D18; [derived] el r
 registra en el log con `val: ignorado <estado> <evento>`; si el evento es una orden, el nodo
 responde con su `valvula/state` actual (FR-ORD-01). Una fuga confirmada en
 FALLA dispara el reintento de cierre de V16 (fila V20).
+Fila V15 [user, 2026-11-28, U-03]: el nodo no distingue la palanca de un final que llega sin
+orden después de V07 (por ejemplo, la carrera lenta de un ejercicio); ese final cuenta como
+movimiento de palanca: `cerrada_por` pasa a `ninguno` y la válvula queda CERRADA hasta una orden
+del propietario, con los avisos `falla_valvula` (V07) y `movimiento_manual`. Riesgo aceptado por
+escrito: la casa puede quedarse sin agua hasta esa orden.
 
 | Fila | Desde | Evento | Guarda | Hacia | Acción | Límite |
 |---|---|---|---|---|---|---|
 | V20 | FALLA | fuga confirmada | — | CERRANDO | `bloqueo_fuga`=1, `cerrada_por`=`fuga`; un reintento | P3 |
 | V21 | CERRANDO | fuga confirmada | — | CERRANDO (sigue cerrando) | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | — |
-| V22 | ABIERTA, DESCONOCIDA, FALLA | batería `critica` y red `ausente` (FR-ENE-04) | — | CERRANDO | `cerrada_por`=`bateria`; desde FALLA, un solo reintento por episodio (como V16): el episodio dura hasta que la condición deja de cumplirse o la válvula sale de FALLA por otra fila | ≤ 500 ms |
+| V22 | ABIERTA, DESCONOCIDA, FALLA | batería `critica` y red `ausente` (FR-ENE-04) | la posición no la puso la palanca (V15) sin que el nodo haya movido el motor después, como V24 [user, 2026-11-28, U-02] | CERRANDO | `cerrada_por`=`bateria`; desde FALLA, un solo reintento por episodio (como V16): el episodio dura hasta que la condición deja de cumplirse o la válvula sale de FALLA por otra fila | ≤ 500 ms |
 | V23 | CERRADA | reapertura por batería cumplida (FR-ENE-05) | `cerrada_por`=`bateria`, `bloqueo_fuga`=0, `g_seco` y no `g_ciego` (H-93) | ABRIENDO | `cerrada_por`=`ninguno` | ≤ 500 ms |
 | V24 | ABIERTA, DESCONOCIDA, FALLA | `g_ciego` (FR-SON-05) | la posición no la puso la palanca (V15) sin que el nodo haya movido el motor después | CERRANDO | `cerrada_por`=`sondas`; `bloqueo_fuga` sin cambio; desde FALLA, un solo reintento por episodio (como V16): el episodio dura hasta que la condición deja de cumplirse o la válvula sale de FALLA por otra fila | ≤ 500 ms |
 | V25 | CERRADA | orden `abrir` válida o pulsación larga | `g_seco` y `g_ciego` | CERRADA | rechazar `sondas_en_falla`; con la pulsación, patrón de rechazo (§8) | — |
@@ -636,6 +645,7 @@ envía en cada ciclo mientras se cumple su condición. V14 deja `cerrada_por`=`n
 | FR-VAL-08 | Reapertura válida; luego sonda 5 `mojada` | Cierre según FR-FUG-02 | Quedarse abierta | bench |
 | FR-VAL-09 | CERRADA con fuga activa: pulsación de 3 s; luego seca: pulsación de 3 s | 1.º: patrón de rechazo, sin movimiento. 2.º: ABRIENDO | Abrir con fuga | bench |
 | FR-VAL-10 | Ejercicio terminado en FALLA (V07, `cerrada_por`=`ejercicio`), todo seco; el banco simula el cierre con la palanca (solo el final «cerrada» activo) | Línea A1 de V15 (FALLA -> CERRADA); A11 `cerrada_por=ninguno`; IN1 = IN2 = 0 durante 60 s | Apertura por V30; cualquier movimiento del motor | bench |
+| FR-VAL-10 | Lógica pura: batería `critica` y red `ausente` con la válvula CERRADA; palanca a «abierta» | V15 a ABIERTA; V22 no actúa; sin movimiento del motor | Cierre por V22 tras la palanca | host |
 | FR-VAL-10 | Lógica pura: CERRADA por batería (V22); palanca a «abierta» y luego a «cerrada»; red presente y 12,9 V durante 5 min | `cerrada_por`=`ninguno` tras V15; sin V23 | Reapertura por V23 | host |
 | FR-VAL-10 | CERRADA con `bloqueo_fuga`; el banco simula la palanca (final «abierta» activo, «cerrada» inactivo) | Línea A1 de V15 (CERRADA -> ABIERTA); IN1 = IN2 = 0 durante 60 s; en la Fase 2, además, el evento `movimiento_manual` | Intento de cierre por el motor | bench |
 | FR-VAL-11 | Lógica pura: todas las filas de §5.3 y combinaciones de eventos simultáneos | Nunca IN1 = IN2 = 1 | Cualquier caso con los dos en alto | host + bench |
@@ -892,7 +902,8 @@ puede no contar bien (< 0,25 GPM): por eso hay un umbral por hora y otro diario 
   y `bateria_critica` una vez por cambio de estado. El recordatorio periódico hasta el
   cambio es de HA.
 - **FR-ENE-04** [Must] [user] D2 (P16): con la batería `critica` y la red `ausente`,
-  la válvula deberá cerrarse con `cerrada_por`=`bateria`.
+  la válvula deberá cerrarse con `cerrada_por`=`bateria`, salvo si la posición la puso la
+  palanca sin que el nodo haya movido el motor después (V22, FR-VAL-10) [user, 2026-11-28, U-02].
 - **FR-ENE-05** [Must] [derived] (P16): con `cerrada_por`=`bateria`, la red `presente`
   durante 5 min, Vbat ≥ 12,8 V, `bloqueo_fuga`=0, `g_seco` y no `g_ciego` (V23), la válvula
   deberá reabrirse.
