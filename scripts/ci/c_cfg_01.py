@@ -6,7 +6,7 @@ import pathlib, re, sys
 root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".")
 CAMPOS = re.compile(r"WIFI|SSID|PASS|MQTT|BROKER|USER|ZONA|SITIO", re.I)   # los 7 campos de cadena de §17
 MIME = ("text/", "application/", "image/", "multipart/")                   # literales con «/» que no son tópicos
-SUFIJOS = ("cmd/ota",)        # FSD §12.1: sufijo tras <sitio>/<zona>/<nodo>, no un prefijo (lista cerrada)
+SUFIJOS = ("cmd/ota", "medidor/set")   # FSD §12.1 y §13.1: sufijos tras <sitio>/<zona>/<nodo>, no prefijos (lista cerrada)
 mal = []
 
 # 1. Kconfig: opciones de §17 con un default de cadena no vacío

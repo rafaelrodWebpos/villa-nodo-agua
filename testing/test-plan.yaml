@@ -1805,6 +1805,20 @@ tests:
       una de las dos primeras en ≤ 1 s con hasta_min = 30 + consumo_margen_min y 60 + consumo_margen_min (± 1); ninguno con la tercera
     impl: null
     status: not_run
+  - id: TC-MED-A11
+    shape: atomic
+    kind: negative
+    wave: 3
+    phase: 2
+    tier: host
+    verifies: [FR-MED-04, FR-MED-06, FR-ORD-02]
+    needs: [hosted-ci]
+    expect: >
+      medidor/set: orden válida (con espacios y otro orden de claves) → min; `{`, vacío, `{}`, accion numérica, min 0/721,
+      min de texto o decimal, sin min, basura al final, array, coma colgante y 300 bytes → payload; acción desconocida → accion;
+      JSON del tópico medidor con y sin ts; búfer corto → -1
+    impl: tests/host/test_medidor.c
+    status: not_run
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"

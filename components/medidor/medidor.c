@@ -1,5 +1,7 @@
 /* L2 medidor — FR-MED-01…10 (FSD §6.7). Núcleo puro. */
 #include "medidor.h"
+#include <stdio.h>
+#include <string.h>
 
 med_resultado_t med_permitir(med_periodo_t *p, uint32_t ahora_s, int min, int margen_min, int *hasta_min)
 {
@@ -109,4 +111,87 @@ bool med_falla_nivel(med_falla_t *f, float nivel_cm)
     if (f->avisado || nivel_cm - f->base_cm < MED_FALLA_CM) return false;
     f->avisado = true;
     return true;
+}
+
+/* JSON mínimo y estricto: un objeto con claves de texto y valores de texto o enteros */
+typedef struct { const char *p, *fin; } lex_t;
+static void blancos(lex_t *l) { while (l->p < l->fin && (*l->p == ' ' || *l->p == '\t' || *l->p == '\n' || *l->p == '\r')) l->p++; }
+static bool texto(lex_t *l, char *out, size_t cap)
+{
+    if (l->p >= l->fin || *l->p != '"') return false;
+    size_t k = 0;
+    for (l->p++; l->p < l->fin && *l->p != '"'; l->p++) {
+        if (*l->p == '\\' || (unsigned char)*l->p < 0x20 || k + 1 >= cap) return false;
+        out[k++] = *l->p;
+    }
+    if (l->p >= l->fin) return false;
+    l->p++; out[k] = 0;
+    return true;
+}
+static bool entero(lex_t *l, long *v)
+{
+    bool neg = l->p < l->fin && *l->p == '-';
+    if (neg) l->p++;
+    if (l->p >= l->fin || *l->p < '0' || *l->p > '9') return false;
+    long x = 0;
+    for (; l->p < l->fin && *l->p >= '0' && *l->p <= '9'; l->p++) { x = x * 10 + (*l->p - '0'); if (x > 100000) return false; }
+    if (l->p < l->fin && (*l->p == '.' || *l->p == 'e' || *l->p == 'E')) return false;
+    *v = neg ? -x : x;
+    return true;
+}
+
+med_orden_t med_orden(const char *p, size_t n, int *min)
+{
+    if (!p || n > MED_ORDEN_MAX) return MORD_PAYLOAD;
+    lex_t l = { p, p + n };
+    char clave[16], accion[24] = "";
+    bool hay_accion = false, hay_min = false, accion_texto = true;
+    long m = 0;
+    blancos(&l);
+    if (l.p >= l.fin || *l.p++ != '{') return MORD_PAYLOAD;
+    blancos(&l);
+    if (l.p < l.fin && *l.p == '}') { l.p++; goto fin; }
+    for (;;) {
+        blancos(&l);
+        if (!texto(&l, clave, sizeof clave)) return MORD_PAYLOAD;
+        blancos(&l);
+        if (l.p >= l.fin || *l.p++ != ':') return MORD_PAYLOAD;
+        blancos(&l);
+        if (l.p < l.fin && *l.p == '"') {
+            char v[24];
+            if (!texto(&l, v, sizeof v)) return MORD_PAYLOAD;
+            if (!strcmp(clave, "accion")) { strcpy(accion, v); hay_accion = true; }
+            else if (!strcmp(clave, "min")) return MORD_PAYLOAD;          /* tipo incorrecto */
+        } else {
+            long v;
+            if (!entero(&l, &v)) return MORD_PAYLOAD;
+            if (!strcmp(clave, "accion")) { hay_accion = true; accion_texto = false; }
+            else if (!strcmp(clave, "min")) { m = v; hay_min = true; }
+        }
+        blancos(&l);
+        if (l.p < l.fin && *l.p == ',') { l.p++; continue; }
+        if (l.p < l.fin && *l.p == '}') { l.p++; break; }
+        return MORD_PAYLOAD;
+    }
+fin:
+    blancos(&l);
+    if (l.p != l.fin) return MORD_PAYLOAD;
+    if (!hay_accion || !accion_texto) return MORD_PAYLOAD;
+    if (strcmp(accion, "permitir_consumo")) return MORD_ACCION;
+    if (!hay_min || m < 1 || m > MED_MIN_MAX) return MORD_PAYLOAD;
+    *min = (int)m;
+    return MORD_OK;
+}
+
+const char *med_orden_motivo(med_orden_t r) { return r == MORD_PAYLOAD ? "payload" : r == MORD_ACCION ? "accion" : ""; }
+
+int med_json(char *buf, size_t cap, const med_lectura_t *l)
+{
+    int n = l->ts_valido
+        ? snprintf(buf, cap, "{\"total_l\":%.2f,\"caudal_lh\":%.0f,\"pulsos\":%lu,\"galones_por_pulso\":%.3g,\"ts\":%lu}",
+                   l->total_l, l->caudal_lh, (unsigned long)l->pulsos, l->galones_por_pulso, (unsigned long)l->ts)
+        : snprintf(buf, cap, "{\"total_l\":%.2f,\"caudal_lh\":%.0f,\"pulsos\":%lu,\"galones_por_pulso\":%.3g}",
+                   l->total_l, l->caudal_lh, (unsigned long)l->pulsos, l->galones_por_pulso);
+    if (n < 0 || (size_t)n >= cap) { if (cap) buf[0] = 0; return -1; }
+    return n;
 }

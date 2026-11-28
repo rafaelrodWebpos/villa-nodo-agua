@@ -2,7 +2,8 @@
  *   periodo · TC-MED-A9 · FR-MED-06 (periodo permitido) y FR-MED-10 (consumo_permitido, Q-11/S-07)
  *   pulsos  · TC-MED-A1 · FR-MED-01 (antirrebote) y FR-MED-02 (total)
  *   nvs     · TC-MED-A3 · FR-MED-03 (guardar como mucho cada 60 s y solo si cambió)
- *   consumo · TC-MED-A2 · FR-MED-05, FR-MED-06, FR-MED-08, FR-MED-09 */
+ *   consumo · TC-MED-A2 · FR-MED-05, FR-MED-06, FR-MED-08, FR-MED-09
+ *   orden   · TC-MED-A11 · `medidor/set` (FR-MED-06, FR-ORD-02) y tópico `medidor` (FR-MED-04) */
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -165,6 +166,37 @@ static void consumo(void)
     OK(fallas == 0, "subida de 9 cm: %d avisos", fallas);
 }
 
+static void orden(void)
+{
+    int m = -1;
+    const char *ok = "{\"accion\":\"permitir_consumo\",\"min\":90}";
+    OK(med_orden(ok, strlen(ok), &m) == MORD_OK && m == 90, "orden válida: m %d", m);
+    const char *ok2 = " { \"min\" : 720 , \"accion\" : \"permitir_consumo\" } ";
+    OK(med_orden(ok2, strlen(ok2), &m) == MORD_OK && m == 720, "orden con espacios y otro orden");
+    const struct { const char *p; med_orden_t r; } C[] = {
+        { "{", MORD_PAYLOAD }, { "", MORD_PAYLOAD }, { "{}", MORD_PAYLOAD }, { "{\"accion\":5}", MORD_PAYLOAD },
+        { "{\"accion\":\"x\"}", MORD_ACCION }, { "{\"accion\":\"cerrar\",\"min\":5}", MORD_ACCION },
+        { "{\"accion\":\"permitir_consumo\",\"min\":0}", MORD_PAYLOAD },
+        { "{\"accion\":\"permitir_consumo\",\"min\":721}", MORD_PAYLOAD },
+        { "{\"accion\":\"permitir_consumo\",\"min\":\"30\"}", MORD_PAYLOAD },
+        { "{\"accion\":\"permitir_consumo\",\"min\":3.5}", MORD_PAYLOAD },
+        { "{\"accion\":\"permitir_consumo\"}", MORD_PAYLOAD },
+        { "{\"accion\":\"permitir_consumo\",\"min\":30} x", MORD_PAYLOAD },
+        { "[1,2]", MORD_PAYLOAD }, { "{\"accion\":\"permitir_consumo\",\"min\":30,}", MORD_PAYLOAD },
+    };
+    for (size_t k = 0; k < sizeof C / sizeof C[0]; k++)
+        OK(med_orden(C[k].p, strlen(C[k].p), &m) == C[k].r, "«%s»: %d (esperado %d)", C[k].p, med_orden(C[k].p, strlen(C[k].p), &m), C[k].r);
+    static char largo[301]; memset(largo, ' ', 300); memcpy(largo, ok, strlen(ok));
+    OK(med_orden(largo, 300, &m) == MORD_PAYLOAD, "300 bytes aceptados");
+    OK(!strcmp(med_orden_motivo(MORD_PAYLOAD), "payload") && !strcmp(med_orden_motivo(MORD_ACCION), "accion"), "motivos");
+    char b[160];
+    med_lectura_t l = { 12345.674, 180.4, 3261, 1.0, false, 0 };
+    OK(med_json(b, sizeof b, &l) > 0 && !strcmp(b, "{\"total_l\":12345.67,\"caudal_lh\":180,\"pulsos\":3261,\"galones_por_pulso\":1}"), "json: %s", b);
+    l.ts_valido = true; l.ts = 1800000000u;
+    OK(med_json(b, sizeof b, &l) > 0 && strstr(b, "\"ts\":1800000000}"), "json con ts: %s", b);
+    OK(med_json(b, 20, &l) == -1 && b[0] == 0, "json que no cabe");
+}
+
 int main(int argc, char **argv)
 {
     const char *c = argc > 1 ? argv[1] : "periodo";
@@ -172,6 +204,7 @@ int main(int argc, char **argv)
     else if (!strcmp(c, "pulsos")) pulsos();
     else if (!strcmp(c, "nvs")) nvs();
     else if (!strcmp(c, "consumo")) consumo();
+    else if (!strcmp(c, "orden")) orden();
     else { printf("caso desconocido: %s\n", c); return 2; }
     printf("medidor %s: %d fallos\n", c, fallos);
     return fallos != 0;
