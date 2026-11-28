@@ -25,7 +25,7 @@ typedef struct {
  * con los arranques en la ventana. */
 bool cic_arranque(cic_t *c, uint32_t t_s, uint32_t ventana_s, int max, int *n);
 
-/* ---- Permiso de la bomba (FSD §6.1–§6.2, B01–B11) ------------------------------------ */
+/* ---- Permiso de la bomba (FSD §6.1–§6.2, B01–B16) ------------------------------------ */
 typedef enum { BOM_PERMITIDA, BOM_CORTADA, BOM_BLOQUEADA } bom_estado_t;
 typedef enum { BMOT_NINGUNO, BMOT_SECO, BMOT_NIVEL, BMOT_FLOTADOR, BMOT_ORDEN } bom_motivo_t;
 typedef enum {
@@ -34,8 +34,9 @@ typedef enum {
     BEV_NIVEL,              /* lectura de nivel (B03 si es válida y < nivel_critico_pct) */
     BEV_CORTAR,             /* orden `cortar` */
     BEV_REARME_CUMPLIDO,    /* condición de rearme cumplida (FR-BOM-05, rea_tick) */
-    BEV_REARMAR,            /* orden `rearmar` o pulsación larga */
+    BEV_REARMAR,            /* orden `rearmar` (B08, B12–B14, B16) */
     BEV_PERMITIR,           /* orden `permitir` */
+    BEV_PULSACION,          /* pulsación larga (B07, B08, B16; FR-LOC-03) */
     BEV_N_EVENTOS
 } bom_evento_t;
 
@@ -55,19 +56,26 @@ typedef struct {
     int n_cortes;
     int intentos_max;               /* P6 */
     int nivel_critico_pct;          /* P6 */
+    bool hay_rearme;                /* hubo un rearme (B05, B07, B12) y rearme_t vale (P20) */
+    uint32_t rearme_t;              /* instante del último rearme, s */
 } bom_t;
 
-typedef enum { BRECH_NINGUNO, BRECH_SIN_AGUA, BRECH_NIVEL_BAJO } bom_rechazo_t;
+#define BOM_P20_S 600u              /* P20: un seco a 10 min o menos de un rearme bloquea (B15) */
+
+typedef enum { BRECH_NINGUNO, BRECH_SIN_AGUA, BRECH_NIVEL_BAJO, BRECH_BLOQUEADA } bom_rechazo_t;
 typedef struct {
-    int fila;                       /* 1…11 = B01…B11 (FSD 0.5.0); 0 = par ignorado */
+    int fila;                       /* 1…16 = B01…B16 (FSD 0.8.9); 0 = par ignorado */
     bom_rechazo_t rechazo;
-    bool evento_bloqueada;          /* B06: publicar `bomba_bloqueada` */
+    bool evento_bloqueada;          /* B06, B13, B15: publicar `bomba_bloqueada` */
 } bom_accion_t;
 
 void bom_iniciar(bom_t *b, int intentos_max, int nivel_critico_pct);
 bom_accion_t bom_evento(bom_t *b, const bom_entrada_t *e);
 /* intentos_24h: cortes por seco en las últimas 24 h hasta t_s */
 int bom_intentos_24h(bom_t *b, uint32_t t_s);
+/* P20 / FR-PER-01 (Q-06): hay un rearme de hace 10 min o menos en t_s */
+static inline bool bom_rearme_reciente(const bom_t *b, uint32_t t_s)
+{ return b->hay_rearme && t_s - b->rearme_t <= BOM_P20_S; }
 /* FR-BOM-01: relé energizado (GPIO14 alto) salvo en PERMITIDA */
 static inline bool bom_rele(const bom_t *b) { return b->estado != BOM_PERMITIDA; }
 

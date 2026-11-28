@@ -44,6 +44,7 @@ typedef struct {
     bom_estado_t bomba;
     bom_motivo_t motivo;
     int n_cortes;          /* cortes por seco de las últimas 24 h */
+    bool rearme_reciente;  /* rearme de hace 10 min o menos (P20; FR-PER-01, Q-06) */
 } prot_persistente_t;
 
 typedef struct {
@@ -77,7 +78,7 @@ typedef enum {
     PEV_CICLADO,         /* a = arranques, b = válvula abierta */
     PEV_BATERIA,         /* a = estado (ene_estado_t) */
     PEV_FALLA_ADC,       /* a = índice del ADS (0…2) */
-    PEV_RECHAZO,         /* a = 1 válvula (fuga_activa) / 2 bomba (sin_agua) / 3 válvula (sondas_en_falla, V25) por pulsación larga */
+    PEV_RECHAZO,         /* a = 1 válvula (fuga_activa) / 2 bomba (sin_agua) / 3 válvula (sondas_en_falla, V25) / 4 bomba (nivel_bajo, B16) por pulsación larga */
     PEV_FLOTADOR_FALLA,  /* a = 1 declarada (FR-BOM-10), 0 terminada */
     PEV_VREF,            /* a = 1 se usa la referencia nominal, 0 vuelve la medida */
     PEV_FALLA_VREF,      /* a = 1 referencia en falla 5 s (evento falla_vref, FR-SON-04), 0 terminada */
@@ -100,6 +101,7 @@ typedef struct {
     es_motor_t motor;
     bool arrancado, t0_fijado;
     uint32_t t0_ms;
+    uint32_t t_s;                       /* último reloj monótono visto, s (P20) */
     es_antirrebote_t ar_abierta, ar_cerrada, ar_flotador, ar_red, ar_boton;
     es_boton_t boton;
     uint8_t finales;

@@ -34,26 +34,28 @@ static uint32_t ms(void) { return (uint32_t)(esp_timer_get_time() / 1000); }
 static uint32_t seg(void) { return (uint32_t)(esp_timer_get_time() / 1000000); }
 
 /* ---- NVS (FR-PER-01/02) ---- */
-typedef struct __attribute__((packed)) { uint8_t ver, bloqueo, cerrada_por, bomba, motivo, n_cortes; } nvs_blob_t;
+typedef struct __attribute__((packed)) { uint8_t ver, bloqueo, cerrada_por, bomba, motivo, n_cortes, rearme; } nvs_blob_t;
+#define NVS_BLOB_V1 6   /* tamaño de la versión 1, sin `rearme` */
 
 static prot_persistente_t nvs_leer(void)
 {
-    prot_persistente_t p = { false, VCP_NINGUNO, BOM_PERMITIDA, BMOT_NINGUNO, 0 };
+    prot_persistente_t p = { false, VCP_NINGUNO, BOM_PERMITIDA, BMOT_NINGUNO, 0, false };
     nvs_handle_t h;
     nvs_blob_t b;
     size_t n = sizeof b;
     if (nvs_open(NVS_ESPACIO, NVS_READONLY, &h) != ESP_OK) return p;
-    if (nvs_get_blob(h, NVS_CLAVE, &b, &n) == ESP_OK && n == sizeof b && b.ver == 1)
+    if (nvs_get_blob(h, NVS_CLAVE, &b, &n) == ESP_OK &&
+        ((n == sizeof b && b.ver == 2) || (n == NVS_BLOB_V1 && b.ver == 1)))
         p = (prot_persistente_t){ b.bloqueo != 0, (val_cerrada_por_t)b.cerrada_por, (bom_estado_t)b.bomba,
-                                  (bom_motivo_t)b.motivo, b.n_cortes };
+                                  (bom_motivo_t)b.motivo, b.n_cortes, b.ver == 2 && b.rearme != 0 };
     nvs_close(h);
     return p;
 }
 
 static void nvs_escribir(const prot_persistente_t *p)
 {
-    nvs_blob_t b = { 1, p->bloqueo_fuga, (uint8_t)p->cerrada_por, (uint8_t)p->bomba, (uint8_t)p->motivo,
-                     (uint8_t)p->n_cortes };
+    nvs_blob_t b = { 2, p->bloqueo_fuga, (uint8_t)p->cerrada_por, (uint8_t)p->bomba, (uint8_t)p->motivo,
+                     (uint8_t)p->n_cortes, p->rearme_reciente };
     nvs_handle_t h;
     if (nvs_open(NVS_ESPACIO, NVS_READWRITE, &h) != ESP_OK) return;
     if (nvs_set_blob(h, NVS_CLAVE, &b, sizeof b) == ESP_OK && nvs_commit(h) == ESP_OK)
@@ -111,7 +113,7 @@ static void tarea_pinza(void *arg)
 
 /* ---- Log de los eventos (A1–A3 y avisos) ---- */
 static const char *NOMBRE_BOM[] = { "PERMITIDA", "CORTADA", "BLOQUEADA" };
-static const char *EV_BOM[] = { "seco", "flotador_sin_agua", "nivel", "cortar", "rearme", "rearmar", "permitir" };
+static const char *EV_BOM[] = { "seco", "flotador_sin_agua", "nivel", "cortar", "rearme", "rearmar", "permitir", "pulsacion" };
 static const char *NOMBRE_BAT[] = { "ok", "baja", "critica" };
 
 static void registrar(const prot_evento_t *e)
@@ -136,7 +138,7 @@ static void registrar(const prot_evento_t *e)
     case PEV_FALLA_ADC: ESP_LOGW(TAG, "evento: falla_adc 0x%02x", 0x48 + e->a); break;
     case PEV_RECHAZO:
         ESP_LOGW(TAG, "evento: pulsacion_larga rechazada (%s)",
-                 e->a == 1 ? "fuga_activa" : e->a == 3 ? "sondas_en_falla" : "sin_agua");
+                 e->a == 1 ? "fuga_activa" : e->a == 3 ? "sondas_en_falla" : e->a == 4 ? "nivel_bajo" : "sin_agua");
         break;
     case PEV_FLOTADOR_FALLA:
         if (e->a) ESP_LOGW(TAG, "evento: flotador_falla"); else ESP_LOGI(TAG, "bom: flotador sin falla");

@@ -96,7 +96,7 @@ static int cuantos(const sim_t *x, prot_ev_tipo_t t, int a)
     return n;
 }
 
-static const prot_persistente_t LIMPIO = { false, VCP_NINGUNO, BOM_PERMITIDA, BMOT_NINGUNO, 0 };
+static const prot_persistente_t LIMPIO = { false, VCP_NINGUNO, BOM_PERMITIDA, BMOT_NINGUNO, 0, false };
 
 /* Arranque en ABIERTA, todo seco: V01 sin mover el motor (FR-VAL-06); relé en bajo */
 static void arranque(void)
@@ -156,7 +156,7 @@ static void arranque_mojado(void)
 static void restaurar(void)
 {
     static sim_t x;
-    prot_persistente_t nvs = { true, VCP_FUGA, BOM_BLOQUEADA, BMOT_NINGUNO, 3 };
+    prot_persistente_t nvs = { true, VCP_FUGA, BOM_BLOQUEADA, BMOT_NINGUNO, 3, false };
     sim_iniciar(&x, &nvs, 0.0);
     paso(&x);
     OK(x.s.rele, "relé en bajo en el primer paso");
@@ -164,6 +164,29 @@ static void restaurar(void)
     OK(x.s.rele && x.p.bom.estado == BOM_BLOQUEADA && x.p.val.bloqueo_fuga && x.p.val.estado == VAL_CERRADA && !x.motor_movido_ms,
        "tras 30 min: relé %d, bomba %d, bloqueo %d, válvula %s", x.s.rele, x.p.bom.estado, x.p.val.bloqueo_fuga, val_nombre_estado(x.p.val.estado));
     OK(x.n_persistir == 0, "escrituras de NVS sin cambios: %d", x.n_persistir);
+}
+
+/* FR-PER-01/02 (Q-06): el último rearme se guarda y, tras un reinicio, cuenta como ocurrido al
+ * arrancar: un seco a los 3 min del arranque bloquea (B15) */
+static void rearme_reinicio(void)
+{
+    prot_config_t cfg; prot_config_fabrica(&cfg);
+    prot_t p;
+    prot_persistente_t nvs = { false, VCP_NINGUNO, BOM_PERMITIDA, BMOT_NINGUNO, 1, true };
+    prot_iniciar(&p, &cfg, &nvs, 0);
+    OK(prot_persistente(&p).rearme_reciente, "rearme reciente no restaurado");
+    bom_entrada_t s1 = { BEV_SECO, true, true, 50, 180 };
+    bom_accion_t a = bom_evento(&p.bom, &s1);
+    OK(a.fila == 15 && p.bom.estado == BOM_BLOQUEADA, "seco a los 3 min del arranque: B%02d, estado %d", a.fila, p.bom.estado);
+    nvs.rearme_reciente = false;
+    prot_iniciar(&p, &cfg, &nvs, 0);
+    a = bom_evento(&p.bom, &s1);
+    OK(a.fila == 1, "sin rearme guardado: B%02d (esperada B01)", a.fila);
+    /* el rearme deja de ser reciente a los 10 min: un cambio que se guarda (FR-PER-01) */
+    p.bom.hay_rearme = true; p.bom.rearme_t = 1000; p.t_s = 1000 + BOM_P20_S;
+    OK(prot_persistente(&p).rearme_reciente, "rearme a los 600 s ya no es reciente");
+    p.t_s = 1000 + BOM_P20_S + 1;
+    OK(!prot_persistente(&p).rearme_reciente, "rearme a los 601 s sigue reciente");
 }
 
 /* FR-IO-06: el ADS 0x49 deja de responder → falla_adc, sondas 5–8 en falla ≤ 2 s, sin cierre */
@@ -334,7 +357,7 @@ static void bateria(void)
 static void boton(void)
 {
     static sim_t x;
-    prot_persistente_t nvs = { true, VCP_FUGA, BOM_PERMITIDA, BMOT_NINGUNO, 0 };
+    prot_persistente_t nvs = { true, VCP_FUGA, BOM_PERMITIDA, BMOT_NINGUNO, 0, false };
     sim_iniciar(&x, &nvs, 0.0);
     correr(&x, 2000);
     x.pl.boton = true; correr(&x, x.t + 2500); x.pl.boton = false; correr(&x, x.t + 1000);
@@ -364,7 +387,8 @@ static void ejercicio(void)
        val_nombre_estado(x.p.val.estado), x.p.val.bloqueo_fuga);
 }
 
-/* FR-BOM-10: nivel 50 % y flotador sin agua → B02 enseguida; flotador_falla a los 10 min y PERMITIDA;
+/* FR-BOM-10: nivel 50 % y flotador sin agua → B02 enseguida; flotador_falla a los 10 min; PERMITIDA por B05
+ * a los 10 min + t_rearme_min (FSD 0.8.7, Q-04);
  * transductor en falla → CORTADA(flotador) otra vez. Con nivel 20 % (< 30 %), nunca falla. */
 static void flotador_falla(void)
 {
@@ -379,8 +403,12 @@ static void flotador_falla(void)
     correr(&x, t0 + 602000);
     uint32_t t = cuando(&x, PEV_FLOTADOR_FALLA, 1, t0);
     OK(t != UINT32_MAX && t - t0 >= 600000 && t - t0 <= 601000, "flotador_falla a los %u ms", t - t0);
-    OK(!x.s.rele && x.p.bom.estado == BOM_PERMITIDA, "PERMITIDA con el flotador en falla");
-    correr(&x, t0 + 900000);
+    OK(x.s.rele && x.p.bom.estado == BOM_CORTADA, "PERMITIDA al declarar la falla (B05 cuenta desde ahí)");
+    correr(&x, t0 + 1190000);
+    OK(x.s.rele, "PERMITIDA antes de 10 min + t_rearme_min");
+    correr(&x, t0 + 1212000);
+    OK(!x.s.rele && x.p.bom.estado == BOM_PERMITIDA && cuantos(&x, PEV_BOM, 5) == 1, "PERMITIDA por B05 a los 10 min + t_rearme_min");
+    correr(&x, t0 + 1900000);                                             /* más de 10 min tras el rearme (P20) */
     OK(cuantos(&x, PEV_FLOTADOR_FALLA, 1) == 1 && !x.s.rele, "un solo aviso y sigue permitida");
     x.pl.i_a = 0.8f; x.pl.presion_bar = 0.2f; x.p.cfg.i_seco_a = 1.0f;   /* la detección de seco sigue protegiendo */
     correr(&x, x.t + 13000);
@@ -435,6 +463,7 @@ int main(int argc, char **argv)
     else if (!strcmp(c, "vref")) vref();
     else if (!strcmp(c, "ciego")) ciego();
     else if (!strcmp(c, "falla_vref")) falla_vref();
+    else if (!strcmp(c, "rearme_reinicio")) rearme_reinicio();
     else { printf("caso desconocido: %s\n", c); return 2; }
     printf("%s: %d fallos\n", c, fallos);
     return fallos != 0;

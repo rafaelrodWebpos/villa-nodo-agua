@@ -26,6 +26,8 @@ void prot_iniciar(prot_t *p, const prot_config_t *cfg, const prot_persistente_t 
     /* Los instantes de antes del reinicio no se conocen en este reloj: se cuentan como
      * ocurridos ahora, que es lo más conservador (siguen contando 24 h más). */
     for (int i = 0; i < nvs->n_cortes && i < BOM_MAX_CORTES; i++) p->bom.cortes[p->bom.n_cortes++] = t_s;
+    p->t_s = t_s;
+    if (nvs->rearme_reciente) { p->bom.hay_rearme = true; p->bom.rearme_t = t_s; }   /* FR-PER-02 (Q-06) */
     for (int i = 0; i < PROT_N_SONDAS; i++) p->clase[i] = -2;      /* sin lectura todavía */
     for (int k = 0; k < ES_N_ADS; k++) p->ads_ok[k] = true;
     p->motor = ES_MOTOR_PARADO;
@@ -35,7 +37,8 @@ void prot_iniciar(prot_t *p, const prot_config_t *cfg, const prot_persistente_t 
 prot_persistente_t prot_persistente(const prot_t *p)
 {
     return (prot_persistente_t){ p->val.bloqueo_fuga, p->val.cerrada_por, p->bom.estado,
-                                 p->bom.estado == BOM_CORTADA ? p->bom.motivo : BMOT_NINGUNO, p->bom.n_cortes };
+                                 p->bom.estado == BOM_CORTADA ? p->bom.motivo : BMOT_NINGUNO, p->bom.n_cortes,
+                                 bom_rearme_reciente(&p->bom, p->t_s) };
 }
 
 bool prot_sonda_mojada(const prot_t *p)
@@ -84,7 +87,10 @@ static void aplicar_bom(prot_t *p, const prot_entrada_t *e, bom_evento_t ev, pro
     if (a.fila == 0) return;
     emitir(s, PEV_BOM, a.fila, desde, p->bom.estado, ev);
     if (a.evento_bloqueada) emitir(s, PEV_BOMBA_BLOQUEADA, 0, 0, 0, 0);
-    if (a.rechazo == BRECH_SIN_AGUA && ev == BEV_REARMAR) { rechazo(p, e->t_ms); emitir(s, PEV_RECHAZO, 2, 0, 0, 0); }
+    if (a.rechazo != BRECH_NINGUNO && ev == BEV_PULSACION) {     /* patrón de rechazo (§8): B08, B16 */
+        rechazo(p, e->t_ms);
+        emitir(s, PEV_RECHAZO, a.rechazo == BRECH_NIVEL_BAJO ? 4 : 2, 0, 0, 0);
+    }
 }
 
 static bool clase_falla(int c) { return c == -1 || c == SON_ABIERTA || c == SON_CORTO || c == SON_INDETERMINADA; }
@@ -164,7 +170,7 @@ static void medidas(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     bool declarar = cond && !p->flotador_falla && e->t_s - p->flot_desde_s >= PROT_FLOTADOR_FALLA_S;
     if (declarar) { p->flotador_falla = true; emitir(s, PEV_FLOTADOR_FALLA, 1, 0, 0, 0); }
     p->flotador_agua = p->flotador_real || p->flotador_falla;
-    if (declarar) aplicar_bom(p, e, BEV_REARME_CUMPLIDO, s);   /* el nivel ya llevaba 10 min suficiente */
+    /* el plazo de B05 cuenta desde la declaración (FR-BOM-10, Q-04): antes el flotador estaba «sin agua» */
     aplicar_bom(p, e, BEV_NIVEL, s);                           /* B03 */
     if (rea_tick(&p->rearme, e->t_s, p->nivel_valido, p->nivel_pct, p->flotador_agua,
                  p->cfg.nivel_rearme_pct, p->cfg.t_rearme_s))
@@ -232,6 +238,7 @@ void prot_paso(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
 {
     s->n_ev = 0;
     s->persistir = false;
+    p->t_s = e->t_s;
     /* Entradas digitales con antirrebote (FR-IO-05) */
     bool fa = es_antirrebote(&p->ar_abierta, e->t_ms, e->fin_abierta);
     bool fc = es_antirrebote(&p->ar_cerrada, e->t_ms, e->fin_cerrada);
@@ -253,9 +260,9 @@ void prot_paso(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     if (!p->flotador_agua) aplicar_bom(p, e, BEV_FLOTADOR_SIN_AGUA, s);   /* B02 (FR-BOM-04) */
     es_boton_ev_t b = es_boton(&p->boton, e->t_ms, bt);
     if (b == ES_BOTON_CORTA) p->silenciado = true;              /* FR-LOC-02 */
-    if (b == ES_BOTON_LARGA) {                                  /* FR-LOC-03: V10/V11 y B07/B08 */
+    if (b == ES_BOTON_LARGA) {                                  /* FR-LOC-03: V10/V11 y B07/B08/B16 */
         aplicar_val(p, e, VEV_PULSACION_LARGA, s);
-        aplicar_bom(p, e, BEV_REARMAR, s);
+        aplicar_bom(p, e, BEV_PULSACION, s);
     }
     if (e->hay_medidas) medidas(p, e, s);
     if (e->hay_corriente) corriente(p, e, s);
@@ -264,5 +271,5 @@ void prot_paso(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     prot_persistente_t ahora = prot_persistente(p);             /* FR-PER-01: solo en los cambios */
     const prot_persistente_t *g = &p->guardado;
     if (ahora.bloqueo_fuga != g->bloqueo_fuga || ahora.cerrada_por != g->cerrada_por || ahora.bomba != g->bomba ||
-        ahora.motivo != g->motivo || ahora.n_cortes != g->n_cortes) { p->guardado = ahora; s->persistir = true; }
+        ahora.motivo != g->motivo || ahora.n_cortes != g->n_cortes || ahora.rearme_reciente != g->rearme_reciente) { p->guardado = ahora; s->persistir = true; }
 }
