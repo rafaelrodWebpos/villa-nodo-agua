@@ -1662,6 +1662,54 @@ tests:
     evidence: CI host-tests (ctest), log del run 46171712187
     observed: >
       FSD 0.8.11: fábrica; coma decimal; sondas 7 y 8 inactivas; sonda 3 mojada no se desactiva; 11 valores fuera de rango; i_seco ≤ i_marcha; i_seco vacío solo sin calibrar; envío sin «nodo» no los toca; valores actuales e ida y vuelta.
+  - id: TC-ORD-A3
+    shape: atomic
+    kind: negative
+    wave: 3
+    phase: 2
+    tier: bench
+    verifies: [FR-ORD-02]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-serial-monitor, dut-board]
+    expect: >
+      300 bytes, `{`, {"accion":"x"} y {"accion":5} en valvula/set y bomba/set → 8 orden_rechazada con su motivo, sin cambios de estado ni reinicio
+    impl: tests/bench/test_fase2.py::test_tc_ord_a3_payloads
+    status: not_run
+  - id: TC-ORD-A4
+    shape: atomic
+    kind: negative
+    wave: 3
+    phase: 2
+    tier: bench
+    verifies: [FR-ORD-03]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-serial-monitor, dut-board]
+    expect: >
+      abrir, permitir_consumo y casa_cerrada=false con retain y reconexión → tres «ignorada (retain)», sin consumo_permitido ni casa_cerrada; config/state con casa_cerrada=true
+    impl: tests/bench/test_fase2.py::test_tc_ord_a4_retain
+    status: not_run
+  - id: TC-CFG-A2
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench
+    verifies: [FR-CFG-A1, FR-CFG-A2, FR-CFG-A3, FR-CFG-A4, FR-CFG-A5]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-serial-monitor, dut-board]
+    expect: >
+      t_seco_s=15 → config/state con 15 y persiste tras reiniciar; 10 rechazos (rango, desconocido, portal) sin config/state; casa_cerrada true→false→false→true → 2 eventos (v, antes) y 3 config/state
+    impl: tests/bench/test_fase2.py::test_tc_cfg_a2_config_set
+    status: not_run
+  - id: TC-PUB-A2
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench
+    verifies: [FR-PUB-02, FR-PUB-03]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-serial-monitor, dut-board]
+    expect: >
+      5 min en OPERATIVO → 5 ± 1 de nivel, presion, corriente_bomba y medidor; broker reiniciado → reaparecen los retenidos de §13.1 (bateria solo si ya se conoce)
+    impl: tests/bench/test_fase2.py::test_tc_pub_a2_retenidos_y_medidas
+    status: not_run
   - id: TC-PUB-A4
     shape: atomic
     kind: standard
