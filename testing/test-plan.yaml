@@ -1390,14 +1390,13 @@ tests:
       (V15) V24 no vuelve a cerrar hasta que el nodo mueva el motor; la fuga gana; casa_cerrada=false → V08.
       tabla de §5.3 (FSD 0.5.0) como prueba parametrizada: cada fila V01–V23 (con V03b) produce su estado, su acción (motor, rechazo, evento, marcas) y nada más; V07 solo al superar P3; completitud: en todas las combinaciones (estado × evento × finales × g_seco × marcas), o una fila admitida para ese par o el par se ignora sin ningún efecto; nunca IN1 e IN2 a la vez (el motor es un único valor); la fuga siempre gana: desde cualquier estado salvo ARRANQUE (imposible por construcción), fuga y final «cerrada» dejan CERRADA con bloqueo_fuga = 1 y cerrada_por = fuga, y nada sin g_seco la reabre (FR-EJE-03, parte host)
     impl: tests/host/test_tablas.c (val)
-    pendiente_fsd: "FSD 0.8.5 (2026-11-28, G-07): filas V26/V27 y guarda g_bateria en V08/V10/V14; FSD 0.8.6 (R-03, R-09): V15 en DESCONOCIDA/FALLA, finales por flanco, V28, V29; faltan el código y sus casos; el resultado de abajo es de la tabla anterior"
     status: successful
-    commit: 836f609
-    date: 2026-11-15
-    ci_run: 43738664821
-    evidence: CI host-tests (ctest), log del run 43738664821
+    commit: 24b1149
+    date: 2026-11-28
+    ci_run: 46165781699
+    evidence: CI host-tests (ctest), log del run 46165781699
     observed: >
-      FSD 0.5.0: 39 casos de V01–V23 y 5040 combinaciones de completitud (3054 ignoradas sin efecto); la fuga siempre gana desde los 6 estados; un mutante sin V21 da 10 fallos.
+      FSD 0.8.10: 39 casos de V01–V30 y 118272 combinaciones de completitud (74544 ignoradas sin efecto), con g_bateria, palanca y episodio; propiedades G-07 (nada abre con g_bateria), FR-VAL-10/U-02 (ni V22 ni V24 mueven tras la palanca) y S-01 (V15 a CERRADA deja cerrada_por=ninguno); casos de V26–V30, U-03 (final tardío tras V07), V23 tras la palanca y un reintento por episodio desde FALLA. La fuga siempre gana desde los 6 estados.
   - id: TC-EJE-A1
     shape: atomic
     kind: standard
