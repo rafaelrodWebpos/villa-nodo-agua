@@ -1679,7 +1679,13 @@ tests:
     expect: >
       marcas de tiempo simuladas: cierres de 60/60 ms cuentan, 40 ms no, 5 rebotes de 3 ms = 1 pulso, 5 pulsos/s exactos; 10 pulsos a 1,0 gal y 10 a 0,5 → 37,85 y 56,78 L ± 0,01 sin recalcular ni bajar; 50 L en 5 min → caudal_lh 600
     impl: tests/host/test_medidor.c
-    status: not_run
+    status: successful
+    commit: 7a1a800
+    date: 2026-11-28
+    ci_run: 46167626368
+    evidence: CI host-tests (ctest), log del run 46167626368
+    observed: >
+      FSD 0.8.11: 60/60 ms → 10 pulsos; 40 ms → 0; cierre con 5 rebotes de 3 ms → 1; 5 pulsos/s × 10 s → 50; 37,85 L y 56,78 L sin recalcular ni bajar; 2271 L/h con un pulso de 1 gal cada 6 s.
   - id: TC-MED-A2
     shape: atomic
     kind: standard
@@ -1691,7 +1697,13 @@ tests:
     expect: >
       casa_cerrada × periodo (sin, dentro, margen, vencido) × litros (19, 21): evento motivo=hora solo con true, fuera de periodo y 21 L, uno por episodio; 2,5 L/h durante 30 h → un evento motivo=diario al pasar de 50 L (hora 20) y ninguno más en 24 h; la suma de 24 h vuelve a 0 al reiniciar; una orden nueva no acorta el periodo y el reinicio lo borra, ninguno con false o dentro de periodos; una orden nueva solo alarga; nivel 100→112 cm sin pulsos → un medidor_falla, ninguno con pulsos o con el nivel en falla
     impl: tests/host/test_medidor.c
-    status: not_run
+    status: successful
+    commit: 7a1a800
+    date: 2026-11-28
+    ci_run: 46167626368
+    evidence: CI host-tests (ctest), log del run 46167626368
+    observed: >
+      FSD 0.8.11: casa_cerrada × periodo (sin, dentro, margen, vencido) × litros (19, 21): aviso de hora solo con true, fuera de periodo y 21 L; uno por episodio y otro tras una ventana sin pulsos; 2,5 L/h × 30 h → un aviso diario a la hora 20 solo con true y fuera de periodo; suma de 24 h en RAM; medidor_falla con 15 cm sin pulsos y no con pulsos ni con 9 cm.
   - id: TC-MED-A3
     shape: atomic
     kind: standard
@@ -1703,7 +1715,13 @@ tests:
     expect: >
       reloj simulado: 5 min de pulsos → ≤ 1 escritura de NVS cada 60 s; 10 min sin pulsos → 0 escrituras; reinicio ordenado → escritura antes
     impl: tests/host/test_medidor.c
-    status: not_run
+    status: successful
+    commit: 7a1a800
+    date: 2026-11-28
+    ci_run: 46167626368
+    evidence: CI host-tests (ctest), log del run 46167626368
+    observed: >
+      FSD 0.8.11: 5 min de pulsos → 5–6 escrituras, nunca dos en menos de 60 s; 10 min sin pulsos → 0 escrituras.
   - id: TC-MED-A4
     shape: atomic
     kind: standard
@@ -1818,7 +1836,13 @@ tests:
       min de texto o decimal, sin min, basura al final, array, coma colgante y 300 bytes → payload; acción desconocida → accion;
       JSON del tópico medidor con y sin ts; búfer corto → -1
     impl: tests/host/test_medidor.c
-    status: not_run
+    status: successful
+    commit: 7a1a800
+    date: 2026-11-28
+    ci_run: 46167626368
+    evidence: CI host-tests (ctest), log del run 46167626368
+    observed: >
+      FSD 0.8.11: 16 payloads de medidor/set con el motivo esperado (payload o accion) y 300 bytes rechazados; JSON de medidor con y sin ts; búfer corto → -1.
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"
