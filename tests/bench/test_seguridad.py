@@ -96,7 +96,7 @@ def test_tc_por_12_portal_closes_after_10_min(testbench, dut_slot, dut_mac, firm
     pasa a «la protección sigue» (FR-HER-01); su observable (la línea A4 de cada ciclo) llega con
     los drivers de E/S: hasta entonces esa parte no se comprueba aquí."""
     from benchlib import borrar_nvs
-    from consola import quitar_relecturas, reinicios
+    from consola import quitar_relecturas, quitar_viejas, reinicios
     from test_mqtt import grabar
     tb = testbench
     nodo = _nodo(dut_mac)
@@ -122,7 +122,7 @@ def test_tc_por_12_portal_closes_after_10_min(testbench, dut_slot, dut_mac, firm
         assert hit, "sin «con: PORTAL -> ESPERA (portal_vence)» en 12 min"
         tras = [_visible(tb, nodo) for _ in range(ESCANEOS_TRAS)]
         time.sleep(75)                                    # un ciclo después del cierre
-        ent, _ = quitar_relecturas(reg.leer())
+        ent, _ = quitar_viejas(quitar_relecturas(reg.leer())[0])   # relecturas y reenvíos del banco (#89)
         txt = [e.get("text", "") for e in ent]
         i24 = next(i for i, t in enumerate(txt) if T24_LINEA in t)
         i02 = max(i for i, t in enumerate(txt[:i24]) if T02_LINEA in t)
