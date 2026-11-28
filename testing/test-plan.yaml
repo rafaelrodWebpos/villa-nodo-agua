@@ -1781,6 +1781,7 @@ gate_verdicts:   # [{gate, verdict, date, commit}] — los escribe el checker
   - {gate: 01-load-defined, verdict: OPEN, date: 2026-11-14, commit: c3e5053}
   - {gate: 02-ai-harnessed, verdict: OPEN, date: 2026-11-14, commit: c3e5053, note: "observación menor: JRN-03.* a bench+ (corregido después)"}
   - {gate: 01-load-defined, verdict: SHUT, date: 2026-11-28, commit: e69c003, note: "FSD 0.8.4; revisor independiente; req. 2 (§6.2 sin Límite) y G-01 crítica, G-02/03/04 altas — testing/revision-load-defined-2026-11-28.md"}
+  - {gate: 01-load-defined, verdict: SHUT, date: 2026-11-28, commit: 505e807, note: "FSD 0.8.5; 2.ª revisión independiente; R-01 alta (rearmar/pulsación saltan el nivel crítico) — testing/revision-load-defined-2026-11-28b.md"}
 
 commissioning:
   forward_path:
