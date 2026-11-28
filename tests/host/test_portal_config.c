@@ -33,8 +33,9 @@ int main(void)
     char puerto[6];
     const char *w[PORTAL_N_CAMPOS];
     portal_config_valores(&c, puerto, w);
-    for (int i = 0; i < PORTAL_N_CAMPOS; i++)
+    for (int i = 0; i < PORTAL_N_CLIMA; i++)              /* los 8 de §17; los del nodo van aparte (§19) */
         ESPERA(w[i] && strcmp(w[i], v[i]) == 0, "%s cambia: '%.20s' -> '%.20s'", PORTAL_NAME[i], v[i], w[i] ? w[i] : "(null)");
+    for (int i = PORTAL_N_CLIMA; i < PORTAL_N_CAMPOS; i++) ESPERA(!w[i], "%s no queda vacío", PORTAL_NAME[i]);
     portal_validar(w, &r);
     ESPERA(r.n_errores == 0, "lo guardado ya no es válido (%d)", r.n_errores);
 

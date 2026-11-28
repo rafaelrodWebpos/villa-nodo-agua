@@ -46,4 +46,5 @@ void portal_config_valores(const portal_config_t *c, char puerto[6], const char 
     v[PORTAL_MQTT_PASS] = c->mqtt_pass;
     v[PORTAL_SITIO] = c->sitio;
     v[PORTAL_ZONA] = c->zona;
+    for (int i = PORTAL_N_CLIMA; i < PORTAL_N_CAMPOS; i++) v[i] = NULL;   /* los del nodo van aparte */
 }

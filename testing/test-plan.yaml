@@ -1635,6 +1635,21 @@ tests:
       los dos sentidos; mínimo y máximo de cada parámetro; config/state completo; NVS fuera de rango → valores de fábrica
     impl: tests/host/test_configuracion.c
     status: not_run
+  - id: TC-POR-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [FR-CFG-A3, FR-BOM-03, FR-LOC-06]
+    needs: [hosted-ci]
+    expect: >
+      parámetros del nodo en el portal (§19, interfaz portal): fábrica; válido con coma decimal; sondas 7 y 8 inactivas;
+      la sonda 3 mojada no se desactiva; rangos de rango/altura/i_marcha/i_seco e i_seco > i_marcha; i_seco vacío solo si no
+      estaba calibrada (Q-09); envío sin el campo oculto no los toca; el formulario los muestra con su valor actual y la ida y
+      vuelta valida igual; NVS no válida → fábrica
+    impl: tests/host/test_portal_nodo.c
+    status: not_run
   - id: TC-PUB-A4
     shape: atomic
     kind: standard

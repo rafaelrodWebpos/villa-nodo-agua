@@ -44,6 +44,14 @@ bool proteccion_respuesta(prot_resp_t *r, uint32_t espera_ms);
 #include "configuracion.h"
 void config_actual(cfg_t *c);
 bool config_guardar_y_aplicar(const cfg_t *c);
+
+/* Parámetros del nodo del portal (§19, interfaz portal; FR-CFG-A3): vigentes desde el arranque */
+#include "portal_nodo.h"
+void nodo_actual(portal_nodo_t *p);
+bool nodo_guardar(const portal_nodo_t *p);           /* tras un guardado del portal; deja sondas_config pendiente */
+bool nodo_sondas_pendiente(bool inactivas[8]);       /* FR-CFG-A3: publicar una vez al llegar a OPERATIVO */
+void nodo_sondas_hecho(void);
+void proteccion_mojadas(bool m[8]);                  /* sondas activas en `mojada` ahora */
 /* Lectura para el tópico `medidor` (FR-MED-04) */
 void medidor_lectura(med_lectura_t *l);
 /* `permitir_consumo` (FR-MED-06/10) con el reloj y el margen del nodo */

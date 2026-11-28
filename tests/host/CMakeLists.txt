@@ -176,3 +176,8 @@ add_executable(test_configuracion test_configuracion.c ${COMP}/configuracion/con
 target_include_directories(test_configuracion PRIVATE ${COMP}/configuracion/include)
 target_link_libraries(test_configuracion m)
 add_test(NAME TC-CFG-A1 COMMAND test_configuracion)
+
+# TC-POR-A1 · parámetros del nodo en el portal (§19, FR-CFG-A3, FR-BOM-03 Q-09, FR-LOC-06)
+add_executable(test_portal_nodo test_portal_nodo.c ${COMP}/portal/portal_nodo.c)
+target_include_directories(test_portal_nodo PRIVATE ${COMP}/portal/include)
+add_test(NAME TC-POR-A1 COMMAND test_portal_nodo)

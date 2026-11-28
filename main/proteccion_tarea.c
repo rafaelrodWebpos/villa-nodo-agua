@@ -15,6 +15,7 @@
 #include "es_hw.h"
 #include "proteccion.h"
 #include "medidor.h"
+#include "fugas.h"
 
 static const char *TAG = "nodo";
 
@@ -72,6 +73,69 @@ static void cfg_a_prot(const cfg_t *c, prot_config_t *pc)
     pc->t_seco_s = (uint32_t)c->v[CFG_T_SECO_S];
     pc->ciclado_max = (int)c->v[CFG_CICLADO_MAX];
     pc->ciclado_ventana_s = (uint32_t)c->v[CFG_CICLADO_VENTANA_MIN] * 60u;
+}
+
+/* ---- Parámetros del nodo del portal (§19) ---- */
+#define NODO_ESPACIO "nodo"
+#define NODO_CLAVE   "param"                    /* FR-LOC-06 borra solo «cfg»: esta clave queda */
+typedef struct { uint8_t ver; bool pendiente; portal_nodo_t p; } nodo_blob_t;
+static nodo_blob_t s_nodo;                      /* bajo s_mux */
+
+static void nodo_leer(void)
+{
+    s_nodo = (nodo_blob_t){ .ver = 1 };
+    portal_nodo_fabrica(&s_nodo.p);
+    nvs_handle_t h; nodo_blob_t b; size_t n = sizeof b;
+    if (nvs_open(NODO_ESPACIO, NVS_READONLY, &h) != ESP_OK) return;
+    if (nvs_get_blob(h, NODO_CLAVE, &b, &n) == ESP_OK && n == sizeof b && b.ver == 1 && portal_nodo_valido(&b.p)) s_nodo = b;
+    nvs_close(h);
+}
+
+static bool nodo_escribir(const nodo_blob_t *b)
+{
+    nvs_handle_t h;
+    if (nvs_open(NODO_ESPACIO, NVS_READWRITE, &h) != ESP_OK) return false;
+    bool ok = nvs_set_blob(h, NODO_CLAVE, b, sizeof *b) == ESP_OK && nvs_commit(h) == ESP_OK;
+    nvs_close(h);
+    return ok;
+}
+
+void nodo_actual(portal_nodo_t *p)
+{
+    xSemaphoreTake(s_mux, portMAX_DELAY);
+    *p = s_nodo.p;
+    xSemaphoreGive(s_mux);
+}
+
+bool nodo_guardar(const portal_nodo_t *p)       /* se aplica al reiniciar, tras T05 */
+{
+    nodo_blob_t b = { 1, true, *p };
+    return nodo_escribir(&b);
+}
+
+bool nodo_sondas_pendiente(bool inactivas[8])
+{
+    xSemaphoreTake(s_mux, portMAX_DELAY);
+    bool pend = s_nodo.pendiente;
+    for (int i = 0; i < 8; i++) inactivas[i] = !s_nodo.p.sonda_activa[i];
+    xSemaphoreGive(s_mux);
+    return pend;
+}
+
+void nodo_sondas_hecho(void)
+{
+    xSemaphoreTake(s_mux, portMAX_DELAY);
+    s_nodo.pendiente = false;
+    nodo_blob_t b = s_nodo;
+    xSemaphoreGive(s_mux);
+    nodo_escribir(&b);
+}
+
+void proteccion_mojadas(bool m[8])
+{
+    xSemaphoreTake(s_mux, portMAX_DELAY);
+    for (int i = 0; i < 8; i++) m[i] = s_foto.sonda[i] == SON_MOJADA;
+    xSemaphoreGive(s_mux);
 }
 
 static void cfg_leer(void)                      /* al arrancar: la de NVS si es válida; si no, la de fábrica */
@@ -473,6 +537,10 @@ void proteccion_iniciar(const proteccion_ganchos_t *g)
     prot_config_fabrica(&cfg);
     cfg_leer();                                                /* §19: parámetros de campo de la NVS */
     cfg_a_prot(&s_cfg, &cfg);
+    nodo_leer();                                               /* §19: parámetros del nodo del portal */
+    for (int i = 0; i < 8; i++) cfg.sonda_activa[i] = s_nodo.p.sonda_activa[i];
+    cfg.rango_transductor_cm = s_nodo.p.rango_cm; cfg.altura_util_cm = s_nodo.p.altura_cm;
+    cfg.i_marcha_a = s_nodo.p.i_marcha_a; cfg.i_seco_a = s_nodo.p.i_seco_a;
     s_mcfg.galones_por_pulso = s_cfg.v[CFG_GALONES_POR_PULSO];
     s_mcfg.alerta_l = (int)s_cfg.v[CFG_CONSUMO_ALERTA_L]; s_mcfg.ventana_min = (int)s_cfg.v[CFG_CONSUMO_VENTANA_MIN];
     s_mcfg.margen_min = (int)s_cfg.v[CFG_CONSUMO_MARGEN_MIN]; s_mcfg.diario_l = (int)s_cfg.v[CFG_CONSUMO_DIARIO_L];
