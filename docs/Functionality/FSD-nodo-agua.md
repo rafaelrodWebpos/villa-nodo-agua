@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.8.4
+fsd_version: 0.8.5
 repository: villa-nodo-agua (público)
 baseline_commit: c3e5053 (Load defined, 2026-11-14); cada versión, el commit que la introduce
 applicable_firmware_version: ninguna todavía
@@ -12,7 +12,7 @@ approval_status: D1–D18 y P1–P21 aceptadas por el propietario (2026-11-14; P
   H-93 (2026-11-20) y H-95 (2026-11-21, P22–P25) aceptados; H-96 (2026-11-21) aprobado,
   y P28–P34 aceptados (2026-11-21); P26/P27 aceptados para la próxima ronda (H-93)
 created: 2026-11-14
-last_updated: 2026-11-23
+last_updated: 2026-11-28
 herencia: villa-nodo-clima-piloto, docs/Functionality/FSD-nodo-clima.md, versión 0.9.9 (commit ddf8016)
 change_history:
   - 0.1.0 (2026-11-14): versión inicial a partir de /define (D1–D18 del propietario).
@@ -87,6 +87,15 @@ change_history:
     el propietario siempre puede reabrir a mano: con la palanca (V24 ya no vuelve a cerrar
     una posición puesta a mano, P12) o desde HA con confirmación (`casa_cerrada`=false y
     `abrir`, con el evento y el aviso de FR-CFG-A5/FR-VIG-02).
+  - 0.8.5 (2026-11-28): hallazgos de la revisión independiente de la puerta Load defined
+    (testing/revision-load-defined-2026-11-28.md), con las decisiones del propietario. G-01:
+    `sonda_activa` solo por el portal, con el evento `sondas_config` y el aviso de FR-VIG-03.
+    G-02/G-03: `i_marcha_a`, `i_seco_a`, `rango_transductor_cm` y `altura_util_cm` pasan al
+    portal. G-04: de BLOQUEADA solo se sale con la pulsación larga (B07); un `rearmar` remoto
+    no pone `intentos_24h` a cero (B12–B14); P20 entra en B01/B15. G-05: columna «Límite» en
+    §6.2 (≤ 1 s en B02–B04, B07, B09, B12, B13). G-07: guarda de batería crítica sin red en V08,
+    V10 y V14 (V26, V27). G-08–G-10: editoriales (A1–A8 en la Fase 1, FR-VAL-10 y FR-BOM-05
+    observables sin MQTT, V04 sin ABRIENDO, completitud de §6.2). FR-SEC-A1 ampliado.
 ```
 
 ## Convenciones de este documento
@@ -289,15 +298,16 @@ Cada fase se entra solo con lo que entregaron las anteriores.
 
 **Entrega:** drivers de E/S (§12), protección de fugas y válvula (§5), bomba y
 cisterna (§6; del medidor testigo, solo el conteo y la NVS de §6.7), energía (§7, sin publicar), interfaz local (§8), persistencia (§9),
-identidad (§18), líneas de log A1–A7 (§20), y portal + Wi-Fi heredados (§15, §10) para
+identidad (§18), líneas de log A1–A8 de §20 (A6, la de las órdenes, en la Fase 2), y portal + Wi-Fi heredados (§15, §10) para
 dejar el nodo aprovisionado.
 
 **Salida:** en verde, en host, target y bench, **con el broker apagado**, los contratos
 de §5–§9, §12, §18 y FR-OBS-A1 cuyo estímulo es local (sondas, finales, flotador,
 botón, red, tensiones, reloj, pulsos del medidor) y que se observan por GPIO o por las
-líneas A1–A8. Los contratos cuyo estímulo, cuya precondición o cuya observación es un
+líneas A1–A8. Los parámetros del portal (§19, como `i_seco_a` o `sonda_activa`) se fijan al
+aprovisionar, sin MQTT. Los contratos cuyo estímulo, cuya precondición o cuya observación es un
 mensaje MQTT (órdenes, `…/state`, eventos, parámetros fijados por `config/set`, como
-`casa_cerrada`=false o `i_seco_a` calibrado) se cierran en la Fase 2, igual que §5.6 (el ejercicio necesita la hora SNTP). Los contratos de §15 y clima:FR-CON-*
+`casa_cerrada`=false) se cierran en la Fase 2, igual que §5.6 (el ejercicio necesita la hora SNTP). Los contratos de §15 y clima:FR-CON-*
 heredados, en verde.
 
 **Necesita del banco** (capacidades nuevas, numeradas por el propietario; se
@@ -491,17 +501,17 @@ Todas las filas son [Must]. Procedencia: [user] D1, D5, D12, D18; [derived] el r
 | V02 | ARRANQUE | fin de lectura de finales | solo «cerrada» | CERRADA | ninguna | — |
 | V03 | ARRANQUE | fin de lectura de finales | ninguno | DESCONOCIDA | publicar | — |
 | V03b | ARRANQUE | fin de lectura de finales | los dos | FALLA | publicar; evento `falla_valvula` | — |
-| V04 | ABIERTA, ABRIENDO, DESCONOCIDA | fuga confirmada | — | CERRANDO | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | orden ≤ P2 |
+| V04 | ABIERTA, DESCONOCIDA | fuga confirmada | — | CERRANDO | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | orden ≤ P2 |
 | V05 | ABIERTA, DESCONOCIDA | orden `cerrar` válida | — | CERRANDO | `cerrada_por`=`orden` | ≤ 500 ms |
 | V06 | CERRANDO | final «cerrada» | — | CERRADA | parar el motor | ≤ P3 |
 | V07 | CERRANDO / ABRIENDO | tiempo de carrera > P3 | — | FALLA | parar el motor; evento `falla_valvula` | P3 |
-| V08 | CERRADA | orden `abrir` válida | `g_seco` | ABRIENDO | `bloqueo_fuga`=0, `cerrada_por`=`ninguno` | ≤ 500 ms |
+| V08 | CERRADA | orden `abrir` válida | `g_seco` y no `g_bateria` | ABRIENDO | `bloqueo_fuga`=0, `cerrada_por`=`ninguno` | ≤ 500 ms |
 | V09 | CERRADA | orden `abrir` | no `g_seco` | CERRADA | rechazar `fuga_activa` | — |
-| V10 | CERRADA | pulsación larga | `g_seco` | ABRIENDO | igual que V08 | ≤ 500 ms |
+| V10 | CERRADA | pulsación larga | `g_seco` y no `g_bateria` | ABRIENDO | igual que V08 | ≤ 500 ms |
 | V11 | CERRADA | pulsación larga | no `g_seco` | CERRADA | patrón de rechazo (§8) | — |
 | V12 | ABRIENDO | final «abierta» | — | ABIERTA | parar el motor | ≤ P3 |
 | V13 | ABIERTA | ejercicio vencido | `g_seco`, `bloqueo_fuga`=0 y no `g_ciego` | CERRANDO | `cerrada_por`=`ejercicio` | — |
-| V14 | CERRADA | final «cerrada» confirmado | `cerrada_por`=`ejercicio`, `g_seco` y no `g_ciego` | ABRIENDO | registrar tiempo de carrera | — |
+| V14 | CERRADA | final «cerrada» confirmado | `cerrada_por`=`ejercicio`, `g_seco`, no `g_ciego` y no `g_bateria` | ABRIENDO | registrar tiempo de carrera | — |
 | V15 | ABIERTA / CERRADA | cambia un final sin orden | — | solo «abierta» → ABIERTA; solo «cerrada» → CERRADA; ninguno → DESCONOCIDA; los dos → FALLA | evento `movimiento_manual` (P12); con los dos, `falla_valvula` | — |
 | V16 | FALLA | orden `cerrar` u `abrir` válida, o pulsación larga | según V05/V08/V10; para abrir, además no `g_ciego` (si no, rechazo `sondas_en_falla` y, con la pulsación, patrón de rechazo, como V25) | CERRANDO / ABRIENDO | un reintento por orden | P3 |
 | V17 | CERRADA | fuga confirmada | — | CERRADA | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | — |
@@ -520,6 +530,12 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 | V23 | CERRADA | reapertura por batería cumplida (FR-ENE-05) | `cerrada_por`=`bateria`, `bloqueo_fuga`=0, `g_seco` y no `g_ciego` (H-93) | ABRIENDO | `cerrada_por`=`ninguno` | ≤ 500 ms |
 | V24 | ABIERTA, DESCONOCIDA | `g_ciego` (FR-SON-05) | la posición no la puso la palanca (V15) sin que el nodo haya movido el motor después | CERRANDO | `cerrada_por`=`sondas`; `bloqueo_fuga` sin cambio | ≤ 500 ms |
 | V25 | CERRADA | orden `abrir` válida o pulsación larga | `g_seco` y `g_ciego` | CERRADA | rechazar `sondas_en_falla`; con la pulsación, patrón de rechazo (§8) | — |
+| V26 | CERRADA | orden `abrir` válida o pulsación larga | `g_seco`, no `g_ciego` y `g_bateria` | CERRADA | rechazar `bateria_critica`; con la pulsación, patrón de rechazo (§8) | — |
+| V27 | CERRADA | final «cerrada» confirmado | `cerrada_por`=`ejercicio` y `g_bateria` | CERRADA | `cerrada_por`=`bateria` (la reabre V23) | — |
+
+`g_bateria` = batería `critica` y red `ausente` (FR-ENE-04), la condición de V22. Filas V26
+y V27 [user, 2026-11-28] (G-07): con `g_bateria` no se reabre, porque V22 volvería a cerrar y
+el bucle gastaría la batería y el motor; V23 reabre cuando la batería se recupera.
 
 Filas V20–V23 [user, 2026-11-15]. Filas V24 y V25 [user] H-93; V24 es de nivel, como V22.
 V25 tiene prioridad sobre V08 y V10: mientras se cumple `g_ciego` no se reabre, porque V24
@@ -575,9 +591,9 @@ envía en cada ciclo mientras se cumple su condición. V14 deja `cerrada_por`=`n
 | FR-VAL-07 | CERRADA, sonda 2 `mojada`; orden `abrir` | Respuesta `rechazado: fuga_activa`; IN2 = 0 | Movimiento | bench |
 | FR-VAL-08 | Reapertura válida; luego sonda 5 `mojada` | Cierre según FR-FUG-02 | Quedarse abierta | bench |
 | FR-VAL-09 | CERRADA con fuga activa: pulsación de 3 s; luego seca: pulsación de 3 s | 1.º: patrón de rechazo, sin movimiento. 2.º: ABRIENDO | Abrir con fuga | bench |
-| FR-VAL-10 | CERRADA con `bloqueo_fuga`; el banco simula la palanca (final «abierta» activo, «cerrada» inactivo) | Evento `movimiento_manual`; IN1 = IN2 = 0 durante 60 s | Intento de cierre por el motor | bench |
+| FR-VAL-10 | CERRADA con `bloqueo_fuga`; el banco simula la palanca (final «abierta» activo, «cerrada» inactivo) | Línea A1 de V15 (CERRADA -> ABIERTA); IN1 = IN2 = 0 durante 60 s; en la Fase 2, además, el evento `movimiento_manual` | Intento de cierre por el motor | bench |
 | FR-VAL-11 | Lógica pura: todas las filas de §5.3 y combinaciones de eventos simultáneos | Nunca IN1 = IN2 = 1 | Cualquier caso con los dos en alto | host + bench |
-| V01–V25 | Tabla de transiciones como prueba parametrizada | Cada fila produce su estado y su acción | Una transición no listada | host |
+| V01–V27 | Tabla de transiciones como prueba parametrizada | Cada fila produce su estado y su acción | Una transición no listada | host |
 
 ### 5.6 Ejercicio periódico (D12)
 
@@ -612,19 +628,29 @@ envía en cada ciclo mientras se cumple su condición. V14 deja `cerrada_por`=`n
 
 ### 6.2 Tabla de transiciones (normativa)
 
-| Fila | Desde | Evento | Guarda | Hacia | Acción |
-|---|---|---|---|---|---|
-| B01 | PERMITIDA | trabajo en seco (FR-BOM-03) | — | CORTADA(seco) | intentos_24h += 1 |
-| B02 | PERMITIDA | flotador sin agua | — | CORTADA(flotador) | — |
-| B03 | PERMITIDA | nivel < `nivel_critico_pct` con transductor válido | — | CORTADA(nivel) | — |
-| B04 | PERMITIDA | orden `cortar` | — | CORTADA(orden) | — |
-| B05 | CORTADA(seco\|nivel\|flotador) | condición de rearme cumplida (FR-BOM-05) | motivo `nivel` o `flotador`; o motivo `seco` con intentos_24h < `intentos_max` | PERMITIDA | — |
-| B06 | CORTADA(seco) | condición de rearme cumplida | intentos_24h ≥ `intentos_max` | BLOQUEADA | evento `bomba_bloqueada` |
-| B07 | CORTADA(any), BLOQUEADA | orden `rearmar` o pulsación larga | flotador con agua | PERMITIDA | intentos_24h = 0 |
-| B08 | CORTADA(any), BLOQUEADA | orden `rearmar` o pulsación larga | flotador sin agua | sin cambio | rechazar `sin_agua` |
-| B09 | CORTADA(orden) | orden `permitir` | flotador con agua y (nivel ≥ crítico o transductor en falla) | PERMITIDA | — |
-| B10 | CORTADA(orden) | orden `permitir` | flotador sin agua | sin cambio | rechazar `sin_agua` |
-| B11 | CORTADA(orden) | orden `permitir` | flotador con agua, transductor válido y nivel < crítico | sin cambio | rechazar `nivel_bajo` |
+| Fila | Desde | Evento | Guarda | Hacia | Acción | Límite |
+|---|---|---|---|---|---|---|
+| B01 | PERMITIDA | trabajo en seco (FR-BOM-03) | más de 10 min desde el último rearme (P20) | CORTADA(seco) | intentos_24h += 1 | `t_seco_s` ± 1 s |
+| B02 | PERMITIDA | flotador sin agua | — | CORTADA(flotador) | — | ≤ 1 s |
+| B03 | PERMITIDA | nivel < `nivel_critico_pct` con transductor válido | — | CORTADA(nivel) | — | ≤ 1 s |
+| B04 | PERMITIDA | orden `cortar` | — | CORTADA(orden) | — | ≤ 1 s |
+| B05 | CORTADA(seco\|nivel\|flotador) | condición de rearme cumplida (FR-BOM-05) | motivo `nivel` o `flotador`; o motivo `seco` con intentos_24h < `intentos_max` | PERMITIDA | — | `t_rearme_min` ± 10 s |
+| B06 | CORTADA(seco) | condición de rearme cumplida | intentos_24h ≥ `intentos_max` | BLOQUEADA | evento `bomba_bloqueada` | `t_rearme_min` ± 10 s |
+| B07 | CORTADA(any), BLOQUEADA | pulsación larga | flotador con agua | PERMITIDA | intentos_24h = 0 | ≤ 1 s |
+| B08 | CORTADA(any), BLOQUEADA | orden `rearmar` o pulsación larga | flotador sin agua | sin cambio | rechazar `sin_agua` | — |
+| B09 | CORTADA(orden) | orden `permitir` | flotador con agua y (nivel ≥ crítico o transductor en falla) | PERMITIDA | — | ≤ 1 s |
+| B10 | CORTADA(orden) | orden `permitir` | flotador sin agua | sin cambio | rechazar `sin_agua` | — |
+| B11 | CORTADA(orden) | orden `permitir` | flotador con agua, transductor válido y nivel < crítico | sin cambio | rechazar `nivel_bajo` | — |
+| B12 | CORTADA(any) | orden `rearmar` | flotador con agua; motivo distinto de `seco`, o intentos_24h < `intentos_max` | PERMITIDA | intentos_24h sin cambio | ≤ 1 s |
+| B13 | CORTADA(seco) | orden `rearmar` | flotador con agua e intentos_24h ≥ `intentos_max` | BLOQUEADA | evento `bomba_bloqueada` | ≤ 1 s |
+| B14 | BLOQUEADA | orden `rearmar` | flotador con agua | sin cambio | rechazar `bloqueada` | — |
+| B15 | PERMITIDA | trabajo en seco (FR-BOM-03) | 10 min o menos desde el último rearme (B05, B07, B12) (P20) | BLOQUEADA | intentos_24h += 1; evento `bomba_bloqueada` | `t_seco_s` ± 1 s |
+
+**Completitud.** Cualquier par (estado × evento) no listado se **ignora**: el permiso y el
+relé no cambian, y se registra en el log con `bom: ignorado <estado> <evento>`.
+Filas B12–B15 [user, 2026-11-28] (G-04): de BLOQUEADA solo se sale en persona, con la
+pulsación larga (B07); un `rearmar` remoto saca de un corte pero no pone a cero los intentos,
+así que repetirlo no evita el bloqueo, y un nuevo seco a 10 min o menos de un rearme bloquea (P20).
 
 Filas B05, B09–B11 [user, 2026-11-15]: solo los cortes por seco cuentan como intentos y
 para el bloqueo de 3 en 24 h; los cortes por nivel o flotador se rearman solos al
@@ -651,8 +677,9 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
 - **FR-BOM-06** [Must] [derived] (P19): con el transductor en falla, B05 no deberá
   ejecutarse.
 - **FR-BOM-07** [Must] [user] D10 (P6, P20): al alcanzar `intentos_max` cortes por
-  seco en 24 h móviles, el permiso deberá pasar a BLOQUEADA y solo deberá salir por
-  B07.
+  seco en 24 h móviles, o con un seco a 10 min o menos de un rearme (P20, B15), el permiso
+  deberá pasar a BLOQUEADA y solo deberá salir por B07 (pulsación larga); un `rearmar`
+  remoto deberá rechazarse con `bloqueada` (B14) y no deberá poner `intentos_24h` a cero (B12).
 - **FR-BOM-08** [Must] [user] D3: ninguna orden ni valor de configuración deberá
   llevar el permiso a PERMITIDA con el flotador sin agua, salvo con el flotador en
   falla (FR-BOM-10).
@@ -677,14 +704,16 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
 | FR-BOM-03 | Banco: senoide equivalente a 0,8 A (calibrado `i_seco_a`=1,0), presión 0,2 bar, 11 s | CORTADA(seco) a los 10 ± 1 s | No cortar; cortar con presión 2 bar | bench |
 | FR-BOM-03 | `i_seco_a` sin configurar | `calibrada`=false; no hay corte por corriente | Corte por corriente | bench |
 | FR-BOM-04 | Transductor indicando 80 %; flotador sin agua | CORTADA(flotador) ≤ 1 s | Seguir permitida | bench |
-| FR-BOM-05 | CORTADA(seco); nivel 35 %, flotador con agua durante 10 min | PERMITIDA a los 10 min ± 10 s | Rearme con una interrupción del flotador a los 5 min | host + bench (tiempos reducidos por configuración de prueba) |
+| FR-BOM-05 | CORTADA(seco); nivel 35 %, flotador con agua durante `t_rearme_min` (host: reloj simulado con 10 min; banco: `t_rearme_min`=2 por `config/set`, Fase 2) | PERMITIDA a los `t_rearme_min` ± 10 s | Rearme con una interrupción del flotador a mitad del plazo | host + bench |
 | FR-BOM-06 | CORTADA(seco), transductor a 2 mA, flotador con agua | Sin rearme en 2 × `t_rearme_min` | Rearme | bench |
-| FR-BOM-07 | 3 cortes por seco en 24 h simuladas | BLOQUEADA; `bomba_bloqueada`; solo `rearmar` la saca | Rearme automático | host + bench |
+| FR-BOM-07 | 3 cortes por seco en 24 h simuladas | BLOQUEADA; `bomba_bloqueada`; `rearmar` rechazado con `bloqueada`; solo la pulsación larga la saca | Rearme automático; salida por `rearmar` | host + bench |
+| FR-BOM-07 | Seco; `rearmar` remoto; seco a los 5 min; `rearmar` | 2.º seco → BLOQUEADA (P20); 2.º `rearmar` rechazado | Seguir rearmando por orden | host + bench |
+| FR-BOM-07 | Ciclo seco → `rearmar` remoto repetido 5 veces, con más de 10 min entre ellos | BLOQUEADA al llegar a `intentos_max` (B13); `intentos_24h` nunca vuelve a 0 por orden | Seco repetido sin bloqueo | host |
 | FR-BOM-08 | Flotador sin agua; órdenes `permitir`, `rearmar`; configuración con cualquier valor dentro de rango | Rechazo `sin_agua`; GPIO14 en alto | GPIO14 en bajo | bench |
 | FR-BOM-09 | Válvula CERRADA y ABIERTA | Permiso sin cambio | Corte por la válvula | bench |
 | FR-BOM-10 | Lógica pura con planta simulada: nivel 50 % y flotador sin agua 10 min; después transductor en falla | B02 al empezar; `flotador_falla` a los 10 min y PERMITIDA; con el transductor en falla, CORTADA(flotador) otra vez | `flotador_falla` antes de 10 min o con nivel < `nivel_rearme_pct`; seguir permitida sin transductor | host |
 | FR-BOM-10 | Banco: flotador abierto, transductor a 12 mA durante 10 min | `flotador_falla` y relé en bajo | Relé alto tras el evento | bench |
-| B01–B11 | Tabla como prueba parametrizada | Cada fila produce su estado | Transición no listada | host |
+| B01–B15 | Tabla como prueba parametrizada | Cada fila produce su estado | Transición no listada | host |
 
 ### 6.5 Nivel y presión
 
@@ -977,7 +1006,7 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 | `flotador` | → | `{"estado":"agua"\|"sin_agua","ts":…}` | 1 | sí |
 | `red` | → | `{"estado":"presente"\|"ausente","ts":…}` | 1 | sí |
 | `bateria` | → | `{"v":12.9,"u":"V","estado":"ok"\|"baja"\|"critica","ts":…}` | 1 | sí |
-| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla"\|"falla_vref"\|"casa_cerrada"\|"consumo_casa_cerrada"\|"medidor_falla",…,"ts":…,"edad_s":…}` (`edad_s` solo en los eventos que salen de la cola, FR-PUB-04; `consumo_casa_cerrada` lleva además `"motivo":"hora"\|"diario"`, `"l"` y `"ventana_min"`, §6.7) | 1 | no |
+| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla"\|"falla_vref"\|"casa_cerrada"\|"consumo_casa_cerrada"\|"medidor_falla"\|"sondas_config",…,"ts":…,"edad_s":…}` (`edad_s` solo en los eventos que salen de la cola, FR-PUB-04; `consumo_casa_cerrada` lleva además `"motivo":"hora"\|"diario"`, `"l"` y `"ventana_min"`, §6.7; `sondas_config` lleva `"inactivas"`, FR-CFG-A3) | 1 | no |
 | `config/set`, `config/state` | ←, → | §16 | 1 | no, sí |
 | `status`, `cmd/ota` | →, ← | heredados (clima §9.3, §12) | 1 | sí, no |
 
@@ -1005,7 +1034,7 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 - **FR-ORD-01** [Must] [user] regla de confirmación: cada orden de válvula o bomba deberá
   responderse con su `…/state` final o con un evento `orden_rechazada` que incluya el
   motivo (`fuga_activa`, `sin_agua`, `nivel_bajo`, `ocupado`, `payload`, `accion`,
-  `sondas_en_falla` (V25, H-93)).
+  `sondas_en_falla` (V25, H-93), `bateria_critica` (V26), `bloqueada` (B14)).
 - **FR-ORD-02** [Must] [derived] (P15): un payload > 256 bytes, JSON no válido, una
   acción desconocida o un campo de tipo incorrecto deberán rechazarse con
   `orden_rechazada` (`payload` o `accion`), sin efecto y sin reinicio.
@@ -1050,7 +1079,8 @@ no da un % fiable [user, 2026-11-15].
 ## 15. Portal cautivo — heredado
 
 Se hereda **clima §11** completo: clima:FR-POR-01…10, incluido FR-POR-08 (10 min y ESPERA,
-H-82). Los campos son los mismos (§19). Los parámetros de §16 no aparecen en el portal.
+H-82). Los campos son los heredados más los del nodo de §19 (interfaz `portal`). Los
+parámetros de §16 (interfaz `mqtt`) no aparecen en el portal.
 
 ## 16. Configuración por MQTT (D17)
 
@@ -1060,8 +1090,12 @@ H-82). Los campos son los mismos (§19). Los parámetros de §16 no aparecen en 
   publica `config/state` completo en ≤ 1 s.
 - **FR-CFG-A2** [Must] [user] D17: un valor fuera de rango o un parámetro desconocido
   deberá rechazarse con `orden_rechazada` sin modificar la NVS.
-- **FR-CFG-A3** [Must] [user] D17: `sonda_activa[n]`=false deberá rechazarse con
-  `fuga_activa` mientras la sonda n esté en `mojada`.
+- **FR-CFG-A3** [Must] [user] D17, G-01 [user, 2026-11-28]: `sonda_activa[1..8]` solo
+  deberá cambiarse por el portal (§15); un `config/set` con ese nombre deberá rechazarse
+  como en FR-CFG-A4. El portal deberá rechazar `sonda_activa[n]`=false mientras la sonda n
+  esté en `mojada`. Tras cada guardado del portal, al llegar a OPERATIVO, el nodo deberá
+  publicar una vez el evento `{"tipo":"sondas_config","inactivas":[<n>,…]}` (lista vacía si
+  todas están activas), que produce el aviso de FR-VIG-03.
 - **FR-CFG-A4** [Must] [derived] D17: ningún parámetro del portal (§19, interfaz
   `portal`) deberá poder cambiarse por `config/set`.
 - **FR-CFG-A5** [Must] [user] (condición del riesgo de P22, 2026-11-21): cada `config/set`
@@ -1075,8 +1109,10 @@ H-82). Los campos son los mismos (§19). Los parámetros de §16 no aparecen en 
 |---|---|---|---|---|
 | FR-CFG-A1 | `t_seco_s`=15 | `config/state` con 15; persiste tras reinicio | Sin persistir | bench |
 | FR-CFG-A2 | `t_seco_s`=0, =9999; `xyz`=1 | Rechazo; NVS sin cambios | Valor aplicado | host + bench |
-| FR-CFG-A3 | Sonda 3 mojada; desactivarla | Rechazo `fuga_activa` | Desactivada | bench |
-| FR-CFG-A4 | `mqtt_host`, `wifi_ssid` por `config/set` | Rechazo | Cambio | bench |
+| FR-CFG-A3 | Sonda 3 mojada; desactivarla en el portal | El portal rechaza el envío; NVS sin cambios | Desactivada | bench |
+| FR-CFG-A3 | Todas secas; `config/set` con `sonda_activa[1]`=false | Rechazo; la sonda sigue activa | Desactivada | bench |
+| FR-CFG-A3 | Portal con las sondas 7 y 8 inactivas; aprovisionar; suscriptor a `#` | Un evento `sondas_config` con `inactivas`=[7,8] al llegar a OPERATIVO | Sin evento; evento repetido sin un guardado nuevo | bench |
+| FR-CFG-A4 | `mqtt_host`, `wifi_ssid`, `i_marcha_a`, `i_seco_a`, `rango_transductor_cm`, `altura_util_cm` por `config/set` | Rechazo | Cambio | bench |
 | FR-CFG-A5 | Suscriptor a `#`; `casa_cerrada`: true → false, false → false, false → true por `config/set` | Un evento `casa_cerrada` en ≤ 1 s en el 1.º y el 3.º (`v` y `antes` correctos), ninguno en el 2.º; `config/state` en los tres | Cambio sin evento; evento sin cambio | bench |
 
 ---
@@ -1115,25 +1151,31 @@ Heredados del portal (clima §17, sin cambios): `wifi_ssid`, `wifi_pass`, `mqtt_
 `mqtt_port`, `mqtt_user`, `mqtt_pass`, `zona`, `sitio`, más las constantes de build.
 Se heredan clima:FR-CFG-01 y clima:C-CFG-01.
 
-Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; valores de §4.4):
+Parámetros del nodo en el portal (interfaz `portal`, NVS; solo se cambian al aprovisionar,
+con acceso físico; nunca por `config/set`, FR-CFG-A4) [user, 2026-11-28, G-01–G-03]:
 
 | Nombre | Tipo | Por defecto | Rango | Ref. |
 |---|---|---|---|---|
 | `sonda_activa[1..8]` | bool | true | — (FR-CFG-A3) | FR-SON-03 |
+| `rango_transductor_cm` | entero | 500 | 50–1000 | FR-NIV-01 |
+| `altura_util_cm` | entero | 200 | 50–1000 | FR-NIV-01 |
+| `i_marcha_a` | decimal | 0,5 | 0,2–10 | P6 |
+| `i_seco_a` | decimal | sin configurar | 0,2–20 y > `i_marcha_a` | P6 |
+
+Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; valores de §4.4):
+
+| Nombre | Tipo | Por defecto | Rango | Ref. |
+|---|---|---|---|---|
 | `t_carrera_max_s` | entero | 30 | 5–120 | P3 |
 | `ejercicio_dias` | entero | 30 | 7–90 | D12 |
 | `ejercicio_hora` | entero (hora local: UTC−4 sin horario de verano, TZ POSIX `AST4`) [user, 2026-11-15] | 3 | 0–23 | D12 |
 | `casa_cerrada` | bool | true (P22) | — | FR-SON-05, H-93 |
 | `zumbador_activo` | bool | true | — | D16 |
 | `zumbador_min` | entero | 5 | 1–30 | D16 |
-| `rango_transductor_cm` | entero | 500 | 50–1000 | FR-NIV-01 |
-| `altura_util_cm` | entero | 200 | 50–1000 | FR-NIV-01 |
 | `nivel_critico_pct` | entero | 10 | 5–30 | P6 |
 | `nivel_rearme_pct` | entero | 30 | `nivel_critico_pct`+10 – 90 | P6 |
 | `t_rearme_min` | entero | 10 | 2–120 | P6 |
 | `intentos_max` | entero | 3 | 1–5 | P6 |
-| `i_marcha_a` | decimal | 0,5 | 0,2–10 | P6 |
-| `i_seco_a` | decimal | sin configurar | 0,2–20 y > `i_marcha_a` | P6 |
 | `p_min_bar` | decimal | 0,5 | 0,2–5 | P6 |
 | `t_seco_s` | entero | 10 | 3–60 | P6 |
 | `ciclado_max` | entero | 6 | 3–30 | P7 |
@@ -1144,7 +1186,8 @@ Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; valores de §4.4):
 | `consumo_margen_min` | entero | 120 | 0–720 | P32 |
 | `consumo_diario_l` | entero | 50 | 10–2000 | P34 |
 
-Ningún rango permite apagar el cierre por fuga ni el corte por seco o por flotador (D17).
+Ningún parámetro de campo (`mqtt`) permite apagar el cierre por fuga ni el corte por seco o
+por flotador (D17); los que podrían hacerlo con valores extremos están en el portal.
 `casa_cerrada`=false apaga solo el cierre preventivo de FR-SON-05, nunca el cierre por
 fuga; es la decisión del propietario para la casa ocupada (H-93).
 `i_seco_a` sin configurar no apaga el corte por flotador ni por nivel crítico.
@@ -1168,12 +1211,13 @@ el banco solo escribe por este último. La imagen de producción no cambia (C-LO
 | A7 | `i2c: scan sda=8 scl=9 hz=100000 ack=<lista>` | Al arrancar |
 | A8 | `med: pulsos=<n> total_l=<L> caudal_lh=<L/h> nvs=<0\|1>` | Cada ciclo de medidas (H-96) |
 
-- **FR-OBS-A1** [Must] [derived]: el nodo deberá escribir las líneas A1–A7 en los
-  momentos indicados, y A8 (H-96).
+- **FR-OBS-A1** [Must] [derived]: el nodo deberá escribir las líneas A1–A8 en los
+  momentos indicados (A8, H-96).
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
-| FR-OBS-A1 | Ejecutar los contratos de §5, §6, §9 y §13 | Cada línea con el formato exacto | Formato distinto o ausente | bench |
+| FR-OBS-A1 | Fase 1: ejecutar los contratos locales de §5, §6, §9 y §6.7 | A1–A5, A7 y A8 con el formato exacto | Formato distinto o ausente | bench |
+| FR-OBS-A1 | Fase 2: ejecutar los contratos de §13 (órdenes) | A6 con el formato exacto | Formato distinto o ausente | bench |
 
 ## 21. Seguridad
 
@@ -1194,7 +1238,9 @@ fuga). Riesgo aceptado con P22 (H-95) **con una condición** del propietario
 (2026-11-21): cada cambio de `casa_cerrada`, venga de una escena de HA o de cualquier otro
 cliente MQTT, genera el evento `casa_cerrada` (FR-CFG-A5) y un aviso de HA al propietario
 (FR-VIG-02), para que un cambio que no hizo él se note. No puede abrir con una sonda
-mojada, permitir la bomba sin agua ni apagar una protección (FR-SEC-A1).
+mojada, permitir la bomba sin agua ni apagar una protección (FR-SEC-A1): las sondas activas
+y los umbrales de corriente y de nivel solo se cambian en el portal, con acceso físico
+(G-01–G-03), y de BLOQUEADA solo se sale en persona (G-04).
 
 ### 21.2 Requisitos
 
@@ -1202,8 +1248,9 @@ Se heredan NFR-SEC-01, NFR-SEC-02 y FR-SEC-03 de clima §19.2, con este reposito
 
 - **FR-SEC-A1** [Must] [user] D14, D17: ninguna secuencia de mensajes MQTT, de cualquier
   longitud y orden, deberá provocar: una apertura con una sonda activa mojada; el permiso
-  PERMITIDA con el flotador sin agua; un movimiento con IN1 = IN2 = 1; o un valor de
-  configuración fuera de §19.
+  PERMITIDA con el flotador sin agua; un movimiento con IN1 = IN2 = 1; un valor de
+  configuración fuera de §19; un cambio de un parámetro del portal; dejar sin vigilancia
+  una sonda cableada; anular el corte por seco; o la salida de BLOQUEADA.
 - **FR-SEC-A2** [Must] [derived] (auditoría, punto 1): el nodo solo deberá abrir
   conexiones hacia el broker, el servidor SNTP y los hosts OTA permitidos.
 - **C-SEC-A3** [Must] [user] P14: ninguna imagen de banco ni de desarrollo debe activar
@@ -1217,6 +1264,8 @@ Se heredan NFR-SEC-01, NFR-SEC-02 y FR-SEC-03 de clima §19.2, con este reposito
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
 | FR-SEC-A1 | Fuzzing de `valvula/set`, `bomba/set` y `config/set` (≥ 10 000 mensajes aleatorios y mutados) con sonda 1 mojada y flotador sin agua | Válvula CERRADA, permiso cortado y config dentro de rango durante toda la prueba; sin reinicios | Cualquier violación o reinicio | bench + host (lógica de guardas) |
+| FR-SEC-A1 | Todo seco; fuzzing de `config/set` (incluidos los nombres del portal) y después mojar la sonda 1 | Parámetros del portal sin cambio; la válvula cierra por fuga | Una sonda desactivada; sin cierre | bench + host |
+| FR-SEC-A1 | Bomba en seco simulado; fuzzing de `bomba/set` y `config/set` durante 1 h simulada | Cada seco corta (B01/B15); BLOQUEADA al llegar a `intentos_max` o por P20, y no sale por orden | Seco sin corte; salida de BLOQUEADA por mensaje | host |
 | C-SEC-A3 | CI: `sdkconfig` de cada imagen de banco y de desarrollo; banco: `espefuse summary` de cada placa del banco antes y después de cada sesión | `CONFIG_SECURE_BOOT` y `CONFIG_FLASH_ENCRYPTION_ENABLED` sin activar; eFuses de Secure Boot y de cifrado en 0 | Cualquiera activado; un eFuse de seguridad quemado en una placa del banco | other (CI) + bench |
 | FR-SEC-A4 | Puerta S2: `espefuse summary` de la placa de producción tras el procedimiento de instalación; intentar grabar por USB una imagen sin firmar | Secure Boot v2 y cifrado de flash (modo release) activos; la imagen sin firmar no arranca | Placa de producción sin protección; arranque de una imagen sin firmar | field (S2) |
 | FR-SEC-A2 | Captura de tráfico del nodo durante 1 h con OTA (capacidad de captura del banco) | Solo los destinos listados | Cualquier otro destino | bench⁺ |
@@ -1287,12 +1336,16 @@ casa. Se verifican en la puesta en marcha (§3.5) y entran en la auditoría S2.
   `casa_cerrada` del nodo (FR-CFG-A5) deberá producir un aviso de HA al propietario con el
   valor nuevo y la hora, en **≤ 1 min** [user, 2026-11-23], también cuando el cambio lo hizo una
   escena.
+- **FR-VIG-03** [Must] [user] (G-01, 2026-11-28): cada evento `sondas_config` del nodo
+  (FR-CFG-A3) deberá producir un aviso de HA al propietario con la lista de sondas inactivas
+  y la hora, en **≤ 1 min**.
 
 | ID | Precondición · estímulo | Observación esperada | No debe ocurrir | Nivel |
 |---|---|---|---|---|
 | C-INS-01 | Puesta en marcha: quitar la luz general | `valvula/state` y `status` siguen llegando a HA durante 30 min de apagón | HA sin datos del nodo durante el apagón | field |
 | C-INS-03 | Instalación: cubeta de 5 galones (18,93 L) por el medidor; leer `total_l` antes y después | Diferencia de 18,93 L ± 2 % tras el ajuste; valor de `galones_por_pulso` anotado en la instalación | Calibración sin anotar; error > 2 % | field |
 | C-INS-02 | Revisión de la configuración de producción (S2) y del router; luego apagar el DNS del router 10 min | `mqtt_host` es IPv4; reservas presentes; el nodo sigue en OPERATIVO | Un nombre en `mqtt_host`; salida de OPERATIVO | field |
+| FR-VIG-03 | HA de la casa; aprovisionar por el portal con la sonda 8 inactiva | Un aviso en el teléfono en ≤ 1 min con `inactivas`=[8] y la hora | Sin aviso; aviso a más de 1 min | field |
 | FR-VIG-02 | HA de la casa; cambiar `casa_cerrada` con la escena «Casa cerrada», con «Preparar llegada» y con un `config/set` manual desde otro cliente | Un aviso en el teléfono por cada cambio en ≤ 1 min, con el valor nuevo y la hora del evento | Un cambio sin aviso; aviso a más de 1 min | field |
 | FR-VIG-01 | Cuatro cortes, uno cada vez: switch de la Pi, la Pi, el internet de la casa (desconectar el módem) y el nodo | En cada uno, aviso en el teléfono en ≤ 20 min desde el corte | Ningún aviso; aviso que llega por la Pi | field |
 
