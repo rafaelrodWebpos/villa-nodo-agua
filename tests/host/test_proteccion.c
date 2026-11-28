@@ -366,6 +366,38 @@ static void boton(void)
     OK(x.p.val.estado == VAL_ABIERTA && !x.p.val.bloqueo_fuga && x.n_persistir >= 1, "3,5 s: %s", val_nombre_estado(x.p.val.estado));
 }
 
+/* FR-LOC-06: pulsación de 11 s → PEV_PORTAL al soltar, sin acción de la pulsación larga; con la
+ * válvula en CERRANDO se ignora. A11: al arrancar y en cada cambio */
+static void portal(void)
+{
+    static sim_t x;
+    prot_persistente_t nvs = { true, VCP_FUGA, BOM_CORTADA, BMOT_SECO, 2, false };
+    sim_iniciar(&x, &nvs, 0.0);
+    correr(&x, 2000);
+    OK(cuantos(&x, PEV_ESTADO, -1) == 1 && x.log[0].tipo != PEV_PORTAL, "A11 al arrancar: %d", cuantos(&x, PEV_ESTADO, -1));
+    uint32_t t = cuando(&x, PEV_ESTADO, VCP_FUGA, 0);
+    OK(t != UINT32_MAX, "A11 al arrancar con cerrada_por=fuga");
+    x.pl.boton = true; correr(&x, x.t + 9000);
+    OK(cuantos(&x, PEV_PORTAL, -1) == 0, "portal antes de soltar");
+    correr(&x, x.t + 2000); x.pl.boton = false; correr(&x, x.t + 500);
+    OK(cuantos(&x, PEV_PORTAL, -1) == 1, "portal al soltar 11 s: %d", cuantos(&x, PEV_PORTAL, -1));
+    OK(x.p.val.estado == VAL_CERRADA && x.p.bom.estado == BOM_CORTADA && !x.motor_movido_ms, "acción de la pulsación larga con 11 s");
+    /* válvula en CERRANDO: ignorada */
+    static sim_t y; sim_iniciar(&y, &LIMPIO, 1.0);
+    y.pl.carrera_ms = 20000;                                   /* carrera larga: la pulsación cabe dentro */
+    correr(&y, 2000);
+    y.pl.sonda[0] = MOJADA; correr(&y, y.t + 1600);
+    OK(y.p.val.estado == VAL_CERRANDO, "precondición: CERRANDO (%s)", val_nombre_estado(y.p.val.estado));
+    int a11 = cuantos(&y, PEV_ESTADO, -1);
+    OK(a11 >= 2, "A11 al cambiar cerrada_por y bloqueo: %d", a11);
+    y.pl.boton = true; uint32_t t0 = y.t;
+    correr(&y, t0 + 11000);
+    y.pl.boton = false;
+    OK(y.p.val.estado == VAL_CERRANDO, "precondición: sigue CERRANDO al soltar");
+    correr(&y, y.t + 300);
+    OK(cuantos(&y, PEV_PORTAL, -1) == 0, "portal con la válvula en CERRANDO");
+}
+
 /* FR-EJE-01 + FR-EJE-03: el ejercicio a la hora 3 con los días cumplidos; una fuga a mitad de
  * cierre termina CERRADA con bloqueo */
 static void ejercicio(void)
@@ -464,6 +496,7 @@ int main(int argc, char **argv)
     else if (!strcmp(c, "ciego")) ciego();
     else if (!strcmp(c, "falla_vref")) falla_vref();
     else if (!strcmp(c, "rearme_reinicio")) rearme_reinicio();
+    else if (!strcmp(c, "portal")) portal();
     else { printf("caso desconocido: %s\n", c); return 2; }
     printf("%s: %d fallos\n", c, fallos);
     return fallos != 0;

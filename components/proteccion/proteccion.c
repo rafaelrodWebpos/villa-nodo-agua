@@ -270,6 +270,9 @@ void prot_paso(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     if (!p->flotador_agua) aplicar_bom(p, e, BEV_FLOTADOR_SIN_AGUA, s);   /* B02 (FR-BOM-04) */
     es_boton_ev_t b = es_boton(&p->boton, e->t_ms, bt);
     if (b == ES_BOTON_CORTA) p->silenciado = true;              /* FR-LOC-02 */
+    if (b == ES_BOTON_PORTAL && p->arrancado &&                 /* FR-LOC-06: ignorada con el motor en marcha */
+        p->val.estado != VAL_CERRANDO && p->val.estado != VAL_ABRIENDO)
+        emitir(s, PEV_PORTAL, 0, 0, 0, 0);
     if (b == ES_BOTON_LARGA) {                                  /* FR-LOC-03: V10/V11 y B07/B08/B16 */
         aplicar_val(p, e, VEV_PULSACION_LARGA, s);
         aplicar_bom(p, e, BEV_PULSACION, s);
@@ -277,6 +280,13 @@ void prot_paso(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     if (e->hay_medidas) medidas(p, e, s);
     if (e->hay_corriente) corriente(p, e, s);
     aplicar_val(p, e, VEV_TICK, s);                             /* V07 */
+    if (p->arrancado) {                                         /* A11: al arrancar y en cada cambio */
+        int cp = p->val.cerrada_por, bl = p->val.bloqueo_fuga, n = bom_intentos_24h(&p->bom, e->t_s);
+        if (!p->est_hecho || cp != p->est_cp || bl != p->est_bl || n != p->est_n) {
+            p->est_hecho = true; p->est_cp = cp; p->est_bl = bl; p->est_n = n;
+            emitir(s, PEV_ESTADO, cp, bl, n, 0);
+        }
+    }
     salidas(p, e, s);
     prot_persistente_t ahora = prot_persistente(p);             /* FR-PER-01: solo en los cambios */
     const prot_persistente_t *g = &p->guardado;

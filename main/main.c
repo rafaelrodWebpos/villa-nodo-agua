@@ -296,6 +296,20 @@ static void al_reiniciar(void *arg)
     esp_restart();
 }
 
+/* FR-LOC-06: borra solo el registro del portal (Wi-Fi, MQTT, zona y sitio, clima §17) y reinicia
+ * en PORTAL; los bloqueos (FR-PER-01) y los parámetros del nodo están en otras claves y quedan */
+static void reentrada_portal(void)
+{
+    nvs_handle_t h;
+    if (nvs_open("nodo", NVS_READWRITE, &h) == ESP_OK) {
+        nvs_erase_key(h, "cfg");
+        nvs_commit(h);
+        nvs_close(h);
+    }
+    vTaskDelay(pdMS_TO_TICKS(100));                        /* deja salir la línea A10 */
+    esp_restart();
+}
+
 /* Vuelve a solo AP tras la prueba; el AP del portal no se apaga nunca (T06). */
 static void soltar_sta(void)
 {
@@ -879,7 +893,7 @@ void app_main(void)
 
     /* Protección (§5–§9, §12): restaura los bloqueos y corre en todos los estados (FR-HER-02) */
     proteccion_iniciar(&(proteccion_ganchos_t){ .hora = hora_para_proteccion, .conectado = conectado_para_proteccion,
-                                                .wdt_bloquear = &s_wdt_bloquear });
+                                                .wdt_bloquear = &s_wdt_bloquear, .reentrada_portal = reentrada_portal });
 
     /* El ciclo corre en todos los estados, desde el arranque */
     xTaskCreate(tarea_ciclo, "ciclo", 4096, NULL, 5, NULL);

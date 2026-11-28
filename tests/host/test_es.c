@@ -67,9 +67,12 @@ int main(void)
     for (int i = 0; i < ES_RMS_MUESTRAS; i++) mv[i] = 1650;
     OK(es_rms_amperios(mv, ES_RMS_MUESTRAS) < 0.01f, "sin corriente");
 
-    /* Botón: 0,5 s corta; 2,5 s nada; 3,5 s larga a los 3 s y nada al soltar */
-    const struct { uint32_t ms; es_boton_ev_t ev; uint32_t a_los; } B[] = { {500, ES_BOTON_CORTA, 500}, {2500, ES_BOTON_NADA, 0}, {3500, ES_BOTON_LARGA, 3000} };
-    for (int k = 0; k < 3; k++) {
+    /* Botón, todo al soltar (FR-LOC-02/03/06): 0,5 s corta; 2,5 s nada; 3,5 s y 9,99 s larga;
+     * 10 s y 11 s vuelta al portal */
+    const struct { uint32_t ms; es_boton_ev_t ev; uint32_t a_los; } B[] = {
+        {500, ES_BOTON_CORTA, 500}, {2500, ES_BOTON_NADA, 0}, {3000, ES_BOTON_LARGA, 3000}, {3500, ES_BOTON_LARGA, 3500},
+        {9990, ES_BOTON_LARGA, 9990}, {10000, ES_BOTON_PORTAL, 10000}, {11000, ES_BOTON_PORTAL, 11000} };
+    for (int k = 0; k < (int)(sizeof B / sizeof B[0]); k++) {
         es_boton_t b = {0}; es_boton_ev_t visto = ES_BOTON_NADA; uint32_t t_ev = 0; int n = 0;
         for (uint32_t t = 0; t <= B[k].ms + 500; t += 10) {
             es_boton_ev_t ev = es_boton(&b, t, t < B[k].ms);

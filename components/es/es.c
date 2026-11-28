@@ -52,14 +52,13 @@ float es_rms_amperios(const int16_t *mv, int n)
 
 es_boton_ev_t es_boton(es_boton_t *b, uint32_t t_ms, bool pulsado)
 {
-    if (pulsado && !b->pulsado) { b->pulsado = true; b->larga = false; b->desde_ms = t_ms; return ES_BOTON_NADA; }
-    if (pulsado) {
-        if (!b->larga && t_ms - b->desde_ms >= ES_PULSACION_LARGA_MS) { b->larga = true; return ES_BOTON_LARGA; }
-        return ES_BOTON_NADA;
-    }
-    if (!b->pulsado) return ES_BOTON_NADA;
+    if (pulsado && !b->pulsado) { b->pulsado = true; b->desde_ms = t_ms; return ES_BOTON_NADA; }
+    if (pulsado || !b->pulsado) return ES_BOTON_NADA;
     b->pulsado = false;
-    return (!b->larga && t_ms - b->desde_ms < ES_PULSACION_CORTA_MS) ? ES_BOTON_CORTA : ES_BOTON_NADA;
+    uint32_t d = t_ms - b->desde_ms;
+    if (d < ES_PULSACION_CORTA_MS) return ES_BOTON_CORTA;
+    if (d < ES_PULSACION_LARGA_MS) return ES_BOTON_NADA;
+    return d < ES_PULSACION_PORTAL_MS ? ES_BOTON_LARGA : ES_BOTON_PORTAL;
 }
 
 bool es_onda_hz(uint32_t t_ms, uint32_t periodo_ms) { return (t_ms % periodo_ms) < periodo_ms / 2; }

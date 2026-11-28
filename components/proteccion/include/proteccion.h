@@ -82,6 +82,8 @@ typedef enum {
     PEV_FLOTADOR_FALLA,  /* a = 1 declarada (FR-BOM-10), 0 terminada */
     PEV_VREF,            /* a = 1 se usa la referencia nominal, 0 vuelve la medida */
     PEV_FALLA_VREF,      /* a = 1 referencia en falla 5 s (evento falla_vref, FR-SON-04), 0 terminada */
+    PEV_PORTAL,          /* FR-LOC-06 aceptada: línea A10, borrar Wi-Fi/MQTT/zona/sitio y reiniciar */
+    PEV_ESTADO,          /* línea A11: a = cerrada_por, b = bloqueo_fuga, c = intentos (Q-06) */
 } prot_ev_tipo_t;
 
 typedef struct { prot_ev_tipo_t tipo; int a, b, c, d; } prot_evento_t;
@@ -111,6 +113,8 @@ typedef struct {
     bool vref_nominal;
     float vref;
     bool vref_falla;                    /* FR-SON-04: nominal durante PROT_FALLA_VREF_MS */
+    bool est_hecho;                     /* A11 ya escrita al menos una vez */
+    int est_cp, est_bl, est_n;          /* último A11 escrito */
     uint32_t vref_nominal_desde_ms;
     /* sondas */
     fug_sonda_t fug[PROT_N_SONDAS];

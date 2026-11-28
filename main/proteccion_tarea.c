@@ -115,6 +115,7 @@ static void tarea_pinza(void *arg)
 static const char *NOMBRE_BOM[] = { "PERMITIDA", "CORTADA", "BLOQUEADA" };
 static const char *EV_BOM[] = { "seco", "flotador_sin_agua", "nivel", "cortar", "rearme", "rearmar", "permitir", "pulsacion" };
 static const char *NOMBRE_BAT[] = { "ok", "baja", "critica" };
+static const char *NOMBRE_CP[] = { "ninguno", "fuga", "orden", "bateria", "ejercicio", "sondas" };
 
 static void registrar(const prot_evento_t *e)
 {
@@ -145,6 +146,10 @@ static void registrar(const prot_evento_t *e)
         if (e->a) ESP_LOGW(TAG, "evento: flotador_falla"); else ESP_LOGI(TAG, "bom: flotador sin falla");
         break;
     case PEV_VREF: ESP_LOGW(TAG, "son: vref %s", e->a ? "nominal" : "medida"); break;
+    case PEV_PORTAL: ESP_LOGW(TAG, "loc: reentrada_portal"); break;                    /* A10 */
+    case PEV_ESTADO:                                                                     /* A11 */
+        ESP_LOGI(TAG, "est: cerrada_por=%s bloqueo_fuga=%d intentos=%d", NOMBRE_CP[e->a], e->b, e->c);
+        break;
     case PEV_FALLA_VREF:
         if (e->a) ESP_LOGW(TAG, "evento: falla_vref"); else ESP_LOGI(TAG, "son: vref sin falla");
         break;
@@ -191,6 +196,8 @@ static void tarea_proteccion(void *arg)
         es_hw_salidas(s.in1, s.in2, s.rele, s.led_verde, s.led_rojo, s.zumbador);
         for (int i = 0; i < s.n_ev; i++) registrar(&s.ev[i]);
         if (s.persistir) { prot_persistente_t p = prot_persistente(&s_prot); nvs_escribir(&p); }
+        for (int i = 0; i < s.n_ev; i++)                       /* FR-LOC-06, tras guardar FR-PER-01 */
+            if (s.ev[i].tipo == PEV_PORTAL && s_g.reentrada_portal) s_g.reentrada_portal();
         if (e.t_ms - ultimo_ana >= ANA_MS) { ultimo_ana = e.t_ms; log_ana(&s_prot); }
         if (!(s_g.wdt_bloquear && *s_g.wdt_bloquear)) esp_task_wdt_reset();
         vTaskDelayUntil(&ultimo, pdMS_TO_TICKS(PROT_PERIODO_MS));
