@@ -1389,7 +1389,7 @@ tests:
       (V15) V24 no vuelve a cerrar hasta que el nodo mueva el motor; la fuga gana; casa_cerrada=false → V08.
       tabla de §5.3 (FSD 0.5.0) como prueba parametrizada: cada fila V01–V23 (con V03b) produce su estado, su acción (motor, rechazo, evento, marcas) y nada más; V07 solo al superar P3; completitud: en todas las combinaciones (estado × evento × finales × g_seco × marcas), o una fila admitida para ese par o el par se ignora sin ningún efecto; nunca IN1 e IN2 a la vez (el motor es un único valor); la fuga siempre gana: desde cualquier estado salvo ARRANQUE (imposible por construcción), fuga y final «cerrada» dejan CERRADA con bloqueo_fuga = 1 y cerrada_por = fuga, y nada sin g_seco la reabre (FR-EJE-03, parte host)
     impl: tests/host/test_tablas.c (val)
-    pendiente_fsd: "FSD 0.8.5 (2026-11-28, G-07): filas V26/V27 y guarda g_bateria en V08/V10/V14; faltan el código y sus casos; el resultado de abajo es de la tabla anterior"
+    pendiente_fsd: "FSD 0.8.5 (2026-11-28, G-07): filas V26/V27 y guarda g_bateria en V08/V10/V14; FSD 0.8.6 (R-03, R-09): V15 en DESCONOCIDA/FALLA, finales por flanco, V28, V29; faltan el código y sus casos; el resultado de abajo es de la tabla anterior"
     status: successful
     commit: 836f609
     date: 2026-11-15
@@ -1426,7 +1426,7 @@ tests:
     expect: >
       tabla de §6.2 (FSD 0.5.0) como prueba parametrizada: cada fila B01–B11 produce su estado y su rechazo (sin_agua, nivel_bajo) y nada más; los cortes por nivel o flotador rearman sin límite y solo los de seco cuentan como intentos; completitud en todas las combinaciones; ninguna orden a PERMITIDA sin agua (FR-BOM-08, parte host); rearme a los 600 s exactos y reinicio con una interrupción del flotador (FR-BOM-05, parte host); sin rearme con el transductor en falla (FR-BOM-06, parte host); 3 cortes por seco en 24 h → BLOQUEADA, que solo sale con rearmar (FR-BOM-07, parte host)
     impl: tests/host/test_tablas.c (bom)
-    pendiente_fsd: "FSD 0.8.5 (2026-11-28, G-04/G-05): B07 solo con la pulsación larga, B12–B15 (rearmar remoto sin poner intentos a cero, rechazo bloqueada, P20) y columna Límite; faltan el código y sus casos; el resultado de abajo es de la tabla anterior"
+    pendiente_fsd: "FSD 0.8.5 (2026-11-28, G-04/G-05): B07 solo con la pulsación larga, B12–B15 (rearmar remoto sin poner intentos a cero, rechazo bloqueada, P20) y columna Límite; FSD 0.8.6 (R-01): B16 nivel_bajo y B03 de nivel; faltan el código y sus casos; el resultado de abajo es de la tabla anterior"
     status: successful
     commit: 836f609
     date: 2026-11-15
