@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.8.10
+fsd_version: 0.8.11
 repository: villa-nodo-agua (público)
 baseline_commit: c3e5053 (Load defined, 2026-11-14); cada versión, el commit que la introduce
 applicable_firmware_version: ninguna todavía
@@ -131,6 +131,8 @@ change_history:
     (testing/revision-load-defined-2026-11-28f.md). U-02: V22 respeta la palanca igual que V24
     (FR-ENE-04 con esa excepción). U-03: un final tardío tras V07 cuenta como palanca y la
     válvula queda CERRADA hasta una orden; riesgo aceptado por escrito.
+  - 0.8.11 (2026-11-28): guarda `g_bateria` definida en §5.2 (batería `critica` y red `ausente`,
+    la condición de FR-ENE-04), como ya la usan V08, V10, V14 y V22–V30 [user, 2026-11-28].
 ```
 
 ## Convenciones de este documento
@@ -528,6 +530,9 @@ en falla cuenta como no mojada).
 
 **Guarda `g_ciego`** (H-93): `casa_cerrada`=true **y** (≥ 2 sondas activas en falla según
 FR-SON-02 **o** la referencia en falla según FR-SON-04).
+
+**Guarda `g_bateria`** [user, 2026-11-28]: batería `critica` (FR-ENE-02) **y** red `ausente`
+(FR-ENE-01), la misma condición de FR-ENE-04.
 
 ### 5.3 Tabla de transiciones (normativa)
 
