@@ -1678,7 +1678,7 @@ tests:
     needs: [hosted-ci]
     expect: >
       marcas de tiempo simuladas: cierres de 60/60 ms cuentan, 40 ms no, 5 rebotes de 3 ms = 1 pulso, 5 pulsos/s exactos; 10 pulsos a 1,0 gal y 10 a 0,5 → 37,85 y 56,78 L ± 0,01 sin recalcular ni bajar; 50 L en 5 min → caudal_lh 600
-    impl: null
+    impl: tests/host/test_medidor.c
     status: not_run
   - id: TC-MED-A2
     shape: atomic
@@ -1690,7 +1690,7 @@ tests:
     needs: [hosted-ci]
     expect: >
       casa_cerrada × periodo (sin, dentro, margen, vencido) × litros (19, 21): evento motivo=hora solo con true, fuera de periodo y 21 L, uno por episodio; 2,5 L/h durante 30 h → un evento motivo=diario al pasar de 50 L (hora 20) y ninguno más en 24 h; la suma de 24 h vuelve a 0 al reiniciar; una orden nueva no acorta el periodo y el reinicio lo borra, ninguno con false o dentro de periodos; una orden nueva solo alarga; nivel 100→112 cm sin pulsos → un medidor_falla, ninguno con pulsos o con el nivel en falla
-    impl: null
+    impl: tests/host/test_medidor.c
     status: not_run
   - id: TC-MED-A3
     shape: atomic
@@ -1702,7 +1702,7 @@ tests:
     needs: [hosted-ci]
     expect: >
       reloj simulado: 5 min de pulsos → ≤ 1 escritura de NVS cada 60 s; 10 min sin pulsos → 0 escrituras; reinicio ordenado → escritura antes
-    impl: null
+    impl: tests/host/test_medidor.c
     status: not_run
   - id: TC-MED-A4
     shape: atomic

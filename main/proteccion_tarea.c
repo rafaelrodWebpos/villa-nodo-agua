@@ -13,6 +13,7 @@
 #include "nvs.h"
 #include "es_hw.h"
 #include "proteccion.h"
+#include "medidor.h"
 
 static const char *TAG = "nodo";
 
@@ -29,6 +30,78 @@ static SemaphoreHandle_t s_mux;
 static struct { uint32_t seq; bool ads_ok[ES_N_ADS]; float v[12]; } s_med;   /* 8 sondas + nivel, presión, Vbat, referencia */
 static struct { uint32_t seq; float i_rms; } s_pin;
 static uint32_t s_escrituras;
+
+static uint32_t seg(void);
+
+/* ---- Medidor testigo (§6.7): no toca la válvula ni la bomba (FR-MED-07) ---- */
+#define MED_ESPACIO "medidor"
+#define MED_CLAVE   "total"
+typedef struct __attribute__((packed)) { uint8_t ver; uint32_t pulsos; double total_l; } med_blob_t;
+static SemaphoreHandle_t s_mmux;
+static med_pulso_t s_mp;
+static med_total_t s_mt;
+static med_guardado_t s_mg;
+static med_consumo_t s_mc;
+static med_falla_t s_mf;
+static med_periodo_t s_periodo;                 /* FR-MED-06, en RAM */
+static struct { double galones_por_pulso; int alerta_l, ventana_min, margen_min, diario_l; } s_mcfg =
+    { 1.0, 20, 60, 120, 50 };                   /* §19, valores de fábrica */
+
+static void med_leer(void)
+{
+    nvs_handle_t h; med_blob_t b; size_t n = sizeof b;
+    if (nvs_open(MED_ESPACIO, NVS_READONLY, &h) != ESP_OK) return;
+    if (nvs_get_blob(h, MED_CLAVE, &b, &n) == ESP_OK && n == sizeof b && b.ver == 1 && b.total_l >= 0)
+        s_mt = (med_total_t){ b.pulsos, b.total_l };
+    nvs_close(h);
+}
+
+static void med_escribir(uint32_t t_s)          /* llamar con s_mmux tomado */
+{
+    med_blob_t b = { 1, s_mt.pulsos, s_mt.total_l };
+    nvs_handle_t h;
+    if (nvs_open(MED_ESPACIO, NVS_READWRITE, &h) != ESP_OK) return;
+    if (nvs_set_blob(h, MED_CLAVE, &b, sizeof b) == ESP_OK && nvs_commit(h) == ESP_OK) med_guardado(&s_mg, t_s, s_mt.pulsos);
+    nvs_close(h);
+}
+
+void medidor_guardar_ya(void)
+{
+    if (!s_mmux) return;
+    xSemaphoreTake(s_mmux, portMAX_DELAY);
+    if (!s_mg.hecho || s_mg.pulsos != s_mt.pulsos) med_escribir(seg());
+    xSemaphoreGive(s_mmux);
+}
+
+/* Un paso del medidor: muestra del reed cada 10 ms y, con medidas nuevas, avisos */
+static void med_paso(uint32_t t_ms, uint32_t t_s, bool cerrado, bool hay_medidas, const prot_t *p)
+{
+    xSemaphoreTake(s_mmux, portMAX_DELAY);
+    if (med_muestra(&s_mp, t_ms, cerrado)) {                                  /* FR-MED-01 */
+        double l = med_sumar(&s_mt, s_mcfg.galones_por_pulso);                /* FR-MED-02 */
+        med_consumo_pulso(&s_mc, t_s, l, !med_dentro(&s_periodo, t_s));
+        med_falla_pulso(&s_mf);
+    }
+    if (hay_medidas) {
+        med_aviso_t a = med_consumo_evaluar(&s_mc, t_s, p->cfg.casa_cerrada, s_mcfg.ventana_min, s_mcfg.alerta_l, s_mcfg.diario_l);
+        if (a.hora) ESP_LOGW(TAG, "eve: consumo_casa_cerrada motivo=hora l=%.1f ventana_min=%d", a.l_hora, s_mcfg.ventana_min);   /* A9, FR-MED-05 */
+        if (a.dia) ESP_LOGW(TAG, "eve: consumo_casa_cerrada motivo=diario l=%.1f", a.l_dia);                                       /* A9, FR-MED-09 */
+        if (p->nivel_valido && med_falla_nivel(&s_mf, p->nivel_cm)) ESP_LOGW(TAG, "eve: medidor_falla");                         /* A9, FR-MED-08 */
+    }
+    if (med_toca_guardar(&s_mg, t_s, s_mt.pulsos)) med_escribir(t_s);         /* FR-MED-03 */
+    xSemaphoreGive(s_mmux);
+}
+
+static void log_med(uint32_t t_s)              /* A8 y caudal (FR-MED-04) */
+{
+    static double total0; static uint32_t t0; static bool hay0;
+    xSemaphoreTake(s_mmux, portMAX_DELAY);
+    double caudal = hay0 ? med_caudal_lh(s_mt.total_l - total0, t_s - t0) : 0.0;
+    total0 = s_mt.total_l; t0 = t_s; hay0 = true;
+    ESP_LOGI(TAG, "med: pulsos=%lu total_l=%.2f caudal_lh=%.0f nvs=%d", (unsigned long)s_mt.pulsos, s_mt.total_l, caudal,
+             s_mg.hecho && s_mg.pulsos == s_mt.pulsos);
+    xSemaphoreGive(s_mmux);
+}
 
 static uint32_t ms(void) { return (uint32_t)(esp_timer_get_time() / 1000); }
 static uint32_t seg(void) { return (uint32_t)(esp_timer_get_time() / 1000000); }
@@ -181,6 +254,7 @@ static void tarea_proteccion(void *arg)
         es_hw_digitales_t d = es_hw_digitales();
         e.fin_abierta = d.fin_abierta; e.fin_cerrada = d.fin_cerrada; e.flotador_agua = d.flotador_agua;
         e.red_presente = d.red_presente; e.boton = d.boton;
+        bool med_cerrado = d.medidor;
         xSemaphoreTake(s_mux, portMAX_DELAY);
         if (s_med.seq != seq_med) {
             seq_med = s_med.seq;
@@ -195,11 +269,12 @@ static void tarea_proteccion(void *arg)
         e.conectado = s_g.conectado && s_g.conectado();
         prot_paso(&s_prot, &e, &s);
         es_hw_salidas(s.in1, s.in2, s.rele, s.led_verde, s.led_rojo, s.zumbador);
+        med_paso(e.t_ms, e.t_s, med_cerrado, e.hay_medidas, &s_prot);
         for (int i = 0; i < s.n_ev; i++) registrar(&s.ev[i]);
         if (s.persistir) { prot_persistente_t p = prot_persistente(&s_prot); nvs_escribir(&p); }
         for (int i = 0; i < s.n_ev; i++)                       /* FR-LOC-06, tras guardar FR-PER-01 */
-            if (s.ev[i].tipo == PEV_PORTAL && s_g.reentrada_portal) s_g.reentrada_portal();
-        if (e.t_ms - ultimo_ana >= ANA_MS) { ultimo_ana = e.t_ms; log_ana(&s_prot); }
+            if (s.ev[i].tipo == PEV_PORTAL && s_g.reentrada_portal) { medidor_guardar_ya(); s_g.reentrada_portal(); }
+        if (e.t_ms - ultimo_ana >= ANA_MS) { ultimo_ana = e.t_ms; log_ana(&s_prot); log_med(e.t_s); }
         if (!(s_g.wdt_bloquear && *s_g.wdt_bloquear)) esp_task_wdt_reset();
         vTaskDelayUntil(&ultimo, pdMS_TO_TICKS(PROT_PERIODO_MS));
     }
@@ -209,6 +284,9 @@ void proteccion_iniciar(const proteccion_ganchos_t *g)
 {
     s_g = *g;
     s_mux = xSemaphoreCreateMutex();
+    s_mmux = xSemaphoreCreateMutex();
+    med_leer();                                                /* FR-MED-03: restaurar total y pulsos */
+    med_guardado(&s_mg, seg(), s_mt.pulsos);
     prot_config_t cfg;
     prot_config_fabrica(&cfg);
     prot_persistente_t nvs = nvs_leer();                       /* FR-PER-02 */
