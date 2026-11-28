@@ -1634,7 +1634,13 @@ tests:
       parámetros del portal rechazados; tipos (bool, entero sin decimales); nivel_rearme_pct ≥ nivel_critico_pct + 10 en
       los dos sentidos; mínimo y máximo de cada parámetro; config/state completo; NVS fuera de rango → valores de fábrica
     impl: tests/host/test_configuracion.c
-    status: not_run
+    status: successful
+    commit: a63cd57
+    date: 2026-11-28
+    ci_run: 46171712187
+    evidence: CI host-tests (ctest), log del run 46171712187
+    observed: >
+      FSD 0.8.11: t_seco_s=15 aceptado; 0, 9999 y xyz rechazados sin cambio; sonda_activa y parámetros del portal rechazados; tipos; nivel_rearme ≥ crítico + 10 en los dos sentidos; mínimo y máximo de los 19 parámetros; config/state completo; NVS fuera de rango no válida.
   - id: TC-POR-A1
     shape: atomic
     kind: standard
@@ -1649,7 +1655,13 @@ tests:
       estaba calibrada (Q-09); envío sin el campo oculto no los toca; el formulario los muestra con su valor actual y la ida y
       vuelta valida igual; NVS no válida → fábrica
     impl: tests/host/test_portal_nodo.c
-    status: not_run
+    status: successful
+    commit: a63cd57
+    date: 2026-11-28
+    ci_run: 46171712187
+    evidence: CI host-tests (ctest), log del run 46171712187
+    observed: >
+      FSD 0.8.11: fábrica; coma decimal; sondas 7 y 8 inactivas; sonda 3 mojada no se desactiva; 11 valores fuera de rango; i_seco ≤ i_marcha; i_seco vacío solo sin calibrar; envío sin «nodo» no los toca; valores actuales e ida y vuelta.
   - id: TC-PUB-A4
     shape: atomic
     kind: standard
