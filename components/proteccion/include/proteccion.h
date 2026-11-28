@@ -146,6 +146,7 @@ typedef struct {
     uint32_t marcha_cambio_ms;
     /* ejercicio y zumbador */
     uint32_t ultimo_mov_s;
+    int32_t t_cierre_ms, t_apertura_ms;  /* últimos tiempos de carrera (V06, V12); -1 sin medir */
     bool pospuesto;                     /* FR-EJE-04: ya hubo un posponer_ejercicio en este ciclo */
     bool fuga_activa;
     uint32_t fuga_desde_ms;

@@ -54,6 +54,7 @@
 #include "udplog.h"
 #include "es_hw.h"
 #include "proteccion_tarea.h"
+#include "publicador_tarea.h"
 
 static const char *TAG = "nodo";
 static char s_id[IDENTIDAD_LEN];
@@ -84,9 +85,6 @@ static bool s_mqtt_activo;                     /* el cliente está arrancado (st
 static int s_intento_mqtt;                     /* E5: <n> del intento MQTT en curso */
 static QueueHandle_t s_eventos_mqtt;           /* mqtt_up / mqtt_down hacia la tarea del gestor */
 static char s_top_status[160];                 /* <sitio>/<zona>/<nodo>/status */
-static char s_top_medidor[160], s_top_medidor_set[160], s_top_evento[160];   /* §13.1 */
-static cola_ev_t s_cola;                        /* eventos críticos fuera de OPERATIVO (FR-PUB-04) */
-static SemaphoreHandle_t s_cola_mux;
 static con_vigia_t s_vigia;                    /* FR-CON-A1/A2 (FSD 0.7.1): sin IP 60 s; sin broker 10 min */
 static esp_timer_handle_t s_t_vigia;           /* consulta de s_vigia cada segundo */
 
@@ -398,6 +396,20 @@ static bool hora_para_proteccion(int *hora_local, uint32_t *ahora_s)
 }
 
 static bool conectado_para_proteccion(void) { return s_estado == CON_OPERATIVO; }
+static esp_mqtt_client_handle_t cliente_mqtt(void) { return s_mqtt; }
+static bool operativo_pub(void)
+{
+    xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
+    bool op = s_estado == CON_OPERATIVO;
+    xSemaphoreGiveRecursive(s_lock);
+    return op;
+}
+static bool hora_pub(uint32_t *ts)
+{
+    if (!hora_valida()) return false;
+    *ts = (uint32_t)time(NULL);
+    return true;
+}
 
 static void al_sincronizar(struct timeval *tv)
 {
@@ -474,55 +486,12 @@ static void al_vencer_backoff(void *arg)
 
 static uint32_t s_lecturas, s_err_sensor;     /* `status` heredado; sin sensores aún */
 
-/* Publica un evento en `evento` (QoS 1, sin retain, §13.1) */
-static void publicar_evento(const cev_t *ev)
-{
-    char json[CEV_EXTRA_LEN + 96];
-    if (cev_json(json, sizeof json, ev, (uint32_t)(esp_timer_get_time() / 1000)) > 0)
-        esp_mqtt_client_publish(s_mqtt, s_top_evento, json, 0, 1, 0);
-}
-
-static cev_t evento_ahora(const char *tipo)
-{
-    cev_t ev = { .tipo = tipo, .t_ms = (uint32_t)(esp_timer_get_time() / 1000) };
-    if (hora_valida()) { ev.ts_valido = true; ev.ts = (uint32_t)time(NULL); }
-    return ev;
-}
-
-/* `medidor/set` (FR-MED-06/10, FR-ORD-02/03, A6): llega solo en OPERATIVO */
-static void orden_medidor(const esp_mqtt_event_t *d)
-{
-    if (d->current_data_offset != 0) return;                       /* resto de un mensaje troceado */
-    if (d->retain) { ESP_LOGI(TAG, "ord: medidor/set ignorada (retain)"); return; }   /* FR-ORD-03 */
-    int min = 0;
-    med_orden_t r = d->total_data_len > d->data_len ? MORD_PAYLOAD
-                  : med_orden(d->data, (size_t)d->data_len, &min);
-    if (r != MORD_OK) {
-        ESP_LOGI(TAG, "ord: medidor/set permitir_consumo -> rechazado:%s", med_orden_motivo(r));   /* A6 */
-        cev_t ev = evento_ahora("orden_rechazada");
-        snprintf(ev.extra, sizeof ev.extra, "\"orden\":\"medidor/set\",\"motivo\":\"%s\"", med_orden_motivo(r));
-        ESP_LOGW(TAG, "eve: orden_rechazada medidor/set %s", med_orden_motivo(r));                 /* A9 */
-        publicar_evento(&ev);
-        return;
-    }
-    int hasta = 0;
-    med_resultado_t m = medidor_permitir(min, &hasta);
-    ESP_LOGI(TAG, "ord: medidor/set permitir_consumo -> ok");                                     /* A6 */
-    if (m == MED_EVENTO) {                                                                         /* FR-MED-10 */
-        cev_t ev = evento_ahora("consumo_permitido");
-        snprintf(ev.extra, sizeof ev.extra, "\"hasta_min\":%d", hasta);
-        ESP_LOGW(TAG, "eve: consumo_permitido hasta_min=%d", hasta);                               /* A9 */
-        publicar_evento(&ev);
-    }
-}
-
 static void al_evento_mqtt(void *arg, esp_event_base_t base, int32_t id, void *datos)
 {
     con_evento_t ev;
     if (id == MQTT_EVENT_DATA) {
         const esp_mqtt_event_t *d = datos;
-        size_t n = strlen(s_top_medidor_set);
-        if (d->topic_len == (int)n && !memcmp(d->topic, s_top_medidor_set, n)) orden_medidor(d);
+        publicador_mensaje(d);                                     /* §13.1: órdenes */
         return;
     }
     if (id == MQTT_EVENT_CONNECTED) ev = CON_EV_MQTT_UP;
@@ -546,9 +515,6 @@ static void crear_mqtt(void)
 {
     if (s_mqtt) return;
     pub_topico(s_top_status, sizeof s_top_status, s_cfg.sitio, s_cfg.zona, s_id, "status");
-    pub_topico(s_top_medidor, sizeof s_top_medidor, s_cfg.sitio, s_cfg.zona, s_id, "medidor");
-    pub_topico(s_top_medidor_set, sizeof s_top_medidor_set, s_cfg.sitio, s_cfg.zona, s_id, "medidor/set");
-    pub_topico(s_top_evento, sizeof s_top_evento, s_cfg.sitio, s_cfg.zona, s_id, "evento");
     esp_mqtt_client_config_t c = {
         .broker.address = {.hostname = s_cfg.mqtt_host, .port = s_cfg.mqtt_port,
                            .transport = MQTT_TRANSPORT_OVER_TCP},
@@ -600,7 +566,8 @@ static void publicar_status(void)
     int rssi = esp_wifi_sta_get_ap_info(&ap) == ESP_OK ? ap.rssi : 0;
     pub_status_t st = {.online = true, .fw = s_version, .rssi = rssi, .reset = causa_reset(),
                        .uptime_s = (uint32_t)(esp_timer_get_time() / 1000000), .lecturas = s_lecturas,
-                       .err_sensor = s_err_sensor, .ota = "ninguno", .hora_valida = hora_valida()};   /* FR-TIME-02 */
+                       .err_sensor = s_err_sensor, .ota = "ninguno", .hora_valida = hora_valida(),   /* FR-TIME-02 */
+                       .eventos_perdidos = publicador_perdidos()};                                       /* FR-PUB-05 */
     char json[256];
     if (pub_status_json(json, sizeof json, &st) > 0)
         esp_mqtt_client_publish(s_mqtt, s_top_status, json, 0, 1, 1);          /* §9.2: QoS 1, retain */
@@ -630,11 +597,7 @@ static void mqtt_listo(void)
     s_intento_mqtt = 0;
     publicar_status();
     publicar_discovery();
-    esp_mqtt_client_subscribe(s_mqtt, s_top_medidor_set, 1);       /* FR-MED-06 */
-    xSemaphoreTake(s_cola_mux, portMAX_DELAY);                     /* FR-PUB-04: la cola, después de lo anterior */
-    cev_t ev;
-    while (cev_sacar(&s_cola, &ev)) publicar_evento(&ev);
-    xSemaphoreGive(s_cola_mux);
+    publicador_entrar_operativo();                                 /* FR-PUB-02, luego la cola de FR-PUB-04 */
     esp_ota_img_states_t st;
     if (esp_ota_get_state_partition(esp_ota_get_running_partition(), &st) == ESP_OK && st == ESP_OTA_IMG_PENDING_VERIFY)
         esp_ota_mark_app_valid_cancel_rollback();
@@ -835,23 +798,6 @@ static void ejecutar(con_estado_t origen, con_evento_t ev, con_transicion_t t)
  * (§5–§9, NFR-WDT-A1) hasta que lleguen los drivers de E/S. */
 #define PERIODO_CICLO_MS 60000
 
-/* Eventos del medidor: en OPERATIVO salen ya; fuera, los críticos esperan en la cola (FR-PUB-04) */
-static void tarea_eventos_medidor(void *arg)
-{
-    (void)arg;
-    cev_t ev;
-    for (;;) {
-        if (!medidor_evento(&ev, 1000)) continue;
-        xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
-        bool operativo = s_estado == CON_OPERATIVO;
-        xSemaphoreGiveRecursive(s_lock);
-        if (operativo) { publicar_evento(&ev); continue; }
-        xSemaphoreTake(s_cola_mux, portMAX_DELAY);
-        cev_poner(&s_cola, &ev);                                   /* los no críticos se descartan */
-        xSemaphoreGive(s_cola_mux);
-    }
-}
-
 static void tarea_ciclo(void *arg)
 {
     (void)arg;
@@ -863,14 +809,7 @@ static void tarea_ciclo(void *arg)
         xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
         bool operativo = s_estado == CON_OPERATIVO;
         xSemaphoreGiveRecursive(s_lock);
-        if (operativo) {
-            publicar_status();
-            med_lectura_t ml;                                       /* FR-MED-04 */
-            medidor_lectura(&ml);
-            if (hora_valida()) { ml.ts_valido = true; ml.ts = (uint32_t)time(NULL); }
-            char json[160];
-            if (med_json(json, sizeof json, &ml) > 0) esp_mqtt_client_publish(s_mqtt, s_top_medidor, json, 0, 0, 0);
-        }
+        if (operativo) publicar_status();
         /* Espera al ciclo siguiente en tramos, alimentando el watchdog */
         const TickType_t siguiente = ultimo + pdMS_TO_TICKS(PERIODO_CICLO_MS);
         while ((TickType_t)(siguiente - xTaskGetTickCount()) - 1u < pdMS_TO_TICKS(PERIODO_CICLO_MS)) {
@@ -967,8 +906,6 @@ void app_main(void)
 #endif
     s_lock = xSemaphoreCreateRecursiveMutex();
     s_eventos_mqtt = xQueueCreate(8, sizeof(con_evento_t));
-    s_cola_mux = xSemaphoreCreateMutex();                  /* antes del gestor: T11 vacía la cola */
-    cev_iniciar(&s_cola);
     xTaskCreate(tarea_gestor, "gestor", 6144, NULL, 6, NULL);   /* T11 serializa Discovery (§10.2) en su pila */
 
     esp_err_t err = nvs_flash_init();
@@ -984,9 +921,12 @@ void app_main(void)
 
     /* El ciclo corre en todos los estados, desde el arranque */
     xTaskCreate(tarea_ciclo, "ciclo", 4096, NULL, 5, NULL);
-    xTaskCreate(tarea_eventos_medidor, "eventos_med", 4096, NULL, 4, NULL);
 
     transicion(CON_EV_FIN_ARRANQUE, (con_guardas_t){.config_valida = config_valida()});
+    char base[160] = "";                                    /* §13: «<sitio>/<zona>/<nodo>» */
+    if (s_cfg.sitio[0]) pub_topico(base, sizeof base, s_cfg.sitio, s_cfg.zona, s_id, "");
+    if (base[0]) base[strlen(base) - 1] = '\0';           /* sin la barra final */
+    publicador_iniciar(&(publicador_ganchos_t){ .cliente = cliente_mqtt, .operativo = operativo_pub, .hora = hora_pub }, base);
 #if CONFIG_NODO_BENCH_BUILD
     comandos_iniciar();                           /* E13: solo en la imagen de banco (C-LOG-02) */
 #endif

@@ -47,7 +47,9 @@ static med_falla_t s_mf;
 static med_periodo_t s_periodo;                 /* FR-MED-06, en RAM */
 static struct { double galones_por_pulso; int alerta_l, ventana_min, margen_min, diario_l; } s_mcfg =
     { 1.0, 20, 60, 120, 50 };                   /* §19, valores de fábrica */
-static QueueHandle_t s_q_med;                   /* eventos del medidor hacia el publicador (sin red aquí, §2.3) */
+static QueueHandle_t s_q_med;                   /* eventos MQTT hacia el publicador (sin red aquí, §2.3) */
+static QueueHandle_t s_q_ord, s_q_resp;         /* órdenes de §13.1 y sus respuestas (FR-ORD-01) */
+static prot_foto_t s_foto;                      /* bajo s_mux */
 static double s_caudal;                         /* último caudal de A8 */
 
 static void med_encolar(const char *tipo, const char *extra, uint32_t t_ms, bool ts_valido, uint32_t ts)
@@ -57,9 +59,47 @@ static void med_encolar(const char *tipo, const char *extra, uint32_t t_ms, bool
     if (s_q_med) xQueueSend(s_q_med, &ev, 0);
 }
 
-bool medidor_evento(cev_t *ev, uint32_t espera_ms)
+bool proteccion_evento(cev_t *ev, uint32_t espera_ms)
 {
     return s_q_med && xQueueReceive(s_q_med, ev, pdMS_TO_TICKS(espera_ms)) == pdTRUE;
+}
+
+/* Evento de la protección con la hora de ahora (FR-PUB-04: ts solo si era válida) */
+static void ev_prot(const char *tipo, const char *extra)
+{
+    int h; uint32_t ts = 0;
+    bool ok = s_g.hora && s_g.hora(&h, &ts);
+    med_encolar(tipo, extra, (uint32_t)(esp_timer_get_time() / 1000), ok, ts);
+}
+
+void proteccion_foto(prot_foto_t *f)
+{
+    xSemaphoreTake(s_mux, portMAX_DELAY);
+    *f = s_foto;
+    xSemaphoreGive(s_mux);
+}
+
+bool proteccion_orden(int pord) { return s_q_ord && xQueueSend(s_q_ord, &pord, 0) == pdTRUE; }
+
+bool proteccion_respuesta(prot_resp_t *r, uint32_t espera_ms)
+{
+    return s_q_resp && xQueueReceive(s_q_resp, r, pdMS_TO_TICKS(espera_ms)) == pdTRUE;
+}
+
+static void foto(prot_t *p)                     /* en la tarea de protección, tras cada paso */
+{
+    prot_foto_t f = { .val_estado = p->val.estado, .bloqueo_fuga = p->val.bloqueo_fuga, .cerrada_por = p->val.cerrada_por,
+                      .t_cierre_ms = p->t_cierre_ms, .t_apertura_ms = p->t_apertura_ms, .bom_estado = p->bom.estado,
+                      .bom_motivo = p->bom.estado == BOM_CORTADA ? p->bom.motivo : BMOT_NINGUNO,
+                      .intentos = bom_intentos_24h(&p->bom, seg()), .calibrada = p->cfg.i_seco_a > 0.0f };
+    for (int i = 0; i < 8; i++) f.sonda[i] = !p->cfg.sonda_activa[i] ? -3 : p->clase[i];
+    f.flotador_agua = p->flotador_real; f.red_presente = p->red_presente;
+    f.bateria_conocida = p->bateria_conocida; f.bateria = p->bateria; f.vbat = p->vbat;
+    f.nivel_valido = p->nivel_valido; f.nivel_cm = p->nivel_cm; f.nivel_pct = p->nivel_pct;
+    f.presion_valida = p->presion_valida; f.presion_bar = p->presion_bar; f.i_rms = p->i_rms;
+    xSemaphoreTake(s_mux, portMAX_DELAY);
+    s_foto = f;
+    xSemaphoreGive(s_mux);
 }
 
 void medidor_lectura(med_lectura_t *l)
@@ -235,32 +275,52 @@ static const char *NOMBRE_CP[] = { "ninguno", "fuga", "orden", "bateria", "ejerc
 
 static void registrar(const prot_evento_t *e)
 {
+    char x[CEV_EXTRA_LEN];
     switch (e->tipo) {
     case PEV_VAL:
         ESP_LOGI(TAG, "val: %s -> %s (%s)", val_nombre_estado(e->b), val_nombre_estado(e->c), val_nombre_evento(e->d));
         break;
     case PEV_BOM:
         ESP_LOGI(TAG, "bom: %s -> %s (%s)", NOMBRE_BOM[e->b], NOMBRE_BOM[e->c], EV_BOM[e->d]);
-        if (e->a == 1) ESP_LOGW(TAG, "eve: bomba_seco");                   /* A9 del corte por seco (B01) */
+        if (e->a == 1) { ESP_LOGW(TAG, "eve: bomba_seco"); ev_prot("bomba_seco", ""); }   /* A9 del corte por seco (B01) */
         break;
     case PEV_SON:
         ESP_LOGI(TAG, "son: s%d %s", e->a, e->b < 0 ? "falla" : son_nombre(e->b));
         break;
-    case PEV_FUGA: ESP_LOGW(TAG, "eve: fuga s%d", e->a); break;
-    case PEV_FALLA_SONDA: ESP_LOGW(TAG, "eve: falla_sonda s%d %s", e->a, e->b < 0 ? "falla" : son_nombre(e->b)); break;
-    case PEV_FALLA_VALVULA: ESP_LOGW(TAG, "eve: falla_valvula"); break;
-    case PEV_MOVIMIENTO_MANUAL: ESP_LOGW(TAG, "eve: movimiento_manual"); break;
-    case PEV_BOMBA_BLOQUEADA: ESP_LOGW(TAG, "eve: bomba_bloqueada"); break;
-    case PEV_CICLADO: ESP_LOGW(TAG, "eve: ciclado_anormal n=%d valvula=%s", e->a, e->b ? "abierta" : "cerrada"); break;
-    case PEV_BATERIA: ESP_LOGW(TAG, "eve: bateria_%s", NOMBRE_BAT[e->a]); break;
-    case PEV_FALLA_ADC: ESP_LOGW(TAG, "eve: falla_adc 0x%02x", 0x48 + e->a); break;
+    case PEV_FUGA:
+        ESP_LOGW(TAG, "eve: fuga s%d", e->a);
+        snprintf(x, sizeof x, "\"sonda\":%d", e->a); ev_prot("fuga", x);
+        break;
+    case PEV_FALLA_SONDA:
+        ESP_LOGW(TAG, "eve: falla_sonda s%d %s", e->a, e->b < 0 ? "falla" : son_nombre(e->b));
+        snprintf(x, sizeof x, "\"sonda\":%d,\"clase\":\"%s\"", e->a, e->b < 0 ? "falla" : son_nombre(e->b));
+        ev_prot("falla_sonda", x);
+        break;
+    case PEV_FALLA_VALVULA: ESP_LOGW(TAG, "eve: falla_valvula"); ev_prot("falla_valvula", ""); break;
+    case PEV_MOVIMIENTO_MANUAL: ESP_LOGW(TAG, "eve: movimiento_manual"); ev_prot("movimiento_manual", ""); break;
+    case PEV_BOMBA_BLOQUEADA: ESP_LOGW(TAG, "eve: bomba_bloqueada"); ev_prot("bomba_bloqueada", ""); break;
+    case PEV_CICLADO:
+        ESP_LOGW(TAG, "eve: ciclado_anormal n=%d valvula=%s", e->a, e->b ? "abierta" : "cerrada");
+        snprintf(x, sizeof x, "\"n\":%d,\"valvula\":\"%s\"", e->a, e->b ? "abierta" : "cerrada");
+        ev_prot("ciclado_anormal", x);
+        break;
+    case PEV_BATERIA:
+        ESP_LOGW(TAG, "eve: bateria_%s", NOMBRE_BAT[e->a]);
+        if (e->a == ENE_BAJA) ev_prot("bateria_baja", "");
+        if (e->a == ENE_CRITICA) ev_prot("bateria_critica", "");
+        break;
+    case PEV_FALLA_ADC:
+        ESP_LOGW(TAG, "eve: falla_adc 0x%02x", 0x48 + e->a);
+        snprintf(x, sizeof x, "\"ads\":\"0x%02x\"", 0x48 + e->a); ev_prot("falla_adc", x);
+        break;
     case PEV_RECHAZO:
         ESP_LOGW(TAG, "loc: pulsacion_larga rechazada (%s)",
                  e->a == 1 ? "fuga_activa" : e->a == 3 ? "sondas_en_falla" : e->a == 4 ? "nivel_bajo" :
                  e->a == 5 ? "bateria_critica" : e->a == 6 ? "estado" : "sin_agua");
         break;
     case PEV_FLOTADOR_FALLA:
-        if (e->a) ESP_LOGW(TAG, "eve: flotador_falla"); else ESP_LOGI(TAG, "bom: flotador sin falla");
+        if (e->a) { ESP_LOGW(TAG, "eve: flotador_falla"); ev_prot("flotador_falla", ""); }
+        else ESP_LOGI(TAG, "bom: flotador sin falla");
         break;
     case PEV_VREF: ESP_LOGW(TAG, "son: vref %s", e->a ? "nominal" : "medida"); break;
     case PEV_PORTAL: ESP_LOGW(TAG, "loc: reentrada_portal"); break;                    /* A10 */
@@ -268,7 +328,8 @@ static void registrar(const prot_evento_t *e)
         ESP_LOGI(TAG, "est: cerrada_por=%s bloqueo_fuga=%d intentos=%d", NOMBRE_CP[e->a], e->b, e->c);
         break;
     case PEV_FALLA_VREF:
-        if (e->a) ESP_LOGW(TAG, "eve: falla_vref"); else ESP_LOGI(TAG, "son: vref sin falla");
+        if (e->a) { ESP_LOGW(TAG, "eve: falla_vref"); ev_prot("falla_vref", ""); }
+        else ESP_LOGI(TAG, "son: vref sin falla");
         break;
     }
 }
@@ -298,6 +359,8 @@ static void tarea_proteccion(void *arg)
         e.fin_abierta = d.fin_abierta; e.fin_cerrada = d.fin_cerrada; e.flotador_agua = d.flotador_agua;
         e.red_presente = d.red_presente; e.boton = d.boton;
         bool med_cerrado = d.medidor;
+        int ord;
+        if (xQueueReceive(s_q_ord, &ord, 0) == pdTRUE) e.orden = ord;     /* FR-ORD-01: una por paso */
         xSemaphoreTake(s_mux, portMAX_DELAY);
         if (s_med.seq != seq_med) {
             seq_med = s_med.seq;
@@ -312,6 +375,11 @@ static void tarea_proteccion(void *arg)
         e.conectado = s_g.conectado && s_g.conectado();
         prot_paso(&s_prot, &e, &s);
         es_hw_salidas(s.in1, s.in2, s.rele, s.led_verde, s.led_rojo, s.zumbador);
+        if (s.hay_resp) {
+            prot_resp_t r = { s.resp_bomba, s.resp_fila, s.resp_rechazo };
+            xQueueSend(s_q_resp, &r, 0);
+        }
+        foto(&s_prot);
         med_paso(e.t_ms, e.t_s, med_cerrado, e.hay_medidas, e.hora_valida, e.ahora_s, &s_prot);
         for (int i = 0; i < s.n_ev; i++) registrar(&s.ev[i]);
         if (s.persistir) { prot_persistente_t p = prot_persistente(&s_prot); nvs_escribir(&p); }
@@ -328,7 +396,9 @@ void proteccion_iniciar(const proteccion_ganchos_t *g)
     s_g = *g;
     s_mux = xSemaphoreCreateMutex();
     s_mmux = xSemaphoreCreateMutex();
-    s_q_med = xQueueCreate(8, sizeof(cev_t));
+    s_q_med = xQueueCreate(16, sizeof(cev_t));
+    s_q_ord = xQueueCreate(4, sizeof(int));
+    s_q_resp = xQueueCreate(4, sizeof(prot_resp_t));
     med_leer();                                                /* FR-MED-03: restaurar total y pulsos */
     med_guardado(&s_mg, seg(), s_mt.pulsos);
     prot_config_t cfg;
