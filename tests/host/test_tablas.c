@@ -284,10 +284,23 @@ static const bcaso_t BC[] = {
     { 5, BOM_CORTADA,   BMOT_FLOTADOR, 0, BEV_REARME_CUMPLIDO,    true,  true,  35, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
     { 6, BOM_CORTADA,   BMOT_SECO,     3, BEV_REARME_CUMPLIDO,    true,  true,  35, BOM_BLOQUEADA, BMOT_NINGUNO,  BRECH_NINGUNO, true,  3 },
     { 0, BOM_CORTADA,   BMOT_ORDEN,    0, BEV_REARME_CUMPLIDO,    true,  true,  35, BOM_CORTADA,   BMOT_ORDEN,    BRECH_NINGUNO, false, 0 },
-    { 7, BOM_CORTADA,   BMOT_ORDEN,    1, BEV_REARMAR,            true,  false,  0, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
-    { 7, BOM_BLOQUEADA, BMOT_NINGUNO,  3, BEV_REARMAR,            true,  true,  50, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
+    { 7, BOM_CORTADA,   BMOT_ORDEN,    1, BEV_PULSACION,          true,  false,  0, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
+    { 7, BOM_BLOQUEADA, BMOT_NINGUNO,  3, BEV_PULSACION,          true,  true,  50, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
+    { 8, BOM_BLOQUEADA, BMOT_NINGUNO,  3, BEV_PULSACION,          false, true,  50, BOM_BLOQUEADA, BMOT_NINGUNO,  BRECH_SIN_AGUA, false, 3 },
     { 8, BOM_BLOQUEADA, BMOT_NINGUNO,  3, BEV_REARMAR,            false, true,  50, BOM_BLOQUEADA, BMOT_NINGUNO,  BRECH_SIN_AGUA, false, 3 },
     { 8, BOM_CORTADA,   BMOT_SECO,     1, BEV_REARMAR,            false, true,  50, BOM_CORTADA,   BMOT_SECO,     BRECH_SIN_AGUA, false, 1 },
+    {12, BOM_CORTADA,   BMOT_SECO,     2, BEV_REARMAR,            true,  true,  50, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 2 },  /* intentos sin cambio */
+    {12, BOM_CORTADA,   BMOT_NIVEL,    3, BEV_REARMAR,            true,  false,  0, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 3 },  /* transductor en falla */
+    {12, BOM_CORTADA,   BMOT_ORDEN,    0, BEV_REARMAR,            true,  true,  10, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
+    {13, BOM_CORTADA,   BMOT_SECO,     3, BEV_REARMAR,            true,  true,  50, BOM_BLOQUEADA, BMOT_NINGUNO,  BRECH_NINGUNO, true,  3 },
+    {14, BOM_BLOQUEADA, BMOT_NINGUNO,  3, BEV_REARMAR,            true,  true,  50, BOM_BLOQUEADA, BMOT_NINGUNO,  BRECH_BLOQUEADA, false, 3 },
+    {14, BOM_BLOQUEADA, BMOT_NINGUNO,  3, BEV_REARMAR,            true,  true,   5, BOM_BLOQUEADA, BMOT_NINGUNO,  BRECH_BLOQUEADA, false, 3 },  /* B14 gana a B16 */
+    {16, BOM_CORTADA,   BMOT_NIVEL,    0, BEV_REARMAR,            true,  true,   5, BOM_CORTADA,   BMOT_NIVEL,    BRECH_NIVEL_BAJO, false, 0 },
+    {16, BOM_CORTADA,   BMOT_SECO,     3, BEV_REARMAR,            true,  true,   5, BOM_CORTADA,   BMOT_SECO,     BRECH_NIVEL_BAJO, false, 3 },  /* B16 gana a B13 */
+    {16, BOM_BLOQUEADA, BMOT_NINGUNO,  3, BEV_PULSACION,          true,  true,   5, BOM_BLOQUEADA, BMOT_NINGUNO,  BRECH_NIVEL_BAJO, false, 3 },  /* B16 gana a B07 */
+    {16, BOM_CORTADA,   BMOT_ORDEN,    1, BEV_PULSACION,          true,  true,   9, BOM_CORTADA,   BMOT_ORDEN,    BRECH_NIVEL_BAJO, false, 1 },
+    { 0, BOM_PERMITIDA, BMOT_NINGUNO,  0, BEV_PULSACION,          true,  true,  50, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
+    { 0, BOM_PERMITIDA, BMOT_NINGUNO,  0, BEV_REARMAR,            true,  true,  50, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
     { 5, BOM_CORTADA,   BMOT_NIVEL,    3, BEV_REARME_CUMPLIDO,    true,  true,  35, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 3 },  /* nivel: sin límite de intentos */
     { 5, BOM_CORTADA,   BMOT_FLOTADOR, 3, BEV_REARME_CUMPLIDO,    true,  true,  35, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 3 },
     { 9, BOM_CORTADA,   BMOT_ORDEN,    0, BEV_PERMITIR,           true,  true,  10, BOM_PERMITIDA, BMOT_NINGUNO,  BRECH_NINGUNO, false, 0 },
@@ -299,9 +312,12 @@ static const bcaso_t BC[] = {
 
 static bool bom_admitida(bom_estado_t s, bom_motivo_t m, bom_evento_t e, int fila)
 {
-    if (s == BOM_PERMITIDA) return (e == BEV_SECO && fila == 1) || (e == BEV_FLOTADOR_SIN_AGUA && fila == 2) ||
+    if (s == BOM_PERMITIDA && e == BEV_SECO && fila == 1) return true;
+    if (s == BOM_PERMITIDA && e != BEV_SECO) return (e == BEV_FLOTADOR_SIN_AGUA && fila == 2) ||
                                    (e == BEV_NIVEL && fila == 3) || (e == BEV_CORTAR && fila == 4);
-    if (e == BEV_REARMAR) return fila == 7 || fila == 8;
+    if (s == BOM_PERMITIDA && e == BEV_SECO) return fila == 15;
+    if (e == BEV_PULSACION) return fila == 7 || fila == 8 || fila == 16;
+    if (e == BEV_REARMAR) return fila == 8 || fila == 16 || (s == BOM_BLOQUEADA ? fila == 14 : fila == 12 || (fila == 13 && m == BMOT_SECO));
     if (s == BOM_CORTADA && e == BEV_REARME_CUMPLIDO && m != BMOT_ORDEN) return fila == 5 || (fila == 6 && m == BMOT_SECO);
     if (s == BOM_CORTADA && m == BMOT_ORDEN && e == BEV_PERMITIR) return fila == 9 || fila == 10 || fila == 11;
     return false;
@@ -338,7 +354,11 @@ static void bom(void)
                             "par ignorado con efecto: estado %d motivo %d evento %d", s, m, ev);
         else OK(bom_admitida(s, m, ev, a.fila), "transición no listada: estado %d motivo %d evento %d → B%02d", s, m, ev, a.fila);
         /* FR-BOM-08: nunca PERMITIDA con el flotador sin agua por una orden */
-        if (!agua && (ev == BEV_REARMAR || ev == BEV_PERMITIR)) OK(b.estado != BOM_PERMITIDA || s == BOM_PERMITIDA, "orden a PERMITIDA sin agua");
+        if (!agua && (ev == BEV_REARMAR || ev == BEV_PERMITIR || ev == BEV_PULSACION)) OK(b.estado != BOM_PERMITIDA || s == BOM_PERMITIDA, "orden a PERMITIDA sin agua");
+        /* R-01: ni orden ni pulsación a PERMITIDA con nivel crítico y transductor válido */
+        if (nv && pct < 10 && ev != BEV_REARME_CUMPLIDO) OK(b.estado != BOM_PERMITIDA || s == BOM_PERMITIDA, "a PERMITIDA con nivel bajo (evento %d)", ev);
+        /* G-04: el `rearmar` remoto nunca saca de BLOQUEADA ni pone los intentos a cero */
+        if (ev == BEV_REARMAR) OK((s != BOM_BLOQUEADA || b.estado == BOM_BLOQUEADA) && bom_intentos_24h(&b, T) == c, "rearmar: estado %d, intentos %d", b.estado, bom_intentos_24h(&b, T));
     }
     printf("bom: %zu filas, %d combinaciones\n", sizeof BC / sizeof BC[0], pares);
 
@@ -377,8 +397,10 @@ static void bom(void)
     OK(b.estado == BOM_BLOQUEADA && bloqueada == 1, "3 cortes en 24 h: estado %d, avisos %d", b.estado, bloqueada);
     bom_entrada_t re = { BEV_REARME_CUMPLIDO, true, true, 50, 100000 };
     OK(bom_evento(&b, &re).fila == 0 && b.estado == BOM_BLOQUEADA, "rearme automático desde BLOQUEADA");
-    bom_entrada_t rm = { BEV_REARMAR, true, true, 50, 100001 };
-    OK(bom_evento(&b, &rm).fila == 7 && b.estado == BOM_PERMITIDA && bom_intentos_24h(&b, 100001) == 0, "rearmar no saca de BLOQUEADA");
+    bom_entrada_t rr = { BEV_REARMAR, true, true, 50, 100001 };
+    OK(bom_evento(&b, &rr).fila == 14 && b.estado == BOM_BLOQUEADA, "rearmar remoto saca de BLOQUEADA (B14)");
+    bom_entrada_t rm = { BEV_PULSACION, true, true, 50, 100001 };
+    OK(bom_evento(&b, &rm).fila == 7 && b.estado == BOM_PERMITIDA && bom_intentos_24h(&b, 100001) == 0, "la pulsación no saca de BLOQUEADA");
     /* los cortes de hace más de 24 h no cuentan */
     bom_iniciar(&b, 3, 10);
     for (int k = 0; k < 3; k++) {
@@ -388,6 +410,31 @@ static void bom(void)
         bom_evento(&b, &r2);
     }
     OK(b.estado == BOM_PERMITIDA, "3 cortes en más de 24 h bloquean (estado %d)", b.estado);
+
+    /* B15 (P20): seco a 10 min o menos de un rearme (B05, B07, B12) → BLOQUEADA; a más, B01 */
+    const bom_evento_t rearmes[] = { BEV_REARME_CUMPLIDO, BEV_PULSACION, BEV_REARMAR };
+    for (int k = 0; k < 3; k++) for (int d = 0; d < 2; d++) {
+        bom_iniciar(&b, 3, 10);
+        bom_entrada_t c1 = { BEV_SECO, true, true, 50, 1000 };
+        bom_evento(&b, &c1);
+        bom_entrada_t r1 = { rearmes[k], true, true, 50, 2000 };
+        bom_evento(&b, &r1);
+        bom_entrada_t s2 = { BEV_SECO, true, true, 50, d ? 2000 + BOM_P20_S + 1 : 2000 + BOM_P20_S };
+        bom_accion_t a2 = bom_evento(&b, &s2);
+        int esperada = d ? 1 : 15;
+        OK(a2.fila == esperada && (d || (b.estado == BOM_BLOQUEADA && a2.evento_bloqueada)),
+           "P20: rearme %d, seco a %u s: B%02d (esperada B%02d)", k, (unsigned)(s2.t_s - 2000), a2.fila, esperada);
+    }
+    /* FR-BOM-07: `rearmar` remoto repetido con más de 10 min entre ellos → BLOQUEADA por B13 */
+    bom_iniciar(&b, 3, 10);
+    int fila_final = 0;
+    for (int k = 0; k < 5 && b.estado != BOM_BLOQUEADA; k++) {
+        bom_entrada_t sk = { BEV_SECO, true, true, 50, (uint32_t)(1000 + k * 1000) };
+        bom_evento(&b, &sk);
+        bom_entrada_t rk = { BEV_REARMAR, true, true, 50, (uint32_t)(1000 + k * 1000 + 300) };
+        fila_final = bom_evento(&b, &rk).fila;
+    }
+    OK(b.estado == BOM_BLOQUEADA && fila_final == 13 && bom_intentos_24h(&b, 6000) == 3, "rearmar repetido: estado %d, fila B%02d", b.estado, fila_final);
 }
 
 /* FR-BOM-03: corriente 0,8 A (i_seco 1,0), presión 0,2 bar → seco a los > 10 s; nunca con presión alta, sin calibrar o 1 s de menos */

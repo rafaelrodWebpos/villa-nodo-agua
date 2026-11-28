@@ -38,7 +38,7 @@ bool cic_arranque(cic_t *c, uint32_t t_s, uint32_t ventana_s, int max, int *n)
     return true;
 }
 
-/* ---- Permiso de la bomba (B01–B09) ---- */
+/* ---- Permiso de la bomba (B01–B16) ---- */
 #define DIA_S (24u * 3600u)
 
 void bom_iniciar(bom_t *b, int intentos_max, int nivel_critico_pct)
@@ -55,6 +55,16 @@ int bom_intentos_24h(bom_t *b, uint32_t t_s)
     return k;
 }
 
+static void sumar_corte(bom_t *b, uint32_t t_s)       /* intentos_24h += 1 */
+{
+    bom_intentos_24h(b, t_s);
+    if (b->n_cortes == BOM_MAX_CORTES) {                 /* lleno: descarta el más antiguo */
+        for (int i = 1; i < b->n_cortes; i++) b->cortes[i - 1] = b->cortes[i];
+        b->n_cortes--;
+    }
+    b->cortes[b->n_cortes++] = t_s;
+}
+
 static bom_accion_t cortar(bom_t *b, int fila, bom_motivo_t m)
 {
     b->estado = BOM_CORTADA;
@@ -62,24 +72,35 @@ static bom_accion_t cortar(bom_t *b, int fila, bom_motivo_t m)
     return (bom_accion_t){ .fila = fila };
 }
 
+static bom_accion_t permitir(bom_t *b, int fila, bool rearme, uint32_t t_s)
+{
+    b->estado = BOM_PERMITIDA; b->motivo = BMOT_NINGUNO;
+    if (rearme) { b->hay_rearme = true; b->rearme_t = t_s; }   /* P20: B05, B07, B12 */
+    return (bom_accion_t){ .fila = fila };
+}
+
+static bom_accion_t bloquear(bom_t *b, int fila)
+{
+    b->estado = BOM_BLOQUEADA; b->motivo = BMOT_NINGUNO;
+    return (bom_accion_t){ .fila = fila, .evento_bloqueada = true };
+}
+
+static bom_accion_t rechazar(int fila, bom_rechazo_t r) { return (bom_accion_t){ .fila = fila, .rechazo = r }; }
+
 bom_accion_t bom_evento(bom_t *b, const bom_entrada_t *e)
 {
     const bom_accion_t ignorar = { 0 };
+    bool nivel_bajo = e->nivel_valido && e->nivel_pct < (float)b->nivel_critico_pct;
     if (b->estado == BOM_PERMITIDA) {
         switch (e->evento) {
         case BEV_SECO:
-            bom_intentos_24h(b, e->t_s);
-            if (b->n_cortes == BOM_MAX_CORTES) {          /* lleno: descarta el más antiguo */
-                for (int i = 1; i < b->n_cortes; i++) b->cortes[i - 1] = b->cortes[i];
-                b->n_cortes--;
-            }
-            b->cortes[b->n_cortes++] = e->t_s;            /* intentos_24h += 1 */
+            sumar_corte(b, e->t_s);
+            if (bom_rearme_reciente(b, e->t_s)) return bloquear(b, 15);   /* B15 (P20) */
             return cortar(b, 1, BMOT_SECO);
         case BEV_FLOTADOR_SIN_AGUA:
             return cortar(b, 2, BMOT_FLOTADOR);
         case BEV_NIVEL:
-            if (!e->nivel_valido || e->nivel_pct >= (float)b->nivel_critico_pct) return ignorar;
-            return cortar(b, 3, BMOT_NIVEL);
+            return nivel_bajo ? cortar(b, 3, BMOT_NIVEL) : ignorar;
         case BEV_CORTAR:
             return cortar(b, 4, BMOT_ORDEN);
         default:
@@ -91,24 +112,24 @@ bom_accion_t bom_evento(bom_t *b, const bom_entrada_t *e)
     case BEV_REARME_CUMPLIDO:
         if (b->estado != BOM_CORTADA || b->motivo == BMOT_ORDEN) return ignorar;
         /* B05: los cortes por nivel o flotador no cuentan como intentos y rearman siempre */
-        if (b->motivo != BMOT_SECO || bom_intentos_24h(b, e->t_s) < b->intentos_max) {
-            b->estado = BOM_PERMITIDA; b->motivo = BMOT_NINGUNO;
-            return (bom_accion_t){ .fila = 5 };
-        }
-        b->estado = BOM_BLOQUEADA; b->motivo = BMOT_NINGUNO;
-        return (bom_accion_t){ .fila = 6, .evento_bloqueada = true };
+        if (b->motivo != BMOT_SECO || bom_intentos_24h(b, e->t_s) < b->intentos_max) return permitir(b, 5, true, e->t_s);
+        return bloquear(b, 6);
+    case BEV_PULSACION:
+        if (!e->flotador_agua) return rechazar(8, BRECH_SIN_AGUA);       /* B08 */
+        if (nivel_bajo) return rechazar(16, BRECH_NIVEL_BAJO);           /* B16 gana a B07 */
+        b->n_cortes = 0;                                                 /* B07: intentos_24h = 0 */
+        return permitir(b, 7, true, e->t_s);
     case BEV_REARMAR:
-        if (!e->flotador_agua) return (bom_accion_t){ .fila = 8, .rechazo = BRECH_SIN_AGUA };
-        b->estado = BOM_PERMITIDA; b->motivo = BMOT_NINGUNO;
-        b->n_cortes = 0;                                  /* intentos_24h = 0 */
-        return (bom_accion_t){ .fila = 7 };
+        if (!e->flotador_agua) return rechazar(8, BRECH_SIN_AGUA);       /* B08 */
+        if (b->estado == BOM_BLOQUEADA) return rechazar(14, BRECH_BLOQUEADA);   /* B14 gana a B16 (Q-04) */
+        if (nivel_bajo) return rechazar(16, BRECH_NIVEL_BAJO);           /* B16 gana a B12/B13 */
+        if (b->motivo == BMOT_SECO && bom_intentos_24h(b, e->t_s) >= b->intentos_max) return bloquear(b, 13);
+        return permitir(b, 12, true, e->t_s);                            /* B12: intentos sin cambio */
     case BEV_PERMITIR:
         if (b->estado != BOM_CORTADA || b->motivo != BMOT_ORDEN) return ignorar;
-        if (!e->flotador_agua) return (bom_accion_t){ .fila = 10, .rechazo = BRECH_SIN_AGUA };  /* B10, FR-BOM-08 */
-        if (e->nivel_valido && e->nivel_pct < (float)b->nivel_critico_pct)
-            return (bom_accion_t){ .fila = 11, .rechazo = BRECH_NIVEL_BAJO };                   /* B11 */
-        b->estado = BOM_PERMITIDA; b->motivo = BMOT_NINGUNO;
-        return (bom_accion_t){ .fila = 9 };
+        if (!e->flotador_agua) return rechazar(10, BRECH_SIN_AGUA);      /* B10, FR-BOM-08 */
+        if (nivel_bajo) return rechazar(11, BRECH_NIVEL_BAJO);           /* B11 */
+        return permitir(b, 9, false, e->t_s);
     default:
         return ignorar;
     }
