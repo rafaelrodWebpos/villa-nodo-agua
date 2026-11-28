@@ -1771,6 +1771,33 @@ tests:
       con motivo=diario, ninguno con motivo=hora
     impl: null
     status: not_run
+  - id: TC-MED-A9
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [FR-MED-06, FR-MED-10]
+    needs: [hosted-ci]
+    expect: >
+      permitir_consumo 30 min, a los 5 min 60 min, a los 6 min 10 min → evento con hasta_min = 30 + margen y 60 + margen,
+      ninguno con la tercera (no mueve el fin); min=0/721 rechazados sin cambio; límites del periodo con margen; periodo
+      vencido reabre con evento; el periodo vive en RAM
+    impl: tests/host/test_medidor.c
+    status: not_run
+  - id: TC-MED-A10
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: bench
+    verifies: [FR-MED-10]
+    needs: [bench-driver, bench-flash, bench-wifi-ap, bench-mqtt-broker, bench-serial-monitor, dut-board]
+    expect: >
+      suscriptor a #: permitir_consumo 30 min; a los 5 min 60 min; a los 6 min 10 min → un evento consumo_permitido por cada
+      una de las dos primeras en ≤ 1 s con hasta_min = 30 + consumo_margen_min y 60 + consumo_margen_min (± 1); ninguno con la tercera
+    impl: null
+    status: not_run
 
 tier_checks:
   host: "ci.yml/host-tests (ctest: tier_smoke + los TC-* host heredados)"

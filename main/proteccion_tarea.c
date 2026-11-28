@@ -125,25 +125,26 @@ static void registrar(const prot_evento_t *e)
         break;
     case PEV_BOM:
         ESP_LOGI(TAG, "bom: %s -> %s (%s)", NOMBRE_BOM[e->b], NOMBRE_BOM[e->c], EV_BOM[e->d]);
+        if (e->a == 1) ESP_LOGW(TAG, "eve: bomba_seco");                   /* A9 del corte por seco (B01) */
         break;
     case PEV_SON:
         ESP_LOGI(TAG, "son: s%d %s", e->a, e->b < 0 ? "falla" : son_nombre(e->b));
         break;
-    case PEV_FUGA: ESP_LOGW(TAG, "evento: fuga s%d", e->a); break;
-    case PEV_FALLA_SONDA: ESP_LOGW(TAG, "evento: falla_sonda s%d %s", e->a, e->b < 0 ? "falla" : son_nombre(e->b)); break;
-    case PEV_FALLA_VALVULA: ESP_LOGW(TAG, "evento: falla_valvula"); break;
-    case PEV_MOVIMIENTO_MANUAL: ESP_LOGW(TAG, "evento: movimiento_manual"); break;
-    case PEV_BOMBA_BLOQUEADA: ESP_LOGW(TAG, "evento: bomba_bloqueada"); break;
-    case PEV_CICLADO: ESP_LOGW(TAG, "evento: ciclado_anormal n=%d valvula=%s", e->a, e->b ? "abierta" : "cerrada"); break;
-    case PEV_BATERIA: ESP_LOGW(TAG, "evento: bateria_%s", NOMBRE_BAT[e->a]); break;
-    case PEV_FALLA_ADC: ESP_LOGW(TAG, "evento: falla_adc 0x%02x", 0x48 + e->a); break;
+    case PEV_FUGA: ESP_LOGW(TAG, "eve: fuga s%d", e->a); break;
+    case PEV_FALLA_SONDA: ESP_LOGW(TAG, "eve: falla_sonda s%d %s", e->a, e->b < 0 ? "falla" : son_nombre(e->b)); break;
+    case PEV_FALLA_VALVULA: ESP_LOGW(TAG, "eve: falla_valvula"); break;
+    case PEV_MOVIMIENTO_MANUAL: ESP_LOGW(TAG, "eve: movimiento_manual"); break;
+    case PEV_BOMBA_BLOQUEADA: ESP_LOGW(TAG, "eve: bomba_bloqueada"); break;
+    case PEV_CICLADO: ESP_LOGW(TAG, "eve: ciclado_anormal n=%d valvula=%s", e->a, e->b ? "abierta" : "cerrada"); break;
+    case PEV_BATERIA: ESP_LOGW(TAG, "eve: bateria_%s", NOMBRE_BAT[e->a]); break;
+    case PEV_FALLA_ADC: ESP_LOGW(TAG, "eve: falla_adc 0x%02x", 0x48 + e->a); break;
     case PEV_RECHAZO:
-        ESP_LOGW(TAG, "evento: pulsacion_larga rechazada (%s)",
+        ESP_LOGW(TAG, "loc: pulsacion_larga rechazada (%s)",
                  e->a == 1 ? "fuga_activa" : e->a == 3 ? "sondas_en_falla" : e->a == 4 ? "nivel_bajo" :
                  e->a == 5 ? "bateria_critica" : e->a == 6 ? "estado" : "sin_agua");
         break;
     case PEV_FLOTADOR_FALLA:
-        if (e->a) ESP_LOGW(TAG, "evento: flotador_falla"); else ESP_LOGI(TAG, "bom: flotador sin falla");
+        if (e->a) ESP_LOGW(TAG, "eve: flotador_falla"); else ESP_LOGI(TAG, "bom: flotador sin falla");
         break;
     case PEV_VREF: ESP_LOGW(TAG, "son: vref %s", e->a ? "nominal" : "medida"); break;
     case PEV_PORTAL: ESP_LOGW(TAG, "loc: reentrada_portal"); break;                    /* A10 */
@@ -151,7 +152,7 @@ static void registrar(const prot_evento_t *e)
         ESP_LOGI(TAG, "est: cerrada_por=%s bloqueo_fuga=%d intentos=%d", NOMBRE_CP[e->a], e->b, e->c);
         break;
     case PEV_FALLA_VREF:
-        if (e->a) ESP_LOGW(TAG, "evento: falla_vref"); else ESP_LOGI(TAG, "son: vref sin falla");
+        if (e->a) ESP_LOGW(TAG, "eve: falla_vref"); else ESP_LOGI(TAG, "son: vref sin falla");
         break;
     }
 }

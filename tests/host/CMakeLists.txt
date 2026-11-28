@@ -154,3 +154,8 @@ add_test(NAME TC-CON-A1 COMMAND test_vigia)
 add_executable(test_cola_eventos test_cola_eventos.c ${COMP}/eventos/cola_eventos.c)
 target_include_directories(test_cola_eventos PRIVATE ${COMP}/eventos/include)
 add_test(NAME TC-PUB-A4 COMMAND test_cola_eventos)
+
+# FSD 0.8.8–0.8.9: TC-MED-A9 · FR-MED-06 (periodo permitido) y FR-MED-10 (evento consumo_permitido)
+add_executable(test_medidor test_medidor.c ${COMP}/medidor/medidor.c)
+target_include_directories(test_medidor PRIVATE ${COMP}/medidor/include)
+add_test(NAME TC-MED-A9 COMMAND test_medidor)
