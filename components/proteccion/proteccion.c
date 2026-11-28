@@ -31,6 +31,7 @@ void prot_iniciar(prot_t *p, const prot_config_t *cfg, const prot_persistente_t 
     for (int i = 0; i < PROT_N_SONDAS; i++) p->clase[i] = -2;      /* sin lectura todavía */
     for (int k = 0; k < ES_N_ADS; k++) p->ads_ok[k] = true;
     p->motor = ES_MOTOR_PARADO;
+    p->t_cierre_ms = p->t_apertura_ms = -1;
     p->guardado = prot_persistente(p);
 }
 
@@ -84,6 +85,8 @@ static val_accion_t aplicar_val(prot_t *p, const prot_entrada_t *e, val_evento_t
     }
     if ((a.fila == 6 || a.fila == 12) && e->hora_valida) p->ultimo_mov_s = e->ahora_s;   /* movimiento completo */
     if (a.fila == 14 || a.fila == 30) p->pospuesto = false;             /* ejercicio completado (FR-EJE-04) */
+    if (a.fila == 6) p->t_cierre_ms = (int32_t)a.t_carrera_ms;          /* valvula/state */
+    if (a.fila == 12) p->t_apertura_ms = (int32_t)a.t_carrera_ms;
     return a;
 }
 
