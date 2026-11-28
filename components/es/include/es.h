@@ -21,6 +21,7 @@
 #define ES_GPIO_ZUMBADOR    15
 #define ES_GPIO_LED_VERDE   16
 #define ES_GPIO_LED_ROJO    17
+#define ES_GPIO_MEDIDOR     18   /* reed del medidor a GND, pull-up externa de 10 kΩ (C-HW-32): bajo = cerrado */
 
 /* ---- ADS1115 (C-HW-24, P1) ---- */
 #define ES_I2C_HZ        100000

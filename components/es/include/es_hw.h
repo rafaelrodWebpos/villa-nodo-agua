@@ -17,7 +17,7 @@ bool es_hw_pinza_iniciar(void);
 /* n muestras en mV a ~2400 muestras/s (FR-IO-04) */
 bool es_hw_pinza_muestras(int16_t *mv, int n);
 
-typedef struct { bool fin_abierta, fin_cerrada, flotador_agua, red_presente, boton; } es_hw_digitales_t;
+typedef struct { bool fin_abierta, fin_cerrada, flotador_agua, red_presente, boton, medidor; } es_hw_digitales_t;
 es_hw_digitales_t es_hw_digitales(void);          /* con la polaridad ya resuelta: true = activo */
 /* Escribe las salidas; nunca IN1 e IN2 a la vez (FR-VAL-11): si llegan los dos, los dos a 0 */
 void es_hw_salidas(bool in1, bool in2, bool rele, bool led_verde, bool led_rojo, bool zumbador);

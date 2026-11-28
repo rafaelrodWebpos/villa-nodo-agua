@@ -13,3 +13,6 @@ typedef struct {
 /* Tras nvs_flash_init: restaura los bloqueos (FR-PER-02), escanea el I²C (A7) y arranca
  * las tareas de medidas, de la pinza y de protección (esta, suscrita al TWDT). */
 void proteccion_iniciar(const proteccion_ganchos_t *g);
+
+/* FR-MED-03: guarda ya el total y los pulsos del medidor (antes de un reinicio ordenado) */
+void medidor_guardar_ya(void);

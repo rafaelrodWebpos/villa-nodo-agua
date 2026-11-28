@@ -33,6 +33,9 @@ void es_hw_gpio_iniciar(void)
     gpio_config_t pd = { .pin_bit_mask = 1ULL << ES_GPIO_RED, .mode = GPIO_MODE_INPUT,
                          .pull_down_en = GPIO_PULLDOWN_ENABLE };
     gpio_config(&pd);
+    /* Medidor testigo (C-HW-32): la pull-up es externa */
+    gpio_config_t md = { .pin_bit_mask = 1ULL << ES_GPIO_MEDIDOR, .mode = GPIO_MODE_INPUT };
+    gpio_config(&md);
 }
 
 void es_hw_i2c_iniciar(char *ack, int cap)
@@ -98,6 +101,7 @@ es_hw_digitales_t es_hw_digitales(void)
         .flotador_agua = gpio_get_level(ES_GPIO_FLOTADOR) == 0,
         .red_presente = gpio_get_level(ES_GPIO_RED) == 1,
         .boton = gpio_get_level(ES_GPIO_BOTON) == 0,
+        .medidor = gpio_get_level(ES_GPIO_MEDIDOR) == 0,
     };
 }
 

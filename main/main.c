@@ -293,6 +293,7 @@ static void al_vencer_validacion(void *arg)
 
 static void al_reiniciar(void *arg)
 {
+    medidor_guardar_ya();                                  /* FR-MED-03 */
     esp_restart();
 }
 
@@ -823,6 +824,7 @@ static void comando_byte(lector_cmd_t *l, uint8_t c)
         ESP_LOGW(TAG, "wdt: bloqueando ciclo");             /* E13 → NFR-WDT-A1 */
         s_wdt_bloquear = true;
     } else if (strcmp(l->linea, "reiniciar") == 0) {
+        medidor_guardar_ya();                              /* FR-MED-03: reinicio ordenado */
         esp_restart();                                     /* E13: la siguiente boot: con reset=sw */
     }
 }
