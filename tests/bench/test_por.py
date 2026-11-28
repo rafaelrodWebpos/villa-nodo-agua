@@ -13,6 +13,10 @@ PORTAL_IP = "192.168.4.1"          # FSD §11.1: el servidor del portal
 NAMES_17 = {"wifi_ssid", "wifi_pass", "mqtt_host", "mqtt_port",
             "mqtt_user", "mqtt_pass", "zona", "sitio"}
 SECRETOS = {"wifi_pass", "mqtt_pass"}
+# FSD §15: los campos del portal son los heredados de §17 más los del nodo de §19 (interfaz portal)
+NAMES_NODO = {"nodo", *(f"sonda_activa_{n}" for n in range(1, 9)), "rango_transductor_cm", "altura_util_cm",
+              "i_marcha_a", "i_seco_a"}
+NAMES_PORTAL = NAMES_17 | NAMES_NODO
 
 
 def _en_portal(tb, slot, c, tmp_dir=None):
@@ -33,7 +37,8 @@ def _en_portal(tb, slot, c, tmp_dir=None):
 
 
 def test_tc_por_02_get_form(testbench, dut_slot, run_dir, tmp_path):
-    """TC-POR-02 · FR-POR-03 (bench) — GET / sirve los 8 campos de §17, sin secretos rellenos."""
+    """TC-POR-02 · FR-POR-03 (bench) — GET / sirve los 8 campos de §17 y los 13 del nodo de §19 (§15),
+    sin secretos rellenos."""
     tb = testbench
     with case(tb, "TC-POR-02", "GET / sirve el formulario", run_dir, spec="TC-POR heredado (villa-nodo-clima-piloto)") as c:
         ssid = _en_portal(tb, dut_slot, c, tmp_path)
@@ -58,13 +63,13 @@ def test_tc_por_02_get_form(testbench, dut_slot, run_dir, tmp_path):
         inputs = re.findall(r"<input\b[^>]*>", html)
         names = {m.group(1) for t in inputs for m in [re.search(r'\bname="([^"]+)"', t)] if m}
         c.note(f"- campos (name): {sorted(names)}")
-        assert names == NAMES_17, f"campos {sorted(names)} ≠ §17 {sorted(NAMES_17)}"
+        assert names == NAMES_PORTAL, f"campos {sorted(names)} ≠ §17 + §19 {sorted(NAMES_PORTAL)}"
         for t in inputs:
             n = re.search(r'\bname="([^"]+)"', t).group(1)
             if n in SECRETOS:
                 assert 'type="password"' in t, f"{n} no es password"
                 assert not re.search(r'\bvalue="[^"]+"', t), f"{n} vuelve relleno (FR-POR-03, «No debe ocurrir»)"
-        c.passed(f"GET / en {ssid}: los 8 campos de §17, secretos vacíos")
+        c.passed(f"GET / en {ssid}: los 8 campos de §17 y los 13 del nodo, secretos vacíos")
 
 
 # Valores ficticios (nunca datos del banco ni de la vivienda): ningún envío es válido
@@ -170,9 +175,9 @@ def test_tc_por_07_captive_redirects(testbench, dut_slot, run_dir, tmp_path):
         for ruta, r in respuestas:
             names = {m.group(1) for t in re.findall(r"<input\b[^>]*>", r.text)
                      for m in [re.search(r'\bname="([^"]+)"', t)] if m}
-            c.note(f"- {ruta}: respuesta final HTTP {r.status_code}, {len(r.text)} bytes, formulario={names == NAMES_17}")
+            c.note(f"- {ruta}: respuesta final HTTP {r.status_code}, {len(r.text)} bytes, formulario={names == NAMES_PORTAL}")
             assert r.status_code != 204, f"{ruta}: 204 (el teléfono no mostraría el portal)"
-            assert r.status_code == 200 and names == NAMES_17, f"{ruta}: la respuesta final no es el formulario del portal (HTTP {r.status_code})"
+            assert r.status_code == 200 and names == NAMES_PORTAL, f"{ruta}: la respuesta final no es el formulario del portal (HTTP {r.status_code})"
         c.passed("/generate_204 y /hotspot-detect.html terminan en el formulario del portal")
 
 

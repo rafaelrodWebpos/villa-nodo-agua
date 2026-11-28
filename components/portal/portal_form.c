@@ -12,6 +12,12 @@ const char *const PORTAL_NAME[PORTAL_N_CAMPOS] = {
     [PORTAL_MQTT_HOST] = "mqtt_host", [PORTAL_MQTT_PORT] = "mqtt_port",
     [PORTAL_MQTT_USER] = "mqtt_user", [PORTAL_MQTT_PASS] = "mqtt_pass",
     [PORTAL_SITIO] = "sitio",         [PORTAL_ZONA] = "zona",
+    [PORTAL_NODO] = "nodo",
+    [PORTAL_SONDA_1] = "sonda_activa_1", [PORTAL_SONDA_2] = "sonda_activa_2", [PORTAL_SONDA_3] = "sonda_activa_3",
+    [PORTAL_SONDA_4] = "sonda_activa_4", [PORTAL_SONDA_5] = "sonda_activa_5", [PORTAL_SONDA_6] = "sonda_activa_6",
+    [PORTAL_SONDA_7] = "sonda_activa_7", [PORTAL_SONDA_8] = "sonda_activa_8",
+    [PORTAL_RANGO] = "rango_transductor_cm", [PORTAL_ALTURA] = "altura_util_cm",
+    [PORTAL_I_MARCHA] = "i_marcha_a", [PORTAL_I_SECO] = "i_seco_a",
 };
 
 typedef struct { char *buf; size_t cap, len; int lleno; } sal_t;
@@ -86,6 +92,30 @@ static void campo(sal_t *s, const def_campo_t *d, const portal_form_t *f)
     if (f->error[d->campo]) put(s, "<small class=\"error\" id=\"err-%s\">%s</small>", n, f->error[d->campo]);
 }
 
+static const def_campo_t NODO[] = {
+    {PORTAL_RANGO,    TX_RANGO,    "number", NULL, "min=\"50\" max=\"1000\" step=\"1\" required", 0, NULL},
+    {PORTAL_ALTURA,   TX_ALTURA,   "number", NULL, "min=\"50\" max=\"1000\" step=\"1\" required", 0, NULL},
+    {PORTAL_I_MARCHA, TX_I_MARCHA, "number", NULL, "min=\"0.2\" max=\"10\" step=\"0.01\" required", 0, NULL},
+    {PORTAL_I_SECO,   TX_I_SECO,   "number", NULL, "min=\"0.2\" max=\"20\" step=\"0.01\"", 0, TX_AYUDA_I_SECO},
+};
+
+/* §15: los parámetros del nodo (§19, interfaz portal), con su valor actual (FR-LOC-06) */
+static void bloque_nodo(sal_t *s, const portal_form_t *f)
+{
+    put(s, "<fieldset><legend>%s</legend><input type=\"hidden\" name=\"nodo\" value=\"1\">", TX_BLOQUE_NODO);
+    put(s, "<p class=\"ayuda\">%s</p>", TX_SONDAS);
+    for (int i = PORTAL_SONDA_1; i <= PORTAL_SONDA_8; i++) {
+        const char *n = PORTAL_NAME[i];
+        put(s, "<label class=\"caja\"><input type=\"checkbox\" id=\"%s\" name=\"%s\" value=\"1\"%s", n, n,
+            f->valores[i] ? " checked" : "");
+        if (f->error[i]) put(s, " aria-invalid=\"true\" aria-describedby=\"err-%s\"", n);
+        put(s, "> %s %d</label>", TX_SONDA, i - PORTAL_SONDA_1 + 1);
+        if (f->error[i]) put(s, "<small class=\"error\" id=\"err-%s\">%s</small>", n, f->error[i]);
+    }
+    for (size_t i = 0; i < sizeof NODO / sizeof *NODO; i++) campo(s, &NODO[i], f);
+    put(s, "</fieldset>");
+}
+
 static void bloque(sal_t *s, const char *titulo, const def_campo_t *d, size_t n, const portal_form_t *f)
 {
     put(s, "<fieldset><legend>%s</legend>", titulo);
@@ -108,7 +138,7 @@ static void cabecera(sal_t *s0, const char *id, const char *version, int refresc
         "fieldset{border:1px solid #d5d9e0;border-radius:10px;background:#fff;margin:0 0 1rem;padding:.6rem 1rem 1rem}"
         ".ayuda{display:block;color:#6b7280;font-size:.8rem;margin-top:.25rem}"
         ".error{display:block;color:#b42318;font-size:.85rem;margin-top:.25rem}"
-        "input[aria-invalid]{border-color:#b42318}"
+        "input[aria-invalid]{border-color:#b42318}.caja{display:flex;gap:.5rem;align-items:center}.caja input{width:auto}"
         ".aviso{background:#fef3f2;border:1px solid #fda29b;color:#912018;border-radius:10px;padding:.7rem 1rem;margin:0 0 1rem}"
         "legend{font-weight:600;padding:0 .3rem}label{display:block;margin:.7rem 0 .25rem;font-size:.95rem}"
         "input{box-sizing:border-box;width:100%%;font-size:1rem;padding:.6rem;border:1px solid #b9c0cc;border-radius:8px}"
@@ -137,6 +167,7 @@ size_t portal_form_html(char *buf, size_t cap, const portal_form_t *f)
     bloque(&s, TX_BLOQUE_WIFI, WIFI, sizeof WIFI / sizeof *WIFI, f);
     bloque(&s, TX_BLOQUE_MQTT, MQTT, sizeof MQTT / sizeof *MQTT, f);
     bloque(&s, TX_BLOQUE_UBICACION, UBICACION, sizeof UBICACION / sizeof *UBICACION, f);
+    bloque_nodo(&s, f);
     put(&s, "<button type=\"submit\">%s</button></form>", TX_GUARDAR);
     put(&s, "<script>function o(i){var e=document.getElementById(i);e.type=e.type==='password'?'text':'password'}</script>"
             "</body></html>");

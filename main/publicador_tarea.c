@@ -189,6 +189,18 @@ static void tarea(void *arg)
             pub_estados(&f, true);
             pub_medidas(&f);
             pub_config();
+            bool inactivas[8];                                       /* FR-CFG-A3: una vez tras guardar el portal */
+            if (nodo_sondas_pendiente(inactivas)) {
+                cev_t ev = { .tipo = "sondas_config", .t_ms = (uint32_t)(esp_timer_get_time() / 1000) };
+                ev.ts_valido = s_g.hora && s_g.hora(&ev.ts);
+                size_t k = (size_t)snprintf(ev.extra, sizeof ev.extra, "\"inactivas\":[");
+                for (int i = 0; i < 8; i++)
+                    if (inactivas[i]) k += (size_t)snprintf(ev.extra + k, sizeof ev.extra - k, "%s%d", ev.extra[k - 1] == '[' ? "" : ",", i + 1);
+                snprintf(ev.extra + k, sizeof ev.extra - k, "]");
+                ESP_LOGW(TAG, "eve: sondas_config %s", ev.extra);                            /* A9 */
+                pub_evento(&ev);
+                nodo_sondas_hecho();
+            }
             ultima_med = (uint32_t)(esp_timer_get_time() / 1000);
             xSemaphoreTake(s_mux, portMAX_DELAY);
             cev_t ev;

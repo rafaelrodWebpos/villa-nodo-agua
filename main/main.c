@@ -191,8 +191,31 @@ static bool persistir(const portal_config_t *c)
 }
 
 /* Evento «envío» del portal (tarea del servidor HTTP). */
+/* Parámetros del nodo del portal (§19): se validan con el envío y se guardan en T05 */
+static portal_nodo_t s_nodo_pendiente;
+static bool s_nodo_hay;
+
+static int validar_nodo(const char *const v[PORTAL_N_CAMPOS], const char *error[PORTAL_N_CAMPOS])
+{
+    portal_nodo_t actual; bool mojada[8];
+    nodo_actual(&actual);
+    proteccion_mojadas(mojada);                            /* FR-CFG-A3: una sonda mojada no se desactiva */
+    int n = portal_nodo_validar(v, &actual, mojada, error, &s_nodo_pendiente);
+    s_nodo_hay = n == 0;
+    return n;
+}
+
+static void valores_nodo(const char *v[PORTAL_N_CAMPOS])
+{
+    static char txt[4][16];
+    portal_nodo_t p;
+    nodo_actual(&p);
+    portal_nodo_valores(&p, txt, v);                        /* FR-LOC-06: con su valor actual */
+}
+
 static portal_resp_t al_enviar(const char *const v[PORTAL_N_CAMPOS], bool valido)
 {
+    if (!portal_nodo_presente(v)) s_nodo_hay = false;       /* un envío sin ellos los deja como están */
     xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
     s_envio = v;
     con_transicion_t t = transicion(CON_EV_ENVIO, (con_guardas_t){.envio_valido = valido});
@@ -631,6 +654,9 @@ static void persistir_y_reiniciar(void)
         return;
     }
     ESP_LOGI(TAG, "nvs: config escrita");                     /* E10 */
+    if (s_nodo_hay && !nodo_guardar(&s_nodo_pendiente))       /* §19: aplica al reiniciar */
+        ESP_LOGE(TAG, "nvs: no se pudieron escribir los parámetros del nodo");
+    s_nodo_hay = false;
     memset(&s_pendiente, 0, sizeof s_pendiente);
     /* Se suelta el STA: el AP del banco también usa 192.168.4.x, y con las dos
      * interfaces activas la respuesta al teléfono podría salir por la del STA */
@@ -758,6 +784,7 @@ static void arrancar_portal(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap));
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_ERROR_CHECK(portal_dns_iniciar());
+    portal_http_nodo(validar_nodo, valores_nodo);
     ESP_ERROR_CHECK(portal_http_iniciar(s_id, s_version, al_enviar));
     const esp_timer_create_args_t tpo = {.callback = al_vencer_portal, .name = "portal"};
     ESP_ERROR_CHECK(esp_timer_create(&tpo, &s_t_portal));

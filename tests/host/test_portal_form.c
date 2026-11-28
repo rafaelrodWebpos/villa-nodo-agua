@@ -44,7 +44,22 @@ int main(void)
         ESPERA(cuenta(html, pat) == 1, "%s aparece %d veces", NAMES_17[i], cuenta(html, pat));
         ESPERA(input_de(html, NAMES_17[i], tag, sizeof tag), "%s no es un <input>", NAMES_17[i]);
     }
-    ESPERA(cuenta(html, "<input ") == 8, "hay %d <input> (esperados 8)", cuenta(html, "<input "));
+    /* §15: más los 13 del nodo (§19, interfaz portal): el oculto «nodo», 8 casillas y 4 números */
+    const char *NODO[] = {"nodo", "sonda_activa_1", "sonda_activa_2", "sonda_activa_3", "sonda_activa_4", "sonda_activa_5",
+                          "sonda_activa_6", "sonda_activa_7", "sonda_activa_8", "rango_transductor_cm", "altura_util_cm",
+                          "i_marcha_a", "i_seco_a"};
+    for (size_t i = 0; i < sizeof NODO / sizeof *NODO; i++) {
+        char pat[64]; snprintf(pat, sizeof pat, "name=\"%s\"", NODO[i]);
+        ESPERA(cuenta(html, pat) == 1, "%s aparece %d veces", NODO[i], cuenta(html, pat));
+    }
+    ESPERA(cuenta(html, "<input ") == 8 + 13, "hay %d <input> (esperados 21)", cuenta(html, "<input "));
+    ESPERA(cuenta(html, "type=\"checkbox\"") == 8 && !strstr(html, " checked"), "casillas: sin valores no salen marcadas");
+    {   /* FR-LOC-06: con los valores actuales, la casilla marcada y el número relleno */
+        static char h2[8192];
+        portal_form_t g = {.id = "agua-a1b2c3", .version = "0.3.0"};
+        g.valores[PORTAL_SONDA_2] = "1"; g.valores[PORTAL_RANGO] = "450";
+        ESPERA(portal_form_html(h2, sizeof h2, &g) > 0 && cuenta(h2, " checked") == 1 && strstr(h2, "value=\"450\""), "valores del nodo no rellenos");
+    }
 
     /* Secretos: type=password, sin value, y el valor recibido no aparece en ningún sitio */
     const char *secretos[] = {"wifi_pass", "mqtt_pass"};

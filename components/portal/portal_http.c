@@ -15,14 +15,23 @@
 #include "portal_textos.h"
 #include "portal_urlenc.h"
 #include "portal_validar.h"
+#include "portal_nodo.h"
 
 #define HTML_MAX 8192
 #define REFRESCO_S 1   /* «Probando…» se recarga cada segundo: «Conectado…» dura poco (T05) */
-#define BODY_MAX 1024      /* 8 campos de §17 con sus máximos, urlencoded, caben con holgura */
+#define BODY_MAX 1536      /* 8 campos de §17 y los 13 del nodo (§19) con sus máximos, urlencoded */
 
 static const char *TAG = "portal";
 static const char *s_id, *s_version;
 static portal_envio_cb_t s_al_enviar;
+static portal_nodo_validar_cb_t s_nodo_validar;
+static portal_nodo_valores_cb_t s_nodo_valores;
+
+void portal_http_nodo(portal_nodo_validar_cb_t validar, portal_nodo_valores_cb_t valores)
+{
+    s_nodo_validar = validar;
+    s_nodo_valores = valores;
+}
 static volatile portal_vista_t s_vista = PORTAL_VISTA_FORMULARIO;
 static httpd_handle_t s_srv;
 
@@ -69,13 +78,15 @@ static esp_err_t get_raiz(httpd_req_t *req)
     case PORTAL_VISTA_NO_CONECTA: {
         pagina = "no-conecta";
         portal_form_t f = {.id = s_id, .version = s_version, .aviso = TX_NO_CONECTA, .aviso_id = "no-conecta"};
-        for (int i = 0; i < PORTAL_N_CAMPOS; i++) if (!es_secreto(i)) f.valores[i] = s_ultimo[i];
+        for (int i = 0; i < PORTAL_N_CAMPOS; i++)        /* una casilla sin marcar vuelve sin marcar */
+            if (!es_secreto(i)) f.valores[i] = i >= PORTAL_N_CLIMA && !s_ultimo[i][0] ? NULL : s_ultimo[i];
         n = portal_form_html(html, HTML_MAX, &f);
         break;
     }
     default: {
         pagina = "formulario";
         portal_form_t f = {.id = s_id, .version = s_version};
+        if (s_nodo_valores) s_nodo_valores(f.valores);       /* §19 con su valor actual (FR-LOC-06) */
         n = portal_form_html(html, HTML_MAX, &f);
     }
     }
@@ -127,6 +138,7 @@ static esp_err_t post_raiz(httpd_req_t *req)
     portal_decodificar(body, v);
     portal_validacion_t val;
     portal_validar(v, &val);
+    if (s_nodo_validar && portal_nodo_presente(v)) val.n_errores += s_nodo_validar(v, val.error);
     portal_resp_t resp = s_al_enviar ? s_al_enviar(v, val.n_errores == 0) : PORTAL_RESP_ERRORES;
 
     size_t n;

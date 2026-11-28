@@ -51,3 +51,18 @@
 #define TX_ERR_MQTT_USER    "Hasta 64 caracteres."
 #define TX_ERR_MQTT_PASS    "Hasta 64 caracteres."
 #define TX_ERR_ID           "De 1 a 32 caracteres: minúsculas, números, - y _."
+
+/* Parámetros del nodo (FSD §19, interfaz portal) */
+#define TX_BLOQUE_NODO      "Nodo de agua"
+#define TX_SONDAS           "Sondas de fuga activas (una sonda mojada no se puede desactivar)."
+#define TX_SONDA            "Sonda"
+#define TX_RANGO            "Rango del transductor de nivel (cm)"
+#define TX_ALTURA           "Altura útil de la cisterna (cm)"
+#define TX_I_MARCHA         "Corriente de marcha de la bomba (A)"
+#define TX_I_SECO           "Corriente de trabajo en seco (A)"
+#define TX_AYUDA_I_SECO     "Vacío = sin calibrar (sin corte por seco). Una vez calibrada no se puede vaciar."
+#define TX_ERR_RANGO_CM     "Escribe un número entero entre 50 y 1000."
+#define TX_ERR_I_MARCHA     "Escribe un número entre 0,2 y 10."
+#define TX_ERR_I_SECO       "Escribe un número entre 0,2 y 20, mayor que la corriente de marcha."
+#define TX_ERR_I_SECO_VACIO "Ya está calibrada: no se puede dejar vacía."
+#define TX_ERR_SONDA_MOJADA "Está mojada: no se puede desactivar ahora."

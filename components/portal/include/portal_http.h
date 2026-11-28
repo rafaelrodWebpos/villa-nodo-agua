@@ -28,6 +28,12 @@ typedef portal_resp_t (*portal_envio_cb_t)(const char *const v[PORTAL_N_CAMPOS],
  * viva el servidor. */
 esp_err_t portal_http_iniciar(const char *id, const char *version, portal_envio_cb_t al_enviar);
 
+/* Parámetros del nodo (§19, interfaz portal): validar suma sus errores a los de §17 en cada
+ * envío que los trae; valores rellena el formulario con el valor actual (FR-LOC-06). */
+typedef int (*portal_nodo_validar_cb_t)(const char *const v[PORTAL_N_CAMPOS], const char *error[PORTAL_N_CAMPOS]);
+typedef void (*portal_nodo_valores_cb_t)(const char *v[PORTAL_N_CAMPOS]);
+void portal_http_nodo(portal_nodo_validar_cb_t validar, portal_nodo_valores_cb_t valores);
+
 /* Detiene el servidor HTTP (T24, FR-POR-08). */
 void portal_http_detener(void);
 

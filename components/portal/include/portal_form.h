@@ -7,6 +7,12 @@ typedef enum {
     PORTAL_WIFI_SSID, PORTAL_WIFI_PASS,
     PORTAL_MQTT_HOST, PORTAL_MQTT_PORT, PORTAL_MQTT_USER, PORTAL_MQTT_PASS,
     PORTAL_SITIO, PORTAL_ZONA,
+    PORTAL_N_CLIMA,                          /* los 8 heredados de clima §17 van antes */
+    /* Parámetros del nodo en el portal (FSD §19, interfaz `portal`; §15) */
+    PORTAL_NODO = PORTAL_N_CLIMA,            /* oculto: el envío trae los del nodo */
+    PORTAL_SONDA_1, PORTAL_SONDA_2, PORTAL_SONDA_3, PORTAL_SONDA_4,
+    PORTAL_SONDA_5, PORTAL_SONDA_6, PORTAL_SONDA_7, PORTAL_SONDA_8,
+    PORTAL_RANGO, PORTAL_ALTURA, PORTAL_I_MARCHA, PORTAL_I_SECO,
     PORTAL_N_CAMPOS
 } portal_campo_t;
 
