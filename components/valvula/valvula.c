@@ -1,4 +1,4 @@
-/* L2 valvula — V01–V25 (FSD §5.3, 0.7.1). Núcleo puro. */
+/* L2 valvula — V01–V30 (FSD §5.3, 0.8.10). Núcleo puro. */
 #include "valvula.h"
 
 void val_iniciar(val_t *v, bool bloqueo_fuga, val_cerrada_por_t cerrada_por, uint32_t t_carrera_max_s)
@@ -12,6 +12,7 @@ static val_accion_t mover(val_t *v, const val_entrada_t *e, int fila, val_estado
     v->estado = hacia;
     v->t_inicio_ms = e->t_ms;
     v->palanca = false;            /* el nodo mueve el motor: la posición ya no es de la palanca */
+    v->epi_bat = v->epi_ciego = false;
     return (val_accion_t){ .fila = fila, .motor = hacia == VAL_CERRANDO ? VMOT_CERRAR : VMOT_ABRIR };
 }
 
@@ -35,13 +36,36 @@ static val_estado_t segun_finales(uint8_t f)
          : f == (VFIN_ABIERTA | VFIN_CERRADA) ? VAL_FALLA : VAL_DESCONOCIDA;
 }
 
-/* V15: un final cambia sin orden */
+/* V15: un final cambia sin orden. Al llegar a CERRADA, cerrada_por = ninguno (S-01): ni V23 ni
+ * V30 reabren y solo una orden abre; un final tardío tras V07 cuenta igual (U-03) */
 static val_accion_t manual(val_t *v, uint8_t f)
 {
     v->estado = segun_finales(f);
     v->palanca = true;
+    v->epi_bat = v->epi_ciego = false;
+    if (v->estado == VAL_CERRADA) v->cerrada_por = VCP_NINGUNO;
     return (val_accion_t){ .fila = 15,
                            .evento = v->estado == VAL_FALLA ? VPUB_FALLA_VALVULA : VPUB_MOVIMIENTO_MANUAL };
+}
+
+void val_episodios(val_t *v, bool g_bateria, bool g_ciego)
+{
+    if (!g_bateria) v->epi_bat = false;
+    if (!g_ciego) v->epi_ciego = false;
+}
+
+static val_accion_t rechazar(int fila, val_rechazo_t r, bool patron)
+{
+    return (val_accion_t){ .fila = fila, .rechazo = r, .patron_rechazo = patron };
+}
+
+/* V25, V26, V08/V10 y V09/V11 desde CERRADA (orden `abrir` o pulsación larga) */
+static val_accion_t abrir_cerrada(val_t *v, const val_entrada_t *e, bool pulsacion)
+{
+    if (!e->g_seco) return pulsacion ? rechazar(11, VRECH_NINGUNO, true) : rechazar(9, VRECH_FUGA_ACTIVA, false);
+    if (e->g_ciego) return rechazar(25, VRECH_SONDAS_EN_FALLA, pulsacion);
+    if (e->g_bateria) return rechazar(26, VRECH_BATERIA_CRITICA, pulsacion);
+    return abrir(v, e, pulsacion ? 10 : 8);
 }
 
 val_accion_t val_evento(val_t *v, const val_entrada_t *e)
@@ -66,8 +90,11 @@ val_accion_t val_evento(val_t *v, const val_entrada_t *e)
             return mover(v, e, 4, VAL_CERRANDO);
         }
         if (e->evento == VEV_CERRAR) { v->cerrada_por = VCP_ORDEN; return mover(v, e, 5, VAL_CERRANDO); }
-        if (e->evento == VEV_BATERIA_CIERRE) { v->cerrada_por = VCP_BATERIA; return mover(v, e, 22, VAL_CERRANDO); }
+        if (e->evento == VEV_BATERIA_CIERRE && !v->palanca) { v->cerrada_por = VCP_BATERIA; return mover(v, e, 22, VAL_CERRANDO); }
         if (e->evento == VEV_CIEGO && !v->palanca) { v->cerrada_por = VCP_SONDAS; return mover(v, e, 24, VAL_CERRANDO); }
+        if (e->evento == VEV_ABRIR || e->evento == VEV_PULSACION_LARGA)     /* V28 */
+            return rechazar(28, VRECH_ESTADO, e->evento == VEV_PULSACION_LARGA);
+        if (e->evento == VEV_FINALES && f != 0) return manual(v, f);        /* V15 */
         return ignorar;
 
     case VAL_ABIERTA:
@@ -82,7 +109,8 @@ val_accion_t val_evento(val_t *v, const val_entrada_t *e)
             if (!e->g_seco || v->bloqueo_fuga || e->g_ciego) return ignorar;
             v->cerrada_por = VCP_EJERCICIO;
             return mover(v, e, 13, VAL_CERRANDO);
-        case VEV_BATERIA_CIERRE:
+        case VEV_BATERIA_CIERRE:                                        /* V22: no tras la palanca (U-02) */
+            if (v->palanca) return ignorar;
             v->cerrada_por = VCP_BATERIA;
             return mover(v, e, 22, VAL_CERRANDO);
         case VEV_CIEGO:                                                 /* V24: bloqueo_fuga sin cambio */
@@ -99,15 +127,9 @@ val_accion_t val_evento(val_t *v, const val_entrada_t *e)
     case VAL_CERRADA:
         switch (e->evento) {
         case VEV_ABRIR:
-            if (e->g_seco && e->g_ciego)                                /* V25: antes que V08 */
-                return (val_accion_t){ .fila = 25, .rechazo = VRECH_SONDAS_EN_FALLA };
-            if (e->g_seco) return abrir(v, e, 8);
-            return (val_accion_t){ .fila = 9, .rechazo = VRECH_FUGA_ACTIVA };
+            return abrir_cerrada(v, e, false);
         case VEV_PULSACION_LARGA:
-            if (e->g_seco && e->g_ciego)                                /* V25: antes que V10 */
-                return (val_accion_t){ .fila = 25, .rechazo = VRECH_SONDAS_EN_FALLA, .patron_rechazo = true };
-            if (e->g_seco) return abrir(v, e, 10);
-            return (val_accion_t){ .fila = 11, .patron_rechazo = true };
+            return abrir_cerrada(v, e, true);
         case VEV_FUGA:
             v->bloqueo_fuga = true; v->cerrada_por = VCP_FUGA;
             return (val_accion_t){ .fila = 17 };
@@ -117,11 +139,21 @@ val_accion_t val_evento(val_t *v, const val_entrada_t *e)
             return mover(v, e, 23, VAL_ABRIENDO);
         case VEV_FINALES:
             if (f == VFIN_CERRADA) {                                    /* final «cerrada» confirmado */
-                if (v->cerrada_por != VCP_EJERCICIO || !e->g_seco || e->g_ciego) return ignorar;   /* V14 */
-                v->cerrada_por = VCP_NINGUNO;                           /* sale abierta: ya no está cerrada por nada */
+                if (v->cerrada_por != VCP_EJERCICIO) return ignorar;
+                if (e->g_ciego) { v->cerrada_por = VCP_SONDAS; return (val_accion_t){ .fila = 29 }; }    /* V29 */
+                if (e->g_bateria) { v->cerrada_por = VCP_BATERIA; return (val_accion_t){ .fila = 27 }; } /* V27 */
+                if (!e->g_seco) return ignorar;                         /* sigue CERRADA; V30 la reevalúa */
+                v->cerrada_por = VCP_NINGUNO;                           /* V14: sale abierta */
                 return mover(v, e, 14, VAL_ABRIENDO);
             }
             return manual(v, f);
+        case VEV_CICLO:                                                 /* V30, de nivel (Q-12) */
+            if (v->cerrada_por != VCP_EJERCICIO || f != VFIN_CERRADA) return ignorar;
+            if (e->g_ciego) { v->cerrada_por = VCP_SONDAS; return (val_accion_t){ .fila = 30 }; }
+            if (e->g_bateria) { v->cerrada_por = VCP_BATERIA; return (val_accion_t){ .fila = 30 }; }
+            if (!e->g_seco) return ignorar;
+            v->cerrada_por = VCP_NINGUNO;
+            return mover(v, e, 30, VAL_ABRIENDO);
         default:
             return ignorar;
         }
@@ -157,16 +189,29 @@ val_accion_t val_evento(val_t *v, const val_entrada_t *e)
             return mover(v, e, 16, VAL_CERRANDO);
         case VEV_ABRIR:                                                 /* V16: no con g_ciego (FSD 0.8.4) */
             if (e->g_seco && e->g_ciego) return (val_accion_t){ .fila = 16, .rechazo = VRECH_SONDAS_EN_FALLA };
+            if (e->g_seco && e->g_bateria) return ignorar;              /* guarda de V08 sin cumplir: par no listado */
             if (e->g_seco) return abrir(v, e, 16);
             return (val_accion_t){ .fila = 16, .rechazo = VRECH_FUGA_ACTIVA };
         case VEV_PULSACION_LARGA:
             if (e->g_seco && e->g_ciego)
                 return (val_accion_t){ .fila = 16, .rechazo = VRECH_SONDAS_EN_FALLA, .patron_rechazo = true };
+            if (e->g_seco && e->g_bateria) return ignorar;              /* guarda de V10 sin cumplir */
             if (e->g_seco) return abrir(v, e, 16);
             return (val_accion_t){ .fila = 16, .patron_rechazo = true };
         case VEV_FUGA:
             v->bloqueo_fuga = true; v->cerrada_por = VCP_FUGA;
             return mover(v, e, 20, VAL_CERRANDO);
+        case VEV_BATERIA_CIERRE:                                        /* V22 desde FALLA: un reintento por episodio */
+            if (v->palanca || v->epi_bat) return ignorar;
+            v->cerrada_por = VCP_BATERIA;
+            { val_accion_t a = mover(v, e, 22, VAL_CERRANDO); v->epi_bat = true; return a; }
+        case VEV_CIEGO:                                                 /* V24 desde FALLA: un reintento por episodio */
+            if (v->palanca || v->epi_ciego) return ignorar;
+            v->cerrada_por = VCP_SONDAS;
+            { val_accion_t a = mover(v, e, 24, VAL_CERRANDO); v->epi_ciego = true; return a; }
+        case VEV_FINALES:                                               /* V15 desde FALLA (U-03) */
+            if (f == (VFIN_ABIERTA | VFIN_CERRADA)) return ignorar;
+            return manual(v, f);
         default:
             return ignorar;
         }
@@ -185,7 +230,7 @@ const char *val_nombre_estado(val_estado_t s)
 const char *val_nombre_evento(val_evento_t e)
 {
     static const char *const N[] = { "finales", "fuga", "cerrar", "abrir", "pulsacion_larga", "ejercicio", "tick",
-                                       "bateria_cierre", "bateria_reapertura", "ciego" };
+                                       "bateria_cierre", "bateria_reapertura", "ciego", "ciclo" };
     return e < VEV_N_EVENTOS ? N[e] : "?";
 }
 

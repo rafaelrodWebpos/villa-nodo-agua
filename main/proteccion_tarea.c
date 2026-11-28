@@ -138,7 +138,8 @@ static void registrar(const prot_evento_t *e)
     case PEV_FALLA_ADC: ESP_LOGW(TAG, "evento: falla_adc 0x%02x", 0x48 + e->a); break;
     case PEV_RECHAZO:
         ESP_LOGW(TAG, "evento: pulsacion_larga rechazada (%s)",
-                 e->a == 1 ? "fuga_activa" : e->a == 3 ? "sondas_en_falla" : e->a == 4 ? "nivel_bajo" : "sin_agua");
+                 e->a == 1 ? "fuga_activa" : e->a == 3 ? "sondas_en_falla" : e->a == 4 ? "nivel_bajo" :
+                 e->a == 5 ? "bateria_critica" : e->a == 6 ? "estado" : "sin_agua");
         break;
     case PEV_FLOTADOR_FALLA:
         if (e->a) ESP_LOGW(TAG, "evento: flotador_falla"); else ESP_LOGI(TAG, "bom: flotador sin falla");

@@ -78,7 +78,7 @@ typedef enum {
     PEV_CICLADO,         /* a = arranques, b = válvula abierta */
     PEV_BATERIA,         /* a = estado (ene_estado_t) */
     PEV_FALLA_ADC,       /* a = índice del ADS (0…2) */
-    PEV_RECHAZO,         /* a = 1 válvula (fuga_activa) / 2 bomba (sin_agua) / 3 válvula (sondas_en_falla, V25) / 4 bomba (nivel_bajo, B16) por pulsación larga */
+    PEV_RECHAZO,         /* a = 1 válvula (fuga_activa) / 2 bomba (sin_agua) / 3 válvula (sondas_en_falla, V25) / 4 bomba (nivel_bajo, B16) / 5 válvula (bateria_critica, V26) / 6 válvula (estado, V28) por pulsación larga */
     PEV_FLOTADOR_FALLA,  /* a = 1 declarada (FR-BOM-10), 0 terminada */
     PEV_VREF,            /* a = 1 se usa la referencia nominal, 0 vuelve la medida */
     PEV_FALLA_VREF,      /* a = 1 referencia en falla 5 s (evento falla_vref, FR-SON-04), 0 terminada */
@@ -148,4 +148,5 @@ prot_persistente_t prot_persistente(const prot_t *p);
 /* ¿Alguna sonda activa en `mojada`? (FR-OTA-A1, para la Fase 3) */
 bool prot_sonda_mojada(const prot_t *p);
 /* g_ciego (§5.2, FR-SON-05): casa_cerrada y (≥ 2 sondas activas en falla o referencia en falla) */
+bool prot_g_bateria(const prot_t *p);   /* batería `critica` y red `ausente` (FR-ENE-04) */
 bool prot_g_ciego(const prot_t *p);
