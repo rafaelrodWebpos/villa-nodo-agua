@@ -1785,6 +1785,7 @@ gate_verdicts:   # [{gate, verdict, date, commit}] — los escribe el checker
   - {gate: 01-load-defined, verdict: SHUT, date: 2026-11-28, commit: 505e807, note: "FSD 0.8.5; 2.ª revisión independiente; R-01 alta (rearmar/pulsación saltan el nivel crítico) — testing/revision-load-defined-2026-11-28b.md"}
   - {gate: 01-load-defined, verdict: SHUT, date: 2026-11-28, commit: 2751360, note: "FSD 0.8.6; 3.ª revisión independiente; Q-01 alta (la pulsación de 10 s de FR-LOC-06 borra i_seco_a y la calibración de nivel: apaga el corte por seco) — testing/revision-load-defined-2026-11-28c.md"}
   - {gate: 01-load-defined, verdict: SHUT, date: 2026-11-28, commit: 9508843, note: "FSD 0.8.7; 4.ª revisión independiente; Q-01 alta (contrato de banco de FR-BOM-10 contradice el plazo de B05) — testing/revision-load-defined-2026-11-28d.md"}
+  - {gate: 01-load-defined, verdict: SHUT, date: 2026-11-28, commit: 6c9bd57, note: "FSD 0.8.8; 5.ª revisión independiente, solo el diff desde 0.8.6; S-01 alta (V30 abre tras un cierre con palanca) y S-02 alta (FR-CON-01 en la Fase 1 necesita MQTT) — testing/revision-load-defined-2026-11-28e.md"}
 
 commissioning:
   forward_path:
