@@ -1,7 +1,7 @@
 /* Tablas normativas y núcleos de §5, §6 y §8 en host:
- *   val  · TC-VAL-A1 · V01–V25 (tabla parametrizada + completitud de §5.3; la fuga siempre gana)
+ *   val  · TC-VAL-A1 · V01–V30 (tabla parametrizada + completitud de §5.3; la fuga siempre gana; FSD 0.8.10)
  *   eje  · TC-EJE-A1 · FR-EJE-01 (reloj simulado) y la secuencia V13 → V06 → V14 → V12
- *   bom  · TC-BOM-A1 · B01–B11 (tabla parametrizada + completitud), FR-BOM-05 y FR-BOM-07 (parte host)
+ *   bom  · TC-BOM-A1 · B01–B16 (tabla parametrizada + completitud), FR-BOM-05 y FR-BOM-07 (parte host)
  *   bat  · TC-ENE-A2 · FR-ENE-04/05 (condiciones de cierre y de reapertura, parte host)
  *   seco · TC-BOM-A2 · FR-BOM-03 (series de corriente y presión)
  *   loc  · TC-LOC-A1 · FR-LOC-04 (todas las combinaciones de §8.2)
@@ -75,17 +75,17 @@ static const vcaso_t VC[] = {
 /* Filas que la tabla de §5.3 admite para cada (estado × evento); 0 = no listado */
 static bool val_admitida(val_estado_t s, val_evento_t e, int fila)
 {
-    static const int M[VAL_N_ESTADOS][VEV_N_EVENTOS][3] = {
-        /*              finales      fuga       cerrar     abrir      larga      ejercicio  tick  bat_cierre bat_reap ciego */
-        [VAL_ARRANQUE]    = {{1,2,3}, {0},       {0},       {0},       {0},       {0},       {0},  {0},       {0},     {0}},
-        [VAL_DESCONOCIDA] = {{0},     {4},       {5},       {0},       {0},       {0},       {0},  {22},      {0},     {24}},
-        [VAL_ABIERTA]     = {{15},    {4},       {5},       {0},       {0},       {13},      {0},  {22},      {0},     {24}},
-        [VAL_CERRADA]     = {{14,15}, {17},      {0},       {8,9,25},  {10,11,25},{0},       {0},  {0},       {23},    {0}},
-        [VAL_CERRANDO]    = {{6},     {21},      {19},      {19},      {0},       {0},       {7},  {0},       {0},     {0}},
-        [VAL_ABRIENDO]    = {{12},    {18},      {19},      {19},      {0},       {0},       {7},  {0},       {0},     {0}},
-        [VAL_FALLA]       = {{0},     {20},      {16},      {16},      {16},      {0},       {0},  {0},       {0},     {0}},
+    static const int M[VAL_N_ESTADOS][VEV_N_EVENTOS][4] = {
+        /*              finales        fuga  cerrar abrir         larga          ejercicio tick bat_cierre bat_reap ciego ciclo */
+        [VAL_ARRANQUE]    = {{1,2,3},     {0},  {0},  {0},          {0},           {0},  {0},  {0},  {0},  {0},  {0}},
+        [VAL_DESCONOCIDA] = {{15},        {4},  {5},  {28},         {28},          {0},  {0},  {22}, {0},  {24}, {0}},
+        [VAL_ABIERTA]     = {{15},        {4},  {5},  {0},          {0},           {13}, {0},  {22}, {0},  {24}, {0}},
+        [VAL_CERRADA]     = {{14,15,27,29},{17},{0},  {8,9,25,26},  {10,11,25,26}, {0},  {0},  {0},  {23}, {0},  {30}},
+        [VAL_CERRANDO]    = {{6},         {21}, {19}, {19},         {0},           {0},  {7},  {0},  {0},  {0},  {0}},
+        [VAL_ABRIENDO]    = {{12},        {18}, {19}, {19},         {0},           {0},  {7},  {0},  {0},  {0},  {0}},
+        [VAL_FALLA]       = {{15},        {20}, {16}, {16},         {16},          {0},  {0},  {22}, {0},  {24}, {0}},
     };
-    for (int i = 0; i < 3; i++) if (M[s][e][i] == fila && fila) return true;
+    for (int i = 0; i < 4; i++) if (M[s][e][i] == fila && fila) return true;
     return false;
 }
 
@@ -97,7 +97,7 @@ static void val(void)
         val_iniciar(&v, k->bloq0, k->cp0, T_MAX_S);
         v.estado = k->desde;
         v.t_inicio_ms = 0;
-        val_entrada_t e = { k->ev, k->fin, k->seco, k->t, false };
+        val_entrada_t e = { k->ev, k->fin, k->seco, k->t, false, false };
         val_accion_t a = val_evento(&v, &e);
         OK(a.fila == k->fila && v.estado == k->hacia && a.motor == k->motor && a.rechazo == k->rech &&
            a.evento == k->pub && a.patron_rechazo == k->patron && v.bloqueo_fuga == k->bloq && v.cerrada_por == k->cp,
@@ -109,44 +109,44 @@ static void val(void)
     {
         val_t v; val_entrada_t e;
         val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_ABIERTA;
-        e = (val_entrada_t){ VEV_CIEGO, A, true, 0, true };
+        e = (val_entrada_t){ VEV_CIEGO, A, true, 0, true, false };
         val_accion_t a = val_evento(&v, &e);
         OK(a.fila == 24 && v.estado == VAL_CERRANDO && a.motor == VMOT_CERRAR && v.cerrada_por == VCP_SONDAS && !v.bloqueo_fuga,
            "V24 desde ABIERTA");
         val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_DESCONOCIDA;
-        e = (val_entrada_t){ VEV_CIEGO, N0, true, 0, true };
+        e = (val_entrada_t){ VEV_CIEGO, N0, true, 0, true, false };
         a = val_evento(&v, &e);
         OK(a.fila == 24 && v.cerrada_por == VCP_SONDAS && !v.bloqueo_fuga, "V24 desde DESCONOCIDA");
         val_iniciar(&v, true, VCP_FUGA, T_MAX_S); v.estado = VAL_ABIERTA;   /* bloqueo_fuga sin cambio */
-        e = (val_entrada_t){ VEV_CIEGO, A, true, 0, true };
+        e = (val_entrada_t){ VEV_CIEGO, A, true, 0, true, false };
         a = val_evento(&v, &e);
         OK(a.fila == 24 && v.bloqueo_fuga, "V24 no toca bloqueo_fuga");
         for (int st = 0; st < VAL_N_ESTADOS; st++) {
-            if (st == VAL_ABIERTA || st == VAL_DESCONOCIDA) continue;
+            if (st == VAL_ABIERTA || st == VAL_DESCONOCIDA || st == VAL_FALLA) continue;   /* FALLA: Q-08 */
             val_iniciar(&v, false, VCP_ORDEN, T_MAX_S); v.estado = (val_estado_t)st;
-            e = (val_entrada_t){ VEV_CIEGO, C, true, 0, true };
-            OK(val_evento(&v, &e).fila == 0, "V24 solo desde ABIERTA y DESCONOCIDA (%s)", val_nombre_estado(st));
+            e = (val_entrada_t){ VEV_CIEGO, C, true, 0, true, false };
+            OK(val_evento(&v, &e).fila == 0, "V24 solo desde ABIERTA, DESCONOCIDA y FALLA (%s)", val_nombre_estado(st));
         }
         /* V25: con g_seco y g_ciego, ni la orden ni la pulsación abren */
         val_iniciar(&v, false, VCP_SONDAS, T_MAX_S); v.estado = VAL_CERRADA;
-        e = (val_entrada_t){ VEV_ABRIR, C, true, 0, true };
+        e = (val_entrada_t){ VEV_ABRIR, C, true, 0, true, false };
         a = val_evento(&v, &e);
         OK(a.fila == 25 && a.rechazo == VRECH_SONDAS_EN_FALLA && v.estado == VAL_CERRADA && a.motor == VMOT_SIN_CAMBIO
            && !a.patron_rechazo, "V25 orden abrir");
-        e = (val_entrada_t){ VEV_PULSACION_LARGA, C, true, 0, true };
+        e = (val_entrada_t){ VEV_PULSACION_LARGA, C, true, 0, true, false };
         a = val_evento(&v, &e);
         OK(a.fila == 25 && a.patron_rechazo && v.estado == VAL_CERRADA, "V25 pulsación larga");
-        e = (val_entrada_t){ VEV_ABRIR, C, false, 0, true };                 /* sin g_seco gana V09 */
+        e = (val_entrada_t){ VEV_ABRIR, C, false, 0, true, false };                 /* sin g_seco gana V09 */
         a = val_evento(&v, &e);
         OK(a.fila == 9 && a.rechazo == VRECH_FUGA_ACTIVA, "con fuga y ciego: V09");
-        e = (val_entrada_t){ VEV_ABRIR, C, true, 0, false };                 /* sin g_ciego: V08 */
+        e = (val_entrada_t){ VEV_ABRIR, C, true, 0, false, false };                 /* sin g_ciego: V08 */
         a = val_evento(&v, &e);
         OK(a.fila == 8 && v.estado == VAL_ABRIENDO && v.cerrada_por == VCP_NINGUNO, "sin ciego: V08");
         /* FSD 0.8.4 (propietario, 2026-11-23): V13, V14 y V16 no reabren ni mueven con g_ciego;
          * el propietario siempre puede reabrir a mano: con la palanca (V24 no vuelve a cerrar,
          * P12) o desde HA con confirmación (casa_cerrada=false → sin g_ciego → V08) */
         val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_FALLA;
-        e = (val_entrada_t){ VEV_ABRIR, 0, true, 0, true };
+        e = (val_entrada_t){ VEV_ABRIR, 0, true, 0, true, false };
         a = val_evento(&v, &e);
         OK(a.fila == 16 && a.rechazo == VRECH_SONDAS_EN_FALLA && v.estado == VAL_FALLA, "V16 abrir con g_ciego: rechazo");
         e.evento = VEV_PULSACION_LARGA; a = val_evento(&v, &e);
@@ -154,54 +154,142 @@ static void val(void)
         e.evento = VEV_CERRAR; a = val_evento(&v, &e);
         OK(a.fila == 16 && v.estado == VAL_CERRANDO, "V16 cerrar con g_ciego: sí");
         val_iniciar(&v, false, VCP_EJERCICIO, T_MAX_S); v.estado = VAL_CERRADA;
-        e = (val_entrada_t){ VEV_FINALES, C, true, 0, true };
-        OK(val_evento(&v, &e).fila == 0 && v.estado == VAL_CERRADA, "V14 con g_ciego: no reabre");
+        e = (val_entrada_t){ VEV_FINALES, C, true, 0, true, false };
+        OK(val_evento(&v, &e).fila == 29 && v.estado == VAL_CERRADA && v.cerrada_por == VCP_SONDAS, "V14 con g_ciego: no reabre (V29)");
         val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_ABIERTA;
-        e = (val_entrada_t){ VEV_EJERCICIO, VFIN_ABIERTA, true, 0, true };
+        e = (val_entrada_t){ VEV_EJERCICIO, VFIN_ABIERTA, true, 0, true, false };
         OK(val_evento(&v, &e).fila == 0 && v.estado == VAL_ABIERTA, "V13 con g_ciego: no empieza el ejercicio");
         /* palanca: CERRADA (por sondas) → abierta a mano con g_ciego; V24 ya no cierra */
         val_iniciar(&v, false, VCP_SONDAS, T_MAX_S); v.estado = VAL_CERRADA;
-        e = (val_entrada_t){ VEV_FINALES, VFIN_ABIERTA, true, 0, true };
+        e = (val_entrada_t){ VEV_FINALES, VFIN_ABIERTA, true, 0, true, false };
         a = val_evento(&v, &e);
         OK(a.fila == 15 && v.estado == VAL_ABIERTA && a.evento == VPUB_MOVIMIENTO_MANUAL, "palanca: V15 a ABIERTA");
-        e = (val_entrada_t){ VEV_CIEGO, VFIN_ABIERTA, true, 100, true };
+        e = (val_entrada_t){ VEV_CIEGO, VFIN_ABIERTA, true, 100, true, false };
         for (int k = 0; k < 5; k++) { a = val_evento(&v, &e); OK(a.fila == 0 && a.motor == VMOT_SIN_CAMBIO, "palanca: V24 no vuelve a cerrar"); }
-        e = (val_entrada_t){ VEV_FUGA, VFIN_ABIERTA, false, 200, true };
+        e = (val_entrada_t){ VEV_FUGA, VFIN_ABIERTA, false, 200, true, false };
         a = val_evento(&v, &e);
         OK(a.fila == 4 && v.estado == VAL_CERRANDO && v.bloqueo_fuga, "palanca: la fuga siempre gana (V04)");
         val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_ABIERTA;
-        e = (val_entrada_t){ VEV_FINALES, 0, true, 0, true };
+        e = (val_entrada_t){ VEV_FINALES, 0, true, 0, true, false };
         OK(val_evento(&v, &e).fila == 15 && v.estado == VAL_DESCONOCIDA, "palanca a medio camino: V15");
-        e = (val_entrada_t){ VEV_CIEGO, 0, true, 100, true };
+        e = (val_entrada_t){ VEV_CIEGO, 0, true, 100, true, false };
         OK(val_evento(&v, &e).fila == 0, "palanca en DESCONOCIDA: V24 no actúa");
         /* después de que el nodo mueva el motor, V24 vuelve a valer */
         val_iniciar(&v, false, VCP_SONDAS, T_MAX_S); v.estado = VAL_ABIERTA; v.palanca = true;
-        e = (val_entrada_t){ VEV_CERRAR, VFIN_ABIERTA, true, 0, true }; val_evento(&v, &e);
+        e = (val_entrada_t){ VEV_CERRAR, VFIN_ABIERTA, true, 0, true, false }; val_evento(&v, &e);
         OK(!v.palanca, "una orden que mueve el motor borra la marca de la palanca");
         /* HA con confirmación: casa_cerrada=false → sin g_ciego → V08 */
         val_iniciar(&v, false, VCP_SONDAS, T_MAX_S); v.estado = VAL_CERRADA;
-        e = (val_entrada_t){ VEV_ABRIR, C, true, 0, false };
+        e = (val_entrada_t){ VEV_ABRIR, C, true, 0, false, false };
         OK(val_evento(&v, &e).fila == 8 && v.estado == VAL_ABRIENDO, "HA con casa_cerrada=false: V08 reabre");
         /* V23 no reabre con g_ciego */
         val_iniciar(&v, false, VCP_BATERIA, T_MAX_S); v.estado = VAL_CERRADA;
-        e = (val_entrada_t){ VEV_BATERIA_REAPERTURA, C, true, 0, true };
+        e = (val_entrada_t){ VEV_BATERIA_REAPERTURA, C, true, 0, true, false };
         OK(val_evento(&v, &e).fila == 0 && v.estado == VAL_CERRADA, "V23 con g_ciego: no reabre");
+    }
+    /* FSD 0.8.5–0.8.10: V26–V30, V15 en DESCONOCIDA/FALLA, V22/V24 desde FALLA, U-02, U-03 */
+    {
+        val_t v; val_entrada_t e; val_accion_t a;
+        val_iniciar(&v, false, VCP_BATERIA, T_MAX_S); v.estado = VAL_CERRADA;          /* V26 */
+        e = (val_entrada_t){ VEV_ABRIR, C, true, 0, false, true };
+        a = val_evento(&v, &e);
+        OK(a.fila == 26 && a.rechazo == VRECH_BATERIA_CRITICA && !a.patron_rechazo && v.estado == VAL_CERRADA, "V26 orden");
+        e.evento = VEV_PULSACION_LARGA; a = val_evento(&v, &e);
+        OK(a.fila == 26 && a.rechazo == VRECH_BATERIA_CRITICA && a.patron_rechazo, "V26 pulsación");
+        e.g_ciego = true; a = val_evento(&v, &e);
+        OK(a.fila == 25, "con g_ciego y g_bateria gana V25 (V%02d)", a.fila);
+        val_iniciar(&v, false, VCP_EJERCICIO, T_MAX_S); v.estado = VAL_CERRADA;        /* V27 */
+        e = (val_entrada_t){ VEV_FINALES, C, true, 0, false, true };
+        a = val_evento(&v, &e);
+        OK(a.fila == 27 && v.estado == VAL_CERRADA && v.cerrada_por == VCP_BATERIA && a.motor == VMOT_SIN_CAMBIO, "V27");
+        val_iniciar(&v, false, VCP_EJERCICIO, T_MAX_S); v.estado = VAL_CERRADA;        /* V29 */
+        e = (val_entrada_t){ VEV_FINALES, C, true, 0, true, true };
+        a = val_evento(&v, &e);
+        OK(a.fila == 29 && v.cerrada_por == VCP_SONDAS && a.motor == VMOT_SIN_CAMBIO, "V29");
+        val_iniciar(&v, false, VCP_EJERCICIO, T_MAX_S); v.estado = VAL_CERRADA;        /* V30 (Q-12) */
+        e = (val_entrada_t){ VEV_FINALES, C, false, 0, false, false };
+        OK(val_evento(&v, &e).fila == 0 && v.cerrada_por == VCP_EJERCICIO, "V14 sin g_seco no debe actuar");
+        e.evento = VEV_CICLO; OK(val_evento(&v, &e).fila == 0, "V30 sin g_seco no debe actuar");
+        e.g_seco = true; a = val_evento(&v, &e);
+        OK(a.fila == 30 && v.estado == VAL_ABRIENDO && v.cerrada_por == VCP_NINGUNO && a.motor == VMOT_ABRIR, "V30 reabre al secarse");
+        val_iniciar(&v, false, VCP_EJERCICIO, T_MAX_S); v.estado = VAL_CERRADA;
+        e = (val_entrada_t){ VEV_CICLO, C, true, 0, false, true };
+        a = val_evento(&v, &e);
+        OK(a.fila == 30 && v.estado == VAL_CERRADA && v.cerrada_por == VCP_BATERIA, "V30 con g_bateria");
+        val_iniciar(&v, false, VCP_EJERCICIO, T_MAX_S); v.estado = VAL_CERRADA;
+        e = (val_entrada_t){ VEV_CICLO, C, true, 0, true, false };
+        a = val_evento(&v, &e);
+        OK(a.fila == 30 && v.estado == VAL_CERRADA && v.cerrada_por == VCP_SONDAS, "V30 con g_ciego");
+        val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_DESCONOCIDA;      /* V28 */
+        e = (val_entrada_t){ VEV_ABRIR, N0, true, 0, false, false };
+        a = val_evento(&v, &e);
+        OK(a.fila == 28 && a.rechazo == VRECH_ESTADO && !a.patron_rechazo && v.estado == VAL_DESCONOCIDA, "V28 orden");
+        e.evento = VEV_PULSACION_LARGA; a = val_evento(&v, &e);
+        OK(a.fila == 28 && a.patron_rechazo, "V28 pulsación");
+        /* S-01 / U-03: ejercicio en FALLA (V07), final «cerrada» tardío → V15, cerrada_por ninguno, nada reabre */
+        val_iniciar(&v, false, VCP_EJERCICIO, T_MAX_S); v.estado = VAL_CERRANDO; v.t_inicio_ms = 0;
+        e = (val_entrada_t){ VEV_TICK, N0, true, 30001, false, false };
+        OK(val_evento(&v, &e).fila == 7 && v.estado == VAL_FALLA, "V07");
+        e = (val_entrada_t){ VEV_FINALES, C, true, 31000, false, false };
+        a = val_evento(&v, &e);
+        OK(a.fila == 15 && v.estado == VAL_CERRADA && v.cerrada_por == VCP_NINGUNO && a.evento == VPUB_MOVIMIENTO_MANUAL,
+           "final tardío tras V07: fila %d, cerrada_por %d", a.fila, v.cerrada_por);
+        for (int k = 0; k < 60; k++) {
+            e = (val_entrada_t){ VEV_CICLO, C, true, 32000u + 1000u * (uint32_t)k, false, false };
+            OK(val_evento(&v, &e).motor == VMOT_SIN_CAMBIO, "V30 abre tras la palanca");
+            e.evento = VEV_FINALES; OK(val_evento(&v, &e).motor == VMOT_SIN_CAMBIO, "V14 abre tras la palanca");
+        }
+        /* V23 tras la palanca */
+        val_iniciar(&v, false, VCP_BATERIA, T_MAX_S); v.estado = VAL_CERRADA;
+        e = (val_entrada_t){ VEV_FINALES, A, true, 0, false, false }; val_evento(&v, &e);
+        e.finales = C; val_evento(&v, &e);
+        e = (val_entrada_t){ VEV_BATERIA_REAPERTURA, C, true, 100, false, false };
+        OK(v.cerrada_por == VCP_NINGUNO && val_evento(&v, &e).fila == 0 && v.estado == VAL_CERRADA, "V23 reabre tras la palanca");
+        /* U-02: batería crítica sin red; palanca a «abierta» → V22 no cierra */
+        val_iniciar(&v, false, VCP_BATERIA, T_MAX_S); v.estado = VAL_CERRADA;
+        e = (val_entrada_t){ VEV_FINALES, A, true, 0, false, true };
+        OK(val_evento(&v, &e).fila == 15 && v.estado == VAL_ABIERTA, "palanca a abierta con batería crítica");
+        e.evento = VEV_BATERIA_CIERRE;
+        for (int k = 0; k < 5; k++) OK(val_evento(&v, &e).fila == 0 && v.estado == VAL_ABIERTA, "V22 cierra tras la palanca");
+        /* V22 desde FALLA: un reintento por episodio; otro en un episodio nuevo */
+        val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_FALLA;
+        e = (val_entrada_t){ VEV_BATERIA_CIERRE, N0, true, 0, false, true };
+        a = val_evento(&v, &e);
+        OK(a.fila == 22 && v.estado == VAL_CERRANDO && v.cerrada_por == VCP_BATERIA, "V22 desde FALLA");
+        e = (val_entrada_t){ VEV_TICK, N0, true, 30001, false, true }; val_evento(&v, &e);
+        e = (val_entrada_t){ VEV_BATERIA_CIERRE, N0, true, 30100, false, true };
+        OK(v.estado == VAL_FALLA && val_evento(&v, &e).fila == 0, "segundo reintento en el mismo episodio");
+        val_episodios(&v, false, false);
+        OK(val_evento(&v, &e).fila == 22, "sin reintento en un episodio nuevo");
+        val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_FALLA;            /* V24 desde FALLA */
+        e = (val_entrada_t){ VEV_CIEGO, N0, true, 0, true, false };
+        OK(val_evento(&v, &e).fila == 24 && v.cerrada_por == VCP_SONDAS, "V24 desde FALLA");
+        e = (val_entrada_t){ VEV_TICK, N0, true, 30001, true, false }; val_evento(&v, &e);
+        e = (val_entrada_t){ VEV_CIEGO, N0, true, 30100, true, false };
+        OK(val_evento(&v, &e).fila == 0, "V24: segundo reintento en el mismo episodio");
+        val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_FALLA;            /* V16 con g_bateria */
+        e = (val_entrada_t){ VEV_ABRIR, N0, true, 0, false, true };
+        OK(val_evento(&v, &e).fila == 0 && v.estado == VAL_FALLA, "V16 abre con g_bateria");
+        val_iniciar(&v, false, VCP_ORDEN, T_MAX_S); v.estado = VAL_DESCONOCIDA;        /* V15 desde DESCONOCIDA */
+        e = (val_entrada_t){ VEV_FINALES, C, true, 0, false, false };
+        OK(val_evento(&v, &e).fila == 15 && v.estado == VAL_CERRADA && v.cerrada_por == VCP_NINGUNO, "V15 desde DESCONOCIDA");
     }
     /* tiempo de carrera medido y límite exacto de P3 */
     val_t v; val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_CERRANDO; v.t_inicio_ms = 1000;
-    val_entrada_t t = { VEV_TICK, 0, true, 31000, false };
+    val_entrada_t t = { VEV_TICK, 0, true, 31000, false, false };
     OK(val_evento(&v, &t).fila == 0 && v.estado == VAL_CERRANDO, "FALLA con exactamente P3 (no superado)");
-    val_entrada_t f = { VEV_FINALES, C, true, 4200, false };
+    val_entrada_t f = { VEV_FINALES, C, true, 4200, false, false };
     OK(val_evento(&v, &f).t_carrera_ms == 3200, "tiempo de carrera de V06");
     /* completitud: cada (estado × evento × finales × g_seco) da una fila admitida o se ignora sin efecto */
     int pares = 0, ignorados = 0;
     for (int s = 0; s < VAL_N_ESTADOS; s++) for (int ev = 0; ev < VEV_N_EVENTOS; ev++)
     for (int fin = 0; fin < 4; fin++) for (int seco = 0; seco < 2; seco++) for (int cp = 0; cp <= VCP_SONDAS; cp++)
-    for (int bl = 0; bl < 2; bl++) for (int ci = 0; ci < 2; ci++) for (int pa = 0; pa < 2; pa++) {
+    for (int bl = 0; bl < 2; bl++) for (int ci = 0; ci < 2; ci++) for (int pa = 0; pa < 2; pa++)
+    for (int bt = 0; bt < 2; bt++) for (int ep = 0; ep < 2; ep++) {
         val_iniciar(&v, bl, (val_cerrada_por_t)cp, T_MAX_S);
-        v.estado = (val_estado_t)s; v.t_inicio_ms = 0; v.palanca = pa;
+        v.estado = (val_estado_t)s; v.t_inicio_ms = 0; v.palanca = pa; v.epi_bat = v.epi_ciego = ep;
         val_t antes = v;
-        val_entrada_t e = { (val_evento_t)ev, (uint8_t)fin, seco, ev == VEV_TICK ? 30001u : 100u, ci };
+        val_entrada_t e = { (val_evento_t)ev, (uint8_t)fin, seco, ev == VEV_TICK ? 30001u : 100u, ci, bt };
         val_accion_t a = val_evento(&v, &e);
         pares++;
         if (a.fila == 0) {
@@ -212,6 +300,13 @@ static void val(void)
         } else {
             OK(val_admitida(s, ev, a.fila), "transición no listada: %s × %s → V%02d", val_nombre_estado(s), val_nombre_evento(ev), a.fila);
         }
+        /* G-07: con g_bateria ninguna orden, pulsación ni ejercicio abre */
+        /* (V23 queda fuera: su evento exige red presente 5 min, imposible con g_bateria) */
+        if (bt && ev != VEV_BATERIA_REAPERTURA && a.motor == VMOT_ABRIR) OK(false, "abre con g_bateria: %s × %s → V%02d", val_nombre_estado(s), val_nombre_evento(ev), a.fila);
+        /* FR-VAL-10 (U-02): tras la palanca, ni la batería ni g_ciego mueven el motor */
+        if (pa && (ev == VEV_BATERIA_CIERRE || ev == VEV_CIEGO)) OK(a.motor == VMOT_SIN_CAMBIO, "mueve tras la palanca: %s × %s", val_nombre_estado(s), val_nombre_evento(ev));
+        /* S-01: V15 a CERRADA deja cerrada_por = ninguno */
+        if (a.fila == 15 && v.estado == VAL_CERRADA) OK(v.cerrada_por == VCP_NINGUNO, "V15 a CERRADA con cerrada_por %d", v.cerrada_por);
     }
     printf("val: %zu filas, %d combinaciones (%d ignoradas)\n", sizeof VC / sizeof VC[0], pares, ignorados);
 
@@ -222,13 +317,13 @@ static void val(void)
     for (int s = VAL_DESCONOCIDA; s < VAL_N_ESTADOS; s++) for (int cp = 0; cp <= VCP_EJERCICIO; cp++) for (int bl = 0; bl < 2; bl++) {
         val_iniciar(&v, bl, (val_cerrada_por_t)cp, T_MAX_S);
         v.estado = (val_estado_t)s; v.t_inicio_ms = 0;
-        val_entrada_t fu = { VEV_FUGA, s == VAL_CERRADA ? C : s == VAL_ABIERTA ? A : N0, false, 100, false };
+        val_entrada_t fu = { VEV_FUGA, s == VAL_CERRADA ? C : s == VAL_ABIERTA ? A : N0, false, 100, false, false };
         val_evento(&v, &fu);
-        val_entrada_t ce = { VEV_FINALES, C, false, 2000, false };
+        val_entrada_t ce = { VEV_FINALES, C, false, 2000, false, false };
         if (v.estado != VAL_CERRADA) val_evento(&v, &ce);
         val_evento(&v, &ce);                                  /* confirmación (V14 no debe reabrir) */
         for (int ev = 0; ev < VEV_N_EVENTOS; ev++) {          /* nada sin g_seco la reabre */
-            val_entrada_t x = { (val_evento_t)ev, C, false, 2500, false };
+            val_entrada_t x = { (val_evento_t)ev, C, false, 2500, false, false };
             if (ev != VEV_FINALES && ev != VEV_TICK && ev != VEV_FUGA) val_evento(&v, &x);   /* sin otra fuga */
         }
         OK(v.estado == VAL_CERRADA && v.bloqueo_fuga && v.cerrada_por == VCP_FUGA,
@@ -257,8 +352,8 @@ static void eje(void)
     /* secuencia V13 → V06 → V14 → V12 con tiempos de carrera */
     val_t v; val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_ABIERTA;
     int filas[4]; uint32_t tc[4];
-    val_entrada_t s[4] = { { VEV_EJERCICIO, A, true, 1000, false }, { VEV_FINALES, C, true, 4000, false },
-                           { VEV_FINALES, C, true, 4100, false }, { VEV_FINALES, A, true, 7300, false } };
+    val_entrada_t s[4] = { { VEV_EJERCICIO, A, true, 1000, false, false }, { VEV_FINALES, C, true, 4000, false, false },
+                           { VEV_FINALES, C, true, 4100, false, false }, { VEV_FINALES, A, true, 7300, false, false } };
     for (int i = 0; i < 4; i++) { val_accion_t a = val_evento(&v, &s[i]); filas[i] = a.fila; tc[i] = a.t_carrera_ms; }
     OK(filas[0] == 13 && filas[1] == 6 && filas[2] == 14 && filas[3] == 12 && v.estado == VAL_ABIERTA &&
        v.cerrada_por == VCP_NINGUNO && tc[1] == 3000 && tc[3] == 3200,
@@ -504,8 +599,8 @@ static void bat(void)
     OK(desde == 501, "con un corte de red a los 200 s: reapertura a los %d s (esperado 501)", desde);
     /* secuencia completa en la válvula: V22 → V06 → V23 → V12 */
     val_t v; val_iniciar(&v, false, VCP_NINGUNO, T_MAX_S); v.estado = VAL_ABIERTA;
-    val_entrada_t s[4] = { { VEV_BATERIA_CIERRE, A, true, 0, false }, { VEV_FINALES, C, true, 3000, false },
-                           { VEV_BATERIA_REAPERTURA, C, true, 400000, false }, { VEV_FINALES, A, true, 403000, false } };
+    val_entrada_t s[4] = { { VEV_BATERIA_CIERRE, A, true, 0, false, false }, { VEV_FINALES, C, true, 3000, false, false },
+                           { VEV_BATERIA_REAPERTURA, C, true, 400000, false, false }, { VEV_FINALES, A, true, 403000, false, false } };
     int f[4]; for (int i = 0; i < 4; i++) f[i] = val_evento(&v, &s[i]).fila;
     OK(f[0] == 22 && f[1] == 6 && f[2] == 23 && f[3] == 12 && v.estado == VAL_ABIERTA && v.cerrada_por == VCP_NINGUNO,
        "batería: filas %d %d %d %d", f[0], f[1], f[2], f[3]);

@@ -47,6 +47,8 @@ bool prot_sonda_mojada(const prot_t *p)
     return false;
 }
 
+bool prot_g_bateria(const prot_t *p) { return p->bateria_conocida && ene_cierre(p->bateria, p->red_presente); }
+
 bool prot_g_ciego(const prot_t *p)
 {
     if (!p->cfg.casa_cerrada) return false;
@@ -66,7 +68,7 @@ static void rechazo(prot_t *p, uint32_t t_ms) { p->rechazo_hasta_ms = t_ms + 200
 static void aplicar_val(prot_t *p, const prot_entrada_t *e, val_evento_t ev, prot_salida_t *s)
 {
     val_estado_t desde = p->val.estado;
-    val_entrada_t ve = { ev, p->finales, !prot_sonda_mojada(p), e->t_ms, prot_g_ciego(p) };
+    val_entrada_t ve = { ev, p->finales, !prot_sonda_mojada(p), e->t_ms, prot_g_ciego(p), prot_g_bateria(p) };
     val_accion_t a = val_evento(&p->val, &ve);
     if (a.fila == 0) return;
     emitir(s, PEV_VAL, a.fila, desde, p->val.estado, ev);
@@ -75,7 +77,11 @@ static void aplicar_val(prot_t *p, const prot_entrada_t *e, val_evento_t ev, pro
     else if (a.motor == VMOT_PARAR) p->motor = ES_MOTOR_PARADO;
     if (a.evento == VPUB_FALLA_VALVULA) emitir(s, PEV_FALLA_VALVULA, 0, 0, 0, 0);
     if (a.evento == VPUB_MOVIMIENTO_MANUAL) emitir(s, PEV_MOVIMIENTO_MANUAL, 0, 0, 0, 0);
-    if (a.patron_rechazo) { rechazo(p, e->t_ms); emitir(s, PEV_RECHAZO, a.rechazo == VRECH_SONDAS_EN_FALLA ? 3 : 1, 0, 0, 0); }
+    if (a.patron_rechazo) {
+        rechazo(p, e->t_ms);
+        emitir(s, PEV_RECHAZO, a.rechazo == VRECH_SONDAS_EN_FALLA ? 3 : a.rechazo == VRECH_BATERIA_CRITICA ? 5
+                               : a.rechazo == VRECH_ESTADO ? 6 : 1, 0, 0, 0);
+    }
     if ((a.fila == 6 || a.fila == 12) && e->hora_valida) p->ultimo_mov_s = e->ahora_s;   /* movimiento completo */
 }
 
@@ -178,7 +184,11 @@ static void medidas(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     if (p->bateria_conocida && ene_cierre(p->bateria, p->red_presente)) aplicar_val(p, e, VEV_BATERIA_CIERRE, s);
     if (prot_g_ciego(p)) aplicar_val(p, e, VEV_CIEGO, s);       /* V24, FR-SON-05: de nivel */
     if (ok && ene_reapertura(&p->reap, e->t_s, p->red_presente, p->vbat)) aplicar_val(p, e, VEV_BATERIA_REAPERTURA, s);
-    if (p->val.estado == VAL_CERRADA && p->val.cerrada_por == VCP_EJERCICIO) aplicar_val(p, e, VEV_FINALES, s);   /* V14 */
+    val_episodios(&p->val, prot_g_bateria(p), prot_g_ciego(p));  /* S-05 */
+    if (p->val.estado == VAL_CERRADA && p->val.cerrada_por == VCP_EJERCICIO) {
+        aplicar_val(p, e, VEV_FINALES, s);                     /* V14/V27/V29: final «cerrada» confirmado */
+        aplicar_val(p, e, VEV_CICLO, s);                       /* V30, de nivel (Q-12) */
+    }
     if (e->hora_valida) {                                      /* FR-EJE-01 */
         if (p->ultimo_mov_s == 0) p->ultimo_mov_s = e->ahora_s;   /* cuenta desde la primera hora válida */
         eje_entrada_t je = { true, e->hora_local, e->ahora_s, p->ultimo_mov_s, p->cfg.ejercicio_dias,

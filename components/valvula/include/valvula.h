@@ -1,5 +1,5 @@
-/* L2 valvula — máquina de estados de la válvula general (FSD §5.2–§5.3, V01–V20).
- * FSD 0.5.0 (V01–V23; V03b = fila 3 con los dos finales). Núcleo puro, sin ESP-IDF; lo compila tests/host. La tarea de protección le pasa un
+/* L2 valvula — máquina de estados de la válvula general (FSD §5.2–§5.3, V01–V30, FSD 0.8.10).
+ * Antes FSD 0.5.0 (V01–V23; V03b = fila 3 con los dos finales). Núcleo puro, sin ESP-IDF; lo compila tests/host. La tarea de protección le pasa un
  * evento cada vez y aplica la acción que devuelve (motor, rechazo, evento publicado). */
 #pragma once
 #include <stdbool.h>
@@ -25,6 +25,7 @@ typedef enum {
     VEV_BATERIA_CIERRE,    /* batería `critica` y red `ausente` (FR-ENE-04, V22); de nivel: en cada ciclo */
     VEV_BATERIA_REAPERTURA,/* reapertura por batería cumplida (FR-ENE-05, V23); de nivel: en cada ciclo */
     VEV_CIEGO,             /* g_ciego (§5.2, FR-SON-05, V24); de nivel: en cada ciclo de medidas */
+    VEV_CICLO,             /* ciclo de medidas (V30, de nivel) */
     VEV_N_EVENTOS
 } val_evento_t;
 
@@ -37,14 +38,16 @@ typedef struct {
     bool g_seco;           /* ninguna sonda activa en `mojada` (§5.2, P13) */
     uint32_t t_ms;         /* reloj monótono */
     bool g_ciego;          /* casa_cerrada y (≥ 2 sondas activas en falla o referencia en falla) (§5.2, H-93) */
+    bool g_bateria;        /* batería `critica` y red `ausente` (FR-ENE-04; V08, V10, V14, V26, V27) */
 } val_entrada_t;
 
 typedef enum { VMOT_SIN_CAMBIO, VMOT_PARAR, VMOT_CERRAR, VMOT_ABRIR } val_motor_t;   /* nunca IN1 e IN2 a la vez (FR-VAL-11) */
-typedef enum { VRECH_NINGUNO, VRECH_FUGA_ACTIVA, VRECH_OCUPADO, VRECH_SONDAS_EN_FALLA /* V25 */ } val_rechazo_t;
+typedef enum { VRECH_NINGUNO, VRECH_FUGA_ACTIVA, VRECH_OCUPADO, VRECH_SONDAS_EN_FALLA /* V25 */,
+               VRECH_BATERIA_CRITICA /* V26 */, VRECH_ESTADO /* V28 */ } val_rechazo_t;
 typedef enum { VPUB_NINGUNO, VPUB_FALLA_VALVULA, VPUB_MOVIMIENTO_MANUAL } val_publicar_t;
 
 typedef struct {
-    int fila;              /* 1…25 = V01…V25 (V03b = 3); 0 = par ignorado (`val: ignorado <estado> <evento>`) */
+    int fila;              /* 1…30 = V01…V30 (V03b = 3); 0 = par ignorado (`val: ignorado <estado> <evento>`) */
     val_motor_t motor;
     val_rechazo_t rechazo;
     val_publicar_t evento;
@@ -60,7 +63,8 @@ typedef struct {
     uint32_t t_inicio_ms;          /* inicio del movimiento en curso */
     uint32_t t_carrera_max_ms;     /* P3: t_carrera_max_s × 1000 */
     bool palanca;                  /* la posición la puso la palanca (V15) y el motor no se ha movido
-                                    * desde entonces: V24 no actúa (FR-VAL-10, P12; FSD 0.8.4). En RAM */
+                                    * desde entonces: V22 y V24 no actúan (FR-VAL-10, P12; U-02). En RAM */
+    bool epi_bat, epi_ciego;       /* V22/V24 ya reintentaron desde FALLA en este episodio (Q-08, S-05) */
 } val_t;
 
 /* Estado inicial (ARRANQUE) con las marcas restauradas de NVS */
@@ -69,6 +73,10 @@ void val_iniciar(val_t *v, bool bloqueo_fuga, val_cerrada_por_t cerrada_por, uin
 /* Aplica un evento y devuelve la acción. Un par (estado × evento) no listado en §5.3
  * no cambia nada y devuelve fila 0 (completitud). */
 val_accion_t val_evento(val_t *v, const val_entrada_t *e);
+
+/* S-05: el episodio de V22 (o de V24) termina cuando su condición deja de cumplirse; la tarea
+ * lo llama en cada ciclo con las guardas actuales. Salir de FALLA por otra fila también lo cierra. */
+void val_episodios(val_t *v, bool g_bateria, bool g_ciego);
 
 const char *val_nombre_estado(val_estado_t s);
 const char *val_nombre_evento(val_evento_t e);
