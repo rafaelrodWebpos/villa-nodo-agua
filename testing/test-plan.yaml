@@ -1784,7 +1784,14 @@ tests:
       ninguno con la tercera (no mueve el fin); min=0/721 rechazados sin cambio; límites del periodo con margen; periodo
       vencido reabre con evento; el periodo vive en RAM
     impl: tests/host/test_medidor.c
-    status: not_run
+    status: successful
+    commit: 58e1364
+    date: 2026-11-28
+    ci_run: 46166419531
+    evidence: CI host-tests (ctest), log del run 46166419531
+    observed: >
+      FSD 0.8.10: hasta_min = 30 + margen y 60 + margen; la orden que no mueve el fin no da evento; min=0, 721 y -5 rechazados sin
+      cambio; 720 aceptado; límites del periodo con margen; periodo vencido reabre con evento; sin periodo tras reinicio.
   - id: TC-MED-A10
     shape: atomic
     kind: standard
