@@ -50,6 +50,61 @@ static struct { double galones_por_pulso; int alerta_l, ventana_min, margen_min,
 static QueueHandle_t s_q_med;                   /* eventos MQTT hacia el publicador (sin red aquí, §2.3) */
 static QueueHandle_t s_q_ord, s_q_resp;         /* órdenes de §13.1 y sus respuestas (FR-ORD-01) */
 static prot_foto_t s_foto;                      /* bajo s_mux */
+static cfg_t s_cfg;                             /* parámetros de campo vigentes (§19), bajo s_mux */
+static volatile bool s_cfg_nueva;               /* la tarea de protección la aplica en su paso */
+#define CFG_ESPACIO "config"
+#define CFG_CLAVE   "valores"
+typedef struct { uint8_t ver, n; cfg_t c; } cfg_blob_t;       /* sin packed: c alineado */
+
+static void cfg_a_prot(const cfg_t *c, prot_config_t *pc)
+{
+    pc->t_carrera_max_s = (uint32_t)c->v[CFG_T_CARRERA_MAX_S];
+    pc->ejercicio_dias = (int)c->v[CFG_EJERCICIO_DIAS];
+    pc->ejercicio_hora = (int)c->v[CFG_EJERCICIO_HORA];
+    pc->casa_cerrada = c->v[CFG_CASA_CERRADA] != 0;
+    pc->zumbador_activo = c->v[CFG_ZUMBADOR_ACTIVO] != 0;
+    pc->zumbador_min = (uint32_t)c->v[CFG_ZUMBADOR_MIN];
+    pc->nivel_critico_pct = (int)c->v[CFG_NIVEL_CRITICO_PCT];
+    pc->nivel_rearme_pct = (int)c->v[CFG_NIVEL_REARME_PCT];
+    pc->t_rearme_s = (uint32_t)c->v[CFG_T_REARME_MIN] * 60u;
+    pc->intentos_max = (int)c->v[CFG_INTENTOS_MAX];
+    pc->p_min_bar = (float)c->v[CFG_P_MIN_BAR];
+    pc->t_seco_s = (uint32_t)c->v[CFG_T_SECO_S];
+    pc->ciclado_max = (int)c->v[CFG_CICLADO_MAX];
+    pc->ciclado_ventana_s = (uint32_t)c->v[CFG_CICLADO_VENTANA_MIN] * 60u;
+}
+
+static void cfg_leer(void)                      /* al arrancar: la de NVS si es válida; si no, la de fábrica */
+{
+    cfg_fabrica(&s_cfg);
+    nvs_handle_t h; cfg_blob_t b; size_t n = sizeof b;
+    if (nvs_open(CFG_ESPACIO, NVS_READONLY, &h) != ESP_OK) return;
+    if (nvs_get_blob(h, CFG_CLAVE, &b, &n) == ESP_OK && n == sizeof b && b.ver == 1 && b.n == CFG_N && cfg_valido(&b.c))
+        s_cfg = b.c;
+    nvs_close(h);
+}
+
+void config_actual(cfg_t *c)
+{
+    xSemaphoreTake(s_mux, portMAX_DELAY);
+    *c = s_cfg;
+    xSemaphoreGive(s_mux);
+}
+
+bool config_guardar_y_aplicar(const cfg_t *c)
+{
+    cfg_blob_t b = { 1, CFG_N, *c };
+    nvs_handle_t h;
+    if (nvs_open(CFG_ESPACIO, NVS_READWRITE, &h) != ESP_OK) return false;
+    bool ok = nvs_set_blob(h, CFG_CLAVE, &b, sizeof b) == ESP_OK && nvs_commit(h) == ESP_OK;
+    nvs_close(h);
+    if (!ok) return false;                      /* FR-CFG-A2: sin NVS no se aplica */
+    xSemaphoreTake(s_mux, portMAX_DELAY);
+    s_cfg = *c;
+    s_cfg_nueva = true;
+    xSemaphoreGive(s_mux);
+    return true;
+}
 static double s_caudal;                         /* último caudal de A8 */
 
 static void med_encolar(const char *tipo, const char *extra, uint32_t t_ms, bool ts_valido, uint32_t ts)
@@ -361,6 +416,19 @@ static void tarea_proteccion(void *arg)
         bool med_cerrado = d.medidor;
         int ord;
         if (xQueueReceive(s_q_ord, &ord, 0) == pdTRUE) e.orden = ord;     /* FR-ORD-01: una por paso */
+        if (s_cfg_nueva) {                                                /* FR-CFG-A1: efecto inmediato */
+            xSemaphoreTake(s_mux, portMAX_DELAY);
+            cfg_t c = s_cfg; s_cfg_nueva = false;
+            xSemaphoreGive(s_mux);
+            prot_config_t pc = s_prot.cfg;
+            cfg_a_prot(&c, &pc);
+            prot_reconfigurar(&s_prot, &pc);
+            xSemaphoreTake(s_mmux, portMAX_DELAY);
+            s_mcfg.galones_por_pulso = c.v[CFG_GALONES_POR_PULSO];
+            s_mcfg.alerta_l = (int)c.v[CFG_CONSUMO_ALERTA_L]; s_mcfg.ventana_min = (int)c.v[CFG_CONSUMO_VENTANA_MIN];
+            s_mcfg.margen_min = (int)c.v[CFG_CONSUMO_MARGEN_MIN]; s_mcfg.diario_l = (int)c.v[CFG_CONSUMO_DIARIO_L];
+            xSemaphoreGive(s_mmux);
+        }
         xSemaphoreTake(s_mux, portMAX_DELAY);
         if (s_med.seq != seq_med) {
             seq_med = s_med.seq;
@@ -403,6 +471,11 @@ void proteccion_iniciar(const proteccion_ganchos_t *g)
     med_guardado(&s_mg, seg(), s_mt.pulsos);
     prot_config_t cfg;
     prot_config_fabrica(&cfg);
+    cfg_leer();                                                /* §19: parámetros de campo de la NVS */
+    cfg_a_prot(&s_cfg, &cfg);
+    s_mcfg.galones_por_pulso = s_cfg.v[CFG_GALONES_POR_PULSO];
+    s_mcfg.alerta_l = (int)s_cfg.v[CFG_CONSUMO_ALERTA_L]; s_mcfg.ventana_min = (int)s_cfg.v[CFG_CONSUMO_VENTANA_MIN];
+    s_mcfg.margen_min = (int)s_cfg.v[CFG_CONSUMO_MARGEN_MIN]; s_mcfg.diario_l = (int)s_cfg.v[CFG_CONSUMO_DIARIO_L];
     prot_persistente_t nvs = nvs_leer();                       /* FR-PER-02 */
     prot_iniciar(&s_prot, &cfg, &nvs, seg());
     es_hw_salidas(false, false, prot_persistente(&s_prot).bomba != BOM_PERMITIDA, false, false, false);   /* FR-BOM-02 */

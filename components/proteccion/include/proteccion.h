@@ -164,5 +164,7 @@ prot_persistente_t prot_persistente(const prot_t *p);
 /* ¿Alguna sonda activa en `mojada`? (FR-OTA-A1, para la Fase 3) */
 bool prot_sonda_mojada(const prot_t *p);
 /* g_ciego (§5.2, FR-SON-05): casa_cerrada y (≥ 2 sondas activas en falla o referencia en falla) */
+/* FR-CFG-A1: efecto inmediato de un parámetro de campo (§19, interfaz mqtt) */
+void prot_reconfigurar(prot_t *p, const prot_config_t *c);
 bool prot_g_bateria(const prot_t *p);   /* batería `critica` y red `ausente` (FR-ENE-04) */
 bool prot_g_ciego(const prot_t *p);
