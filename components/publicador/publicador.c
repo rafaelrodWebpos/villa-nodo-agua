@@ -54,6 +54,70 @@ int pub_status_json(char *buf, size_t cap, const pub_status_t *s)
     poner(&e, ",\"uptime_s\":%" PRIu32 ",\"lecturas\":%" PRIu32 ",\"err_sensor\":%" PRIu32 ",\"ota\":",
           s->uptime_s, s->lecturas, s->err_sensor);
     cadena(&e, s->ota ? s->ota : "ninguno");
-    poner(&e, ",\"hora_valida\":%s}", s->hora_valida ? "true" : "false");
+    poner(&e, ",\"hora_valida\":%s,\"eventos_perdidos\":%" PRIu32 "}", s->hora_valida ? "true" : "false", s->eventos_perdidos);
+    return fin(&e);
+}
+
+static void ts(esc_t *e, pub_ts_t t)
+{
+    if (t.valido) poner(e, ",\"ts\":%" PRIu32, t.t);
+    poner(e, "}");
+}
+
+int pub_valvula_json(char *buf, size_t cap, const char *estado, bool bloqueo_fuga, const char *cerrada_por,
+                     int32_t t_cierre_ms, int32_t t_apertura_ms, pub_ts_t t)
+{
+    esc_t e = {buf, cap, 0, cap == 0};
+    poner(&e, "{\"estado\":");
+    cadena(&e, estado);
+    poner(&e, ",\"bloqueo_fuga\":%s,\"cerrada_por\":", bloqueo_fuga ? "true" : "false");
+    cadena(&e, cerrada_por);
+    if (t_cierre_ms >= 0) poner(&e, ",\"t_cierre_ms\":%" PRId32, t_cierre_ms);
+    if (t_apertura_ms >= 0) poner(&e, ",\"t_apertura_ms\":%" PRId32, t_apertura_ms);
+    ts(&e, t);
+    return fin(&e);
+}
+
+int pub_bomba_json(char *buf, size_t cap, const char *permiso, const char *motivo, int intentos_24h, bool calibrada, pub_ts_t t)
+{
+    esc_t e = {buf, cap, 0, cap == 0};
+    poner(&e, "{\"permiso\":");
+    cadena(&e, permiso);
+    if (motivo) { poner(&e, ",\"motivo\":"); cadena(&e, motivo); }
+    poner(&e, ",\"intentos_24h\":%d,\"calibrada\":%s", intentos_24h, calibrada ? "true" : "false");
+    ts(&e, t);
+    return fin(&e);
+}
+
+int pub_estado_json(char *buf, size_t cap, const char *estado, pub_ts_t t)
+{
+    esc_t e = {buf, cap, 0, cap == 0};
+    poner(&e, "{\"estado\":");
+    cadena(&e, estado);
+    ts(&e, t);
+    return fin(&e);
+}
+
+int pub_medida_json(char *buf, size_t cap, float v, const char *unidad, bool con_pct, float pct,
+                    bool con_valido, bool valido, pub_ts_t t)
+{
+    esc_t e = {buf, cap, 0, cap == 0};
+    bool hay_v = !con_valido || valido;
+    poner(&e, "{");
+    if (hay_v) poner(&e, "\"v\":%.2f,", (double)v);
+    poner(&e, "\"u\":");
+    cadena(&e, unidad);
+    if (con_pct && hay_v) poner(&e, ",\"pct\":%.1f", (double)pct);
+    if (con_valido) poner(&e, ",\"valido\":%s", valido ? "true" : "false");
+    ts(&e, t);
+    return fin(&e);
+}
+
+int pub_bateria_json(char *buf, size_t cap, float v, const char *estado, pub_ts_t t)
+{
+    esc_t e = {buf, cap, 0, cap == 0};
+    poner(&e, "{\"v\":%.2f,\"u\":\"V\",\"estado\":", (double)v);
+    cadena(&e, estado);
+    ts(&e, t);
     return fin(&e);
 }
