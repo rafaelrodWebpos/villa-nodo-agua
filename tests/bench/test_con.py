@@ -6,6 +6,7 @@ import time
 import pytest
 
 from benchlib import _parse_flash_args, aprovisionar, case, esperar_lineas, primera, ultimo_arranque
+from consola import quitar_viejas
 
 BACKOFF_S = [1, 2, 4, 8, 16, 32, 60, 60, 60, 60]   # FR-CON-02
 TOLERANCIA = 0.10
@@ -75,7 +76,7 @@ def test_tc_con_03_wifi_backoff(testbench, dut_slot, dut_mac, firmware, run_dir,
         t0 = time.time()
         tb.serial_reset(dut_slot)
         vistas = esperar_lineas(tb, dut_slot, t0, ["wifi: intento 11"], timeout=sum(BACKOFF_S) + 120)
-        lineas = _unicas(vistas)
+        lineas, viejas = quitar_viejas(_unicas(vistas))   # reenvíos del banco con otra hora (#89, punto 3)
         lineas = lineas[ultimo_arranque(lineas) or 0:]   # el último arranque, aunque llegue sin rst: (CR-TB-12)
         c.save_log("serie", [c._r(e["text"]) for e in lineas])
 
@@ -98,7 +99,7 @@ def test_tc_con_03_wifi_backoff(testbench, dut_slot, dut_mac, firmware, run_dir,
             i += 1
         t09 = sum("con: CONECTANDO_WIFI -> CONECTANDO_WIFI (wifi_down)" in t for t in textos)
         t10 = sum("con: CONECTANDO_WIFI -> CONECTANDO_WIFI (backoff)" in t for t in textos)
-        c.note("", "## Resultado", "", f"- líneas T09: {t09}, T10: {t10}",
+        c.note("", "## Resultado", "", f"- líneas T09: {t09}, T10: {t10}; líneas viejas reenviadas descartadas (#89): {len(viejas)}",
                *[f"- intervalo {k + 1}: {v} s (esperado {BACKOFF_S[k]} s ± 10 %)" for k, v in enumerate(intervalos)])
         error = None
         if len(intervalos) != len(BACKOFF_S):
