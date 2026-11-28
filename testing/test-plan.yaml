@@ -880,7 +880,8 @@ tests:
     evidence: test-results/20261123T121706Z-673bbe8/
     blocked_by: "SensorsIot/Embedded-AI-Harness#89 — la captura serie pierde o mezcla líneas al reabrir el proxy tras el reset (4,4–8,7 s)"
     diagnostico: "decisión del propietario (2026-11-23): bloqueada por #89. Evidencia: falta el wifi_down del intento 2 (~6,8 s tras el reset) en 4 corridas con ee66859/673bbe8, sin ninguna línea en el tramo; con la imagen 3e3ffe7 la misma línea llegó mezclada (test-results/20261123T041844Z-ee66859/). El backoff del firmware es correcto (intento 3 a +2 s del wifi_down no visto). La prueba da not done si la línea cortada o mezclada está en el tramo medido, o si el wifi_down que falta cae en el hueco 4,4–8,7 s sin ninguna línea; si no, FAIL"
-    ultima_corrida: "2026-11-23, d9239fa, test-results/20261123T174125Z-d9239fa/: not done por la regla del hueco (wifi_down ≈ 6795 ms sin líneas en 4,4–8,7 s, #89); sigue bloqueada"
+    ultima_corrida: "2026-11-28, main 5b5b9a1 (imagen d9239fa, run 45202669354), con el filtro quitar_viejas (PR #6; 1 línea vieja descartada), test-results/20261128T071908Z-5b5b9a1/: not done por la regla del hueco (wifi_down ≈ 6795 ms sin líneas en 4,4–8,7 s, #89); 9 intervalos medidos, todos en ±10 %"
+    decision_repeticion: "propietario, 2026-11-28: no repetir hasta que el fork arregle #89 de fondo"
 
 
   - id: TC-CON-06
