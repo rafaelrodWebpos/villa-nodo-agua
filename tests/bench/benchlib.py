@@ -331,6 +331,8 @@ def suscriptor_mqtt(tb, filtro, limpiar=()):
                 raise
             time.sleep(1)
     cli.loop_start()
+    # el mismo cliente publica órdenes de prueba (QoS 1; retain solo si se pide)
+    sub.publicar = lambda t, p, retain=False: cli.publish(t, p, qos=1, retain=retain).wait_for_publish(5)
     try:
         for t in limpiar:
             cli.publish(t, b"", qos=1, retain=True).wait_for_publish(5)
