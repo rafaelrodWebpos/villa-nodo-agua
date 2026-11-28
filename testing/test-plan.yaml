@@ -1562,6 +1562,32 @@ tests:
     impl: tests/host/test_vigia.c (components/conectividad/conectividad_vigia.c)
     status: not_run
     rama: integracion-6.0.3-h95 ab3ddb2 — en verde en local (ctest), 2026-11-21; pasa a CI al mezclar a main
+  - id: TC-PUB-A1
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [FR-PUB-01, FR-PUB-02, FR-PUB-03, FR-PUB-05]
+    needs: [hosted-ci]
+    expect: >
+      payloads de §13.1 (valvula/state, bomba/state, fuga/n, flotador, red, nivel, presion, corriente_bomba, bateria) con y sin ts,
+      medidas sin v cuando no son válidas; status con eventos_perdidos al final; búfer corto → -1
+    impl: tests/host/test_publicador.c
+    status: not_run
+  - id: TC-ORD-A1
+    shape: atomic
+    kind: negative
+    wave: 3
+    phase: 2
+    tier: host
+    verifies: [FR-ORD-02]
+    needs: [hosted-ci]
+    expect: >
+      valvula/set, bomba/set y config/set: órdenes válidas; 300 bytes, `{`, acción desconocida (accion), acción numérica,
+      motivo desconocido, campo extra, clave repetida, basura al final y escapes → payload
+    impl: tests/host/test_ordenes.c
+    status: not_run
   - id: TC-PUB-A4
     shape: atomic
     kind: standard

@@ -271,7 +271,8 @@ OTA_VALOR = re.compile(r"^(ninguno|en_curso|ok|rechazado:(payload|host|ruta|mism
 
 
 def _tipos_status(st):
-    """Errores de §9.3 en un status: los 9 campos con su tipo (bool no cuenta como entero)."""
+    """Errores de §9.3 en un status: los 9 campos con su tipo (bool no cuenta como entero) y
+    `eventos_perdidos` de FR-PUB-05."""
     def entero(v): return isinstance(v, int) and not isinstance(v, bool)
     reglas = {
         "estado": lambda v: v == "online",
@@ -283,6 +284,7 @@ def _tipos_status(st):
         "err_sensor": lambda v: entero(v) and v >= 0,
         "ota": lambda v: isinstance(v, str) and bool(OTA_VALOR.match(v)),
         "hora_valida": lambda v: isinstance(v, bool),
+        "eventos_perdidos": lambda v: entero(v) and v >= 0,      # FR-PUB-05 (FSD §13.2)
     }
     errores = [f"{k} ausente" for k in reglas if k not in st]
     errores += [f"{k}={st[k]!r}" for k, ok in reglas.items() if k in st and not ok(st[k])]

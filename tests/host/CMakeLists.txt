@@ -86,6 +86,12 @@ add_executable(test_publicador test_publicador.c ${COMP}/publicador/publicador.c
 target_include_directories(test_publicador PRIVATE ${COMP}/publicador/include)
 add_test(NAME TC-MQTT-01 COMMAND test_publicador mqtt01)
 add_test(NAME TC-MQTT-02 COMMAND test_publicador mqtt02)
+add_test(NAME TC-PUB-A1 COMMAND test_publicador estados)
+
+# TC-ORD-A1 · FR-ORD-02 y la forma de valvula/set, bomba/set y config/set (§13.1, §16)
+add_executable(test_ordenes test_ordenes.c ${COMP}/ordenes/ordenes.c)
+target_include_directories(test_ordenes PRIVATE ${COMP}/ordenes/include)
+add_test(NAME TC-ORD-A1 COMMAND test_ordenes)
 
 # TC-HA-01 · clima:FR-HA-02, clima:FR-HA-03, FR-HA-A1 (Discovery de §14)
 add_executable(test_ha_discovery test_ha_discovery.c ${COMP}/ha_discovery/ha_discovery.c)
