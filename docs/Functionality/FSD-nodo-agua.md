@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: vigente — Load defined (2026-11-14)
-fsd_version: 0.8.8
+fsd_version: 0.8.9
 repository: villa-nodo-agua (público)
 baseline_commit: c3e5053 (Load defined, 2026-11-14); cada versión, el commit que la introduce
 applicable_firmware_version: ninguna todavía
@@ -120,6 +120,13 @@ change_history:
     reinicio, en §21.1. Q-09: `i_seco_a` no se vacía; sin calibrar no hay seco. Q-10: la
     pulsación larga actúa en las dos máquinas. Q-11: evento `consumo_permitido` (FR-MED-10) y
     aviso de HA (FR-VIG-04). Q-12: V30 (ejercicio reevaluado mientras `cerrada_por`=`ejercicio`).
+  - 0.8.9 (2026-11-28): 5.ª revisión de la puerta, sobre el diff
+    (testing/revision-load-defined-2026-11-28e.md). S-01: V15 pone `cerrada_por`=`ninguno` al
+    llegar a CERRADA, así que ni V30 ni V23 reabren tras un cierre con la palanca. S-02:
+    clima:FR-CON-01 en la Fase 2, como en clima §3; las filas host y de Wi-Fi de FR-CON-02 en la
+    Fase 1. S-03: contrato y rango de «`i_seco_a` no se vacía». S-04: secuencia del contrato
+    host de FR-BOM-10. S-05: episodio de V22/V24. S-06: tolerancias de la fila de banco de
+    FR-BOM-10. S-07: `hasta_min` = `min` + `consumo_margen_min`. S-08: FR-VIG-02/03/04 en §21.1.
 ```
 
 ## Convenciones de este documento
@@ -332,9 +339,9 @@ líneas A1–A11 (A9 da los eventos sin MQTT; A11, `cerrada_por` e intentos). Lo
 aprovisionar, sin MQTT. Los contratos cuyo estímulo, cuya precondición o cuya observación es un
 mensaje MQTT (órdenes, `…/state`, eventos, parámetros fijados por `config/set`, como
 `casa_cerrada`=false) se cierran en la Fase 2, igual que §5.6 (el ejercicio necesita la hora SNTP). Los contratos de §15 y, de los
-heredados de clima, FR-CON-01, la fila de Wi-Fi de FR-CON-02, FR-CON-06 sin broker y FR-CON-07,
-en verde; FR-CON-03, FR-CON-04, FR-CON-05 y la fila de MQTT de FR-CON-02 publican por MQTT y se
-cierran en la Fase 2, como en clima §3.
+heredados de clima, las filas host y de Wi-Fi de FR-CON-02, FR-CON-06 sin broker y FR-CON-07,
+en verde; FR-CON-01 (exige OPERATIVO y un caso con el broker parado), FR-CON-03, FR-CON-04,
+FR-CON-05 y la fila de MQTT de FR-CON-02 se cierran en la Fase 2, como en clima §3.
 
 **Necesita del banco** (capacidades nuevas, numeradas por el propietario; se
 implementan en el fork del banco con la puerta S6). Se prueba con las mismas piezas
@@ -361,7 +368,8 @@ de fin de línea, shunt, transductores y pinza reales):
 del medidor testigo (§6.7) y observabilidad (§20).
 
 **Salida:** contratos de §13, §14, §16, §7 (publicación), §6.6, §6.7 (FR-MED-04…09), §10
-(FR-HER-01, FR-HER-02 salvo su caso OTA, FR-CON-A1/A2; los de bench⁺ cuando existan CR-TB-23/24), §20 y FR-SEC-A1 en verde en
+(FR-HER-01, FR-HER-02 salvo su caso OTA, FR-CON-A1/A2, clima:FR-CON-01, -03, -04, -05 y la fila
+de MQTT de clima:FR-CON-02; los de bench⁺ cuando existan CR-TB-23/24), §20 y FR-SEC-A1 en verde en
 bench; contratos heredados clima:FR-MQTT-*, clima:FR-HA-* y clima:FR-TIME-* en verde.
 Los casos marcados «Fase 3» (OTA en FR-FUG-02, FR-HER-02 y FR-PER-02) y FR-SEC-A2 se
 cierran en la Fase 3, porque necesitan la OTA.
@@ -538,7 +546,7 @@ Todas las filas son [Must]. Procedencia: [user] D1, D5, D12, D18; [derived] el r
 | V12 | ABRIENDO | final «abierta» | — | ABIERTA | parar el motor | ≤ P3 |
 | V13 | ABIERTA | ejercicio vencido | `g_seco`, `bloqueo_fuga`=0 y no `g_ciego` | CERRANDO | `cerrada_por`=`ejercicio` | — |
 | V14 | CERRADA | final «cerrada» confirmado | `cerrada_por`=`ejercicio`, `g_seco`, no `g_ciego` y no `g_bateria` | ABRIENDO | registrar tiempo de carrera | — |
-| V15 | ABIERTA, CERRADA, DESCONOCIDA, FALLA | cambia un final sin orden | — | solo «abierta» → ABIERTA; solo «cerrada» → CERRADA; ninguno → DESCONOCIDA; los dos → FALLA | evento `movimiento_manual` (P12); con los dos, `falla_valvula` | — |
+| V15 | ABIERTA, CERRADA, DESCONOCIDA, FALLA | cambia un final sin orden | — | solo «abierta» → ABIERTA; solo «cerrada» → CERRADA; ninguno → DESCONOCIDA; los dos → FALLA | evento `movimiento_manual` (P12); con los dos, `falla_valvula`; al llegar a CERRADA, `cerrada_por`=`ninguno` (`bloqueo_fuga` sin cambio), así que V23 y V30 no reabren y solo una orden abre (FR-VAL-10) | — |
 | V16 | FALLA | orden `cerrar` u `abrir` válida, o pulsación larga | según V05/V08/V10; para abrir, además no `g_ciego` (si no, rechazo `sondas_en_falla` y, con la pulsación, patrón de rechazo, como V25) | CERRANDO / ABRIENDO | un reintento por orden | P3 |
 | V17 | CERRADA | fuga confirmada | — | CERRADA | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | — |
 | V18 | ABRIENDO | fuga confirmada | — | CERRANDO | como V04 | ≤ P2 |
@@ -553,9 +561,9 @@ FALLA dispara el reintento de cierre de V16 (fila V20).
 |---|---|---|---|---|---|---|
 | V20 | FALLA | fuga confirmada | — | CERRANDO | `bloqueo_fuga`=1, `cerrada_por`=`fuga`; un reintento | P3 |
 | V21 | CERRANDO | fuga confirmada | — | CERRANDO (sigue cerrando) | `bloqueo_fuga`=1, `cerrada_por`=`fuga` | — |
-| V22 | ABIERTA, DESCONOCIDA, FALLA | batería `critica` y red `ausente` (FR-ENE-04) | — | CERRANDO | `cerrada_por`=`bateria`; desde FALLA, un solo reintento por episodio (como V16) | ≤ 500 ms |
+| V22 | ABIERTA, DESCONOCIDA, FALLA | batería `critica` y red `ausente` (FR-ENE-04) | — | CERRANDO | `cerrada_por`=`bateria`; desde FALLA, un solo reintento por episodio (como V16): el episodio dura hasta que la condición deja de cumplirse o la válvula sale de FALLA por otra fila | ≤ 500 ms |
 | V23 | CERRADA | reapertura por batería cumplida (FR-ENE-05) | `cerrada_por`=`bateria`, `bloqueo_fuga`=0, `g_seco` y no `g_ciego` (H-93) | ABRIENDO | `cerrada_por`=`ninguno` | ≤ 500 ms |
-| V24 | ABIERTA, DESCONOCIDA, FALLA | `g_ciego` (FR-SON-05) | la posición no la puso la palanca (V15) sin que el nodo haya movido el motor después | CERRANDO | `cerrada_por`=`sondas`; `bloqueo_fuga` sin cambio; desde FALLA, un solo reintento por episodio (como V16) | ≤ 500 ms |
+| V24 | ABIERTA, DESCONOCIDA, FALLA | `g_ciego` (FR-SON-05) | la posición no la puso la palanca (V15) sin que el nodo haya movido el motor después | CERRANDO | `cerrada_por`=`sondas`; `bloqueo_fuga` sin cambio; desde FALLA, un solo reintento por episodio (como V16): el episodio dura hasta que la condición deja de cumplirse o la válvula sale de FALLA por otra fila | ≤ 500 ms |
 | V25 | CERRADA | orden `abrir` válida o pulsación larga | `g_seco` y `g_ciego` | CERRADA | rechazar `sondas_en_falla`; con la pulsación, patrón de rechazo (§8) | — |
 | V26 | CERRADA | orden `abrir` válida o pulsación larga | `g_seco`, no `g_ciego` y `g_bateria` | CERRADA | rechazar `bateria_critica`; con la pulsación, patrón de rechazo (§8) | — |
 | V27 | CERRADA | final «cerrada» confirmado | `cerrada_por`=`ejercicio`, `g_bateria` y no `g_ciego` | CERRADA | `cerrada_por`=`bateria` (la reabre V23) | — |
@@ -627,6 +635,8 @@ envía en cada ciclo mientras se cumple su condición. V14 deja `cerrada_por`=`n
 | FR-VAL-07 | CERRADA, sonda 2 `mojada`; orden `abrir` | Respuesta `rechazado: fuga_activa`; IN2 = 0 | Movimiento | bench |
 | FR-VAL-08 | Reapertura válida; luego sonda 5 `mojada` | Cierre según FR-FUG-02 | Quedarse abierta | bench |
 | FR-VAL-09 | CERRADA con fuga activa: pulsación de 3 s; luego seca: pulsación de 3 s | 1.º: patrón de rechazo, sin movimiento. 2.º: ABRIENDO | Abrir con fuga | bench |
+| FR-VAL-10 | Ejercicio terminado en FALLA (V07, `cerrada_por`=`ejercicio`), todo seco; el banco simula el cierre con la palanca (solo el final «cerrada» activo) | Línea A1 de V15 (FALLA -> CERRADA); A11 `cerrada_por=ninguno`; IN1 = IN2 = 0 durante 60 s | Apertura por V30; cualquier movimiento del motor | bench |
+| FR-VAL-10 | Lógica pura: CERRADA por batería (V22); palanca a «abierta» y luego a «cerrada»; red presente y 12,9 V durante 5 min | `cerrada_por`=`ninguno` tras V15; sin V23 | Reapertura por V23 | host |
 | FR-VAL-10 | CERRADA con `bloqueo_fuga`; el banco simula la palanca (final «abierta» activo, «cerrada» inactivo) | Línea A1 de V15 (CERRADA -> ABIERTA); IN1 = IN2 = 0 durante 60 s; en la Fase 2, además, el evento `movimiento_manual` | Intento de cierre por el motor | bench |
 | FR-VAL-11 | Lógica pura: todas las filas de §5.3 y combinaciones de eventos simultáneos | Nunca IN1 = IN2 = 1 | Cualquier caso con los dos en alto | host + bench |
 | V01–V30 | Tabla de transiciones como prueba parametrizada | Cada fila produce su estado y su acción | Una transición no listada | host |
@@ -751,6 +761,7 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
 | FR-BOM-02 | NVS con CORTADA(seco); reset | GPIO14 en bajo durante el arranque y en alto ≤ 2 s tras el reset | Alto antes del reset lógico; bajo después de 2 s | bench |
 | FR-BOM-03 | Lógica pura: series de corriente y presión | Declara seco solo con las tres condiciones durante > `t_seco_s` | Seco con presión alta; seco con 1 s de menos | host |
 | FR-BOM-03 | Banco: senoide equivalente a 0,8 A (calibrado `i_seco_a`=1,0), presión 0,2 bar, 11 s | CORTADA(seco) a los 10 ± 1 s | No cortar; cortar con presión 2 bar | bench |
+| FR-BOM-03 | `i_seco_a`=1,0 configurado; enviar el portal con `i_seco_a` vacío | Error en el campo; `i_seco_a` sigue en 1,0 en NVS (la línea A4 y el corte por seco siguen como antes) | `i_seco_a` vaciado; `calibrada`=false | bench |
 | FR-BOM-03 | `i_seco_a` sin configurar | No hay corte por corriente (GPIO14 en bajo); en la Fase 2, además, `calibrada`=false | Corte por corriente | bench |
 | FR-BOM-04 | Transductor indicando 80 %; flotador sin agua | CORTADA(flotador) ≤ 1 s | Seguir permitida | bench |
 | FR-BOM-05 | CORTADA(seco); nivel 35 %, flotador con agua durante `t_rearme_min` (host: reloj simulado con 10 min; banco: `t_rearme_min`=2 por `config/set`, Fase 2) | PERMITIDA a los `t_rearme_min` ± 10 s | Rearme con una interrupción del flotador a mitad del plazo | host + bench |
@@ -760,8 +771,8 @@ la detección de seco, y el nivel se publica como `falla` (FR-NIV-02).
 | FR-BOM-07 | Ciclo seco → `rearmar` remoto repetido 5 veces, con más de 10 min entre ellos | BLOQUEADA al llegar a `intentos_max` (B13); `intentos_24h` nunca vuelve a 0 por orden | Seco repetido sin bloqueo | host |
 | FR-BOM-08 | Flotador sin agua; órdenes `permitir`, `rearmar`; configuración con cualquier valor dentro de rango | Rechazo `sin_agua`; GPIO14 en alto | GPIO14 en bajo | bench |
 | FR-BOM-09 | Válvula CERRADA y ABIERTA | Permiso sin cambio | Corte por la válvula | bench |
-| FR-BOM-10 | Lógica pura con planta simulada: nivel 50 % y flotador sin agua 10 min; después transductor en falla | B02 al empezar; `flotador_falla` a los 10 min; PERMITIDA a los 10 min + `t_rearme_min` (B05); `rearmar` aceptado y `permitir` aceptado durante la falla; con el transductor en falla, CORTADA(flotador) otra vez | `flotador_falla` antes de 10 min o con nivel < `nivel_rearme_pct`; PERMITIDA por B05 antes de 10 min + `t_rearme_min`; rechazo `sin_agua` durante la falla; seguir permitida sin transductor | host |
-| FR-BOM-10 | Banco: flotador abierto, transductor a 12 mA durante 10 min + `t_rearme_min` (10 de fábrica) | Línea A9 `eve: flotador_falla` a los 10 min; relé en bajo a los 10 min + `t_rearme_min` ± 10 s; en la Fase 2, además, el evento MQTT | Relé bajo antes de 10 min + `t_rearme_min`; relé alto después | bench |
+| FR-BOM-10 | Lógica pura con planta simulada: nivel 50 % y flotador sin agua 10 min; después transductor en falla | Secuencia: (a) B02 al empezar; `flotador_falla` a los 10 min; PERMITIDA por B05 a los 10 min + `t_rearme_min`; (b) `cortar` y luego `permitir` → PERMITIDA (B09); (c) `cortar` y luego `rearmar` → PERMITIDA (B12); (d) transductor en falla → CORTADA(flotador) otra vez | `flotador_falla` antes de 10 min o con nivel < `nivel_rearme_pct`; PERMITIDA por B05 antes de 10 min + `t_rearme_min`; rechazo `sin_agua` durante la falla; seguir permitida sin transductor | host |
+| FR-BOM-10 | Banco: flotador abierto, transductor a 12 mA durante 10 min + `t_rearme_min` (10 de fábrica) | Línea A9 `eve: flotador_falla` a los 10 min ± 10 s; relé en bajo a los 10 min + `t_rearme_min` ± 10 s; en la Fase 2, además, el evento MQTT | Relé bajo antes de 10 min + `t_rearme_min` − 10 s; relé alto después de 10 min + `t_rearme_min` + 10 s | bench |
 | B01–B16 | Tabla como prueba parametrizada | Cada fila produce su estado | Transición no listada | host |
 
 ### 6.5 Nivel y presión
@@ -835,7 +846,8 @@ puede no contar bien (< 0,25 GPM): por eso hay un umbral por hora y otro diario 
   reinicio lo borra.
 - **FR-MED-10** [Must] [user] (Q-11, 2026-11-28): cada `permitir_consumo` aceptado que abra un
   periodo o mueva su fin deberá publicar en ≤ 1 s el evento
-  `{"tipo":"consumo_permitido","hasta_min":<minutos hasta el fin>,…}`. Como FR-CFG-A5, solo
+  `{"tipo":"consumo_permitido","hasta_min":<minutos hasta el fin>,…}`, con `hasta_min` =
+  minutos desde ahora hasta el fin del periodo, incluido `consumo_margen_min`. Como FR-CFG-A5, solo
   ocurre en OPERATIVO y no pasa por la cola de FR-PUB-04.
 - **FR-MED-07** [Must] [derived] H-96: el medidor no deberá mover la válvula ni cambiar el
   permiso de la bomba (como FR-CIC-03).
@@ -864,7 +876,7 @@ puede no contar bien (< 0,25 GPM): por eso hay un umbral por hora y otro diario 
 | FR-MED-09 | `casa_cerrada`=true, `consumo_alerta_l`=1000, `consumo_diario_l`=10; el banco da 3 pulsos (11,4 L a 1,0 gal) | Un `consumo_casa_cerrada` con `motivo`=`diario` | `motivo`=`hora`; ningún evento | bench |
 | FR-MED-05 | `casa_cerrada`=true; broker apagado; 25 L en 10 min; broker encendido a los 3 min | `consumo_casa_cerrada` desde la cola, con `edad_s` | Evento perdido | bench |
 | FR-MED-06 | Lógica pura: periodo hasta t+90; orden de 10 min en t+20; reinicio dentro del periodo | El periodo sigue hasta t+90 (no se acorta); tras el reinicio, sin periodo | Periodo acortado; periodo que sobrevive al reinicio | host |
-| FR-MED-10 | Suscriptor a `#`; `permitir_consumo` 30 min; a los 5 min, 60 min; a los 6 min, 10 min | Un evento `consumo_permitido` por cada una de las dos primeras órdenes en ≤ 1 s; ninguno con la tercera (no mueve el fin) | Sin evento; evento con la orden que no mueve el fin | bench |
+| FR-MED-10 | Suscriptor a `#`; `permitir_consumo` 30 min; a los 5 min, 60 min; a los 6 min, 10 min | Un evento `consumo_permitido` por cada una de las dos primeras órdenes en ≤ 1 s, con `hasta_min` = 30 + `consumo_margen_min` y 60 + `consumo_margen_min` (± 1); ninguno con la tercera (no mueve el fin) | Sin evento; evento con la orden que no mueve el fin | bench |
 | FR-MED-06 | `permitir_consumo` 30 min; 25 L a los 10 min; `min`=0, `min`=721, `{"accion":5}` | Sin evento; las tres órdenes inválidas se rechazan con `orden_rechazada` | Evento dentro del periodo; orden inválida aceptada | bench |
 | FR-MED-07 | Válvula ABIERTA, permiso PERMITIDA; provocar `consumo_casa_cerrada` | Válvula y permiso sin cambios | Movimiento o corte | bench |
 | FR-MED-08 | Lógica pura: nivel de 100 → 112 cm sin pulsos; con 1 pulso; nivel en falla | Un `medidor_falla` en el primer caso; ninguno en los otros | Evento con pulsos o con el nivel en falla | host |
@@ -1078,7 +1090,7 @@ diagnóstico). Prefijo `<sitio>/<zona>/<nodo>/` como en el piloto.
 | `flotador` | → | `{"estado":"agua"\|"sin_agua","ts":…}` | 1 | sí |
 | `red` | → | `{"estado":"presente"\|"ausente","ts":…}` | 1 | sí |
 | `bateria` | → | `{"v":12.9,"u":"V","estado":"ok"\|"baja"\|"critica","ts":…}` | 1 | sí |
-| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla"\|"falla_vref"\|"casa_cerrada"\|"consumo_casa_cerrada"\|"medidor_falla"\|"sondas_config"\|"consumo_permitido",…,"ts":…,"edad_s":…}` (`edad_s` solo en los eventos que salen de la cola, FR-PUB-04; `consumo_casa_cerrada` lleva además `"motivo":"hora"\|"diario"`, `"l"` y `"ventana_min"`, §6.7; `sondas_config` lleva `"inactivas"`, FR-CFG-A3) | 1 | no |
+| `evento` | → | `{"tipo":"fuga"\|"falla_valvula"\|"movimiento_manual"\|"falla_sonda"\|"falla_adc"\|"bomba_seco"\|"bomba_bloqueada"\|"ciclado_anormal"\|"bateria_baja"\|"bateria_critica"\|"orden_rechazada"\|"flotador_falla"\|"falla_vref"\|"casa_cerrada"\|"consumo_casa_cerrada"\|"medidor_falla"\|"sondas_config"\|"consumo_permitido",…,"ts":…,"edad_s":…}` (`edad_s` solo en los eventos que salen de la cola, FR-PUB-04; `consumo_casa_cerrada` lleva además `"motivo":"hora"\|"diario"`, `"l"` y `"ventana_min"`; `consumo_permitido` lleva `"hasta_min"` (FR-MED-10), §6.7; `sondas_config` lleva `"inactivas"`, FR-CFG-A3) | 1 | no |
 | `config/set`, `config/state` | ←, → | §16 | 1 | no, sí |
 | `status`, `cmd/ota` | →, ← | heredados (clima §9.3, §12) | 1 | sí, no |
 
@@ -1235,7 +1247,7 @@ valor actual; nunca por `config/set`, FR-CFG-A4)
 | `rango_transductor_cm` | entero | 500 | 50–1000 | FR-NIV-01 |
 | `altura_util_cm` | entero | 200 | 50–1000 | FR-NIV-01 |
 | `i_marcha_a` | decimal | 0,5 | 0,2–10 | P6 |
-| `i_seco_a` | decimal | sin configurar | 0,2–20 y > `i_marcha_a` | P6 |
+| `i_seco_a` | decimal | sin configurar | 0,2–20 y > `i_marcha_a`; no vacío si ya tiene valor (FR-BOM-03) | P6 |
 
 Parámetros de campo (interfaz `mqtt`, NVS, efecto inmediato; valores de §4.4):
 
@@ -1324,8 +1336,8 @@ borra los bloqueos, los intentos, el total del medidor ni la calibración, y no 
 Tras la pulsación, el portal heredado (clima FR-POR-01/08) es un AP abierto durante 10 min:
 quien esté al alcance de radio puede aprovisionar antes que el propietario, cambiar el Wi-Fi y
 el broker, y cambiar los parámetros del nodo que el portal muestra (desactivar sondas, con el
-evento `sondas_config`, o la calibración). Si cambia el broker, el aviso de FR-VIG-03 no llega
-al propietario; solo llega el de FR-VIG-01 (nodo caído a los 20 min). Riesgo aceptado por
+evento `sondas_config`, o la calibración). Si cambia el broker, los avisos de FR-VIG-02, FR-VIG-03 y
+FR-VIG-04 no llegan al propietario; solo llega el de FR-VIG-01 (nodo caído a los 20 min). Riesgo aceptado por
 escrito, porque requiere presencia física para la pulsación de 10 s [user, 2026-11-28, Q-02].
 Mientras nadie aprovisione, cada reinicio (por ejemplo, un corte del inversor) vuelve a abrir el
 AP otros 10 min (clima FR-POR-08); el riesgo aceptado lo incluye [user, 2026-11-28, Q-08].
