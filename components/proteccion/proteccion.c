@@ -65,12 +65,12 @@ static void emitir(prot_salida_t *s, prot_ev_tipo_t t, int a, int b, int c, int 
 
 static void rechazo(prot_t *p, uint32_t t_ms) { p->rechazo_hasta_ms = t_ms + 2000u; }
 
-static void aplicar_val(prot_t *p, const prot_entrada_t *e, val_evento_t ev, prot_salida_t *s)
+static val_accion_t aplicar_val(prot_t *p, const prot_entrada_t *e, val_evento_t ev, prot_salida_t *s)
 {
     val_estado_t desde = p->val.estado;
     val_entrada_t ve = { ev, p->finales, !prot_sonda_mojada(p), e->t_ms, prot_g_ciego(p), prot_g_bateria(p) };
     val_accion_t a = val_evento(&p->val, &ve);
-    if (a.fila == 0) return;
+    if (a.fila == 0) return a;
     emitir(s, PEV_VAL, a.fila, desde, p->val.estado, ev);
     if (a.motor == VMOT_CERRAR) p->motor = ES_MOTOR_CERRAR;
     else if (a.motor == VMOT_ABRIR) p->motor = ES_MOTOR_ABRIR;
@@ -83,20 +83,23 @@ static void aplicar_val(prot_t *p, const prot_entrada_t *e, val_evento_t ev, pro
                                : a.rechazo == VRECH_ESTADO ? 6 : 1, 0, 0, 0);
     }
     if ((a.fila == 6 || a.fila == 12) && e->hora_valida) p->ultimo_mov_s = e->ahora_s;   /* movimiento completo */
+    if (a.fila == 14 || a.fila == 30) p->pospuesto = false;             /* ejercicio completado (FR-EJE-04) */
+    return a;
 }
 
-static void aplicar_bom(prot_t *p, const prot_entrada_t *e, bom_evento_t ev, prot_salida_t *s)
+static bom_accion_t aplicar_bom(prot_t *p, const prot_entrada_t *e, bom_evento_t ev, prot_salida_t *s)
 {
     bom_estado_t desde = p->bom.estado;
     bom_entrada_t be = { ev, p->flotador_agua, p->nivel_valido, p->nivel_pct, e->t_s };
     bom_accion_t a = bom_evento(&p->bom, &be);
-    if (a.fila == 0) return;
+    if (a.fila == 0) return a;
     emitir(s, PEV_BOM, a.fila, desde, p->bom.estado, ev);
     if (a.evento_bloqueada) emitir(s, PEV_BOMBA_BLOQUEADA, 0, 0, 0, 0);
     if (a.rechazo != BRECH_NINGUNO && ev == BEV_PULSACION) {     /* patrón de rechazo (§8): B08, B16 */
         rechazo(p, e->t_ms);
         emitir(s, PEV_RECHAZO, a.rechazo == BRECH_NIVEL_BAJO ? 4 : 2, 0, 0, 0);
     }
+    return a;
 }
 
 static bool clase_falla(int c) { return c == -1 || c == SON_ABIERTA || c == SON_CORTO || c == SON_INDETERMINADA; }
@@ -244,10 +247,53 @@ static void salidas(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
     s->zumbador = z && p->cfg.zumbador_activo;                 /* FR-LOC-05 */
 }
 
+static const char *val_rechazo_nombre(val_rechazo_t r)
+{
+    switch (r) {
+    case VRECH_FUGA_ACTIVA: return "fuga_activa";
+    case VRECH_OCUPADO: return "ocupado";
+    case VRECH_SONDAS_EN_FALLA: return "sondas_en_falla";
+    case VRECH_BATERIA_CRITICA: return "bateria_critica";
+    case VRECH_ESTADO: return "estado";
+    default: return NULL;
+    }
+}
+
+static const char *bom_rechazo_nombre(bom_rechazo_t r)
+{
+    return r == BRECH_SIN_AGUA ? "sin_agua" : r == BRECH_NIVEL_BAJO ? "nivel_bajo" : r == BRECH_BLOQUEADA ? "bloqueada" : NULL;
+}
+
+/* FR-ORD-01: aplica la orden del paso y deja la respuesta en la salida */
+static void orden(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
+{
+    s->hay_resp = true;
+    s->resp_bomba = e->orden >= PORD_CORTAR;
+    if (e->orden == PORD_POSPONER) {                                    /* FR-EJE-04 (R-11) */
+        if (p->pospuesto) { s->resp_fila = 0; s->resp_rechazo = "estado"; return; }
+        p->pospuesto = true;
+        p->ultimo_mov_s = e->hora_valida ? e->ahora_s : 0;              /* sin hora: cuenta desde la primera válida */
+        s->resp_fila = 13;                                              /* ref. de la cuenta de V13 */
+        return;
+    }
+    if (!s->resp_bomba) {
+        static const val_evento_t EV[] = { [PORD_CERRAR] = VEV_CERRAR, [PORD_ABRIR] = VEV_ABRIR, [PORD_EJERCICIO] = VEV_EJERCICIO };
+        val_accion_t a = aplicar_val(p, e, EV[e->orden], s);
+        s->resp_fila = a.fila;
+        s->resp_rechazo = val_rechazo_nombre(a.rechazo);
+        return;
+    }
+    static const bom_evento_t EB[] = { [PORD_CORTAR] = BEV_CORTAR, [PORD_PERMITIR] = BEV_PERMITIR, [PORD_REARMAR] = BEV_REARMAR };
+    bom_accion_t a = aplicar_bom(p, e, EB[e->orden], s);
+    s->resp_fila = a.fila;
+    s->resp_rechazo = bom_rechazo_nombre(a.rechazo);
+}
+
 void prot_paso(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
 {
     s->n_ev = 0;
     s->persistir = false;
+    s->hay_resp = false; s->resp_bomba = false; s->resp_fila = 0; s->resp_rechazo = NULL;
     p->t_s = e->t_s;
     /* Entradas digitales con antirrebote (FR-IO-05) */
     bool fa = es_antirrebote(&p->ar_abierta, e->t_ms, e->fin_abierta);
@@ -277,6 +323,7 @@ void prot_paso(prot_t *p, const prot_entrada_t *e, prot_salida_t *s)
         aplicar_val(p, e, VEV_PULSACION_LARGA, s);
         aplicar_bom(p, e, BEV_PULSACION, s);
     }
+    if (e->orden != PORD_NINGUNA && p->arrancado) orden(p, e, s);    /* FR-ORD-01 */
     if (e->hay_medidas) medidas(p, e, s);
     if (e->hay_corriente) corriente(p, e, s);
     aplicar_val(p, e, VEV_TICK, s);                             /* V07 */

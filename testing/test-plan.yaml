@@ -1588,6 +1588,21 @@ tests:
       motivo desconocido, campo extra, clave repetida, basura al final y escapes → payload
     impl: tests/host/test_ordenes.c
     status: not_run
+  - id: TC-ORD-A2
+    shape: atomic
+    kind: standard
+    wave: 1
+    phase: 2
+    tier: host
+    verifies: [FR-ORD-01, FR-ORD-04, FR-EJE-04]
+    needs: [hosted-ci]
+    expect: >
+      órdenes en el núcleo de protección sobre la planta simulada: cerrar (V05, cerrada_por=orden, sin bloqueo), abrir en
+      CERRANDO (ocupado), con fuga (fuga_activa), cerrar en CERRADA (ignorada, fila 0), abrir seca (V08), cortar, permitir sin
+      agua (sin_agua), rearmar con nivel bajo (nivel_bajo) y en BLOQUEADA (bloqueada); posponer una vez y la segunda con estado;
+      ejercicio por orden (V13); sin orden, sin respuesta
+    impl: tests/host/test_proteccion.c (escenario ordenes)
+    status: not_run
   - id: TC-PUB-A4
     shape: atomic
     kind: standard
