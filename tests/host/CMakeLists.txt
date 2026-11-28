@@ -149,7 +149,7 @@ add_test(NAME TC-IO-A1 COMMAND test_es)
 add_executable(test_proteccion test_proteccion.c ${COMP}/proteccion/proteccion.c ${COMP}/es/es.c ${NUCLEOS})
 target_include_directories(test_proteccion PRIVATE ${NUCLEOS_INC} ${COMP}/proteccion/include)
 target_link_libraries(test_proteccion m)
-foreach(caso arranque fuga arranque_mojado restaurar ads sondas seco flotador bateria boton ejercicio flotador_falla vref ciego falla_vref rearme_reinicio portal)
+foreach(caso arranque fuga arranque_mojado restaurar ads sondas seco flotador bateria boton ejercicio flotador_falla vref ciego falla_vref rearme_reinicio portal ordenes)
   add_test(NAME TC-PROT-A1-${caso} COMMAND test_proteccion ${caso})
 endforeach()
 

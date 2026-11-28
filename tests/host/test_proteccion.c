@@ -37,6 +37,7 @@ typedef struct {
     uint32_t t_log[512];
     int n_log;
     uint32_t motor_movido_ms;   /* primera vez con el motor en marcha (o 0) */
+    int orden;                  /* orden para el próximo paso (PORD_*) */
 } sim_t;
 
 static void sim_iniciar(sim_t *x, const prot_persistente_t *nvs, double pos)
@@ -56,7 +57,9 @@ static void paso(sim_t *x)
     prot_entrada_t e = { .t_ms = x->t, .t_s = x->t / 1000,
                          .fin_abierta = pl->pos >= 1.0, .fin_cerrada = pl->pos <= 0.0,
                          .flotador_agua = pl->flotador_agua, .red_presente = pl->red, .boton = pl->boton,
-                         .conectado = true, .hora_valida = pl->hora_valida, .hora_local = pl->hora_local, .ahora_s = pl->ahora_s };
+                         .conectado = true, .hora_valida = pl->hora_valida, .hora_local = pl->hora_local, .ahora_s = pl->ahora_s,
+                         .orden = x->orden };
+    x->orden = PORD_NINGUNA;
     if (x->t % 250 == 0) {
         e.hay_medidas = true;
         for (int k = 0; k < 3; k++) e.ads_ok[k] = pl->ads_ok[k];
@@ -81,6 +84,9 @@ static void paso(sim_t *x)
 }
 
 static void correr(sim_t *x, uint32_t hasta_ms) { while (x->t < hasta_ms) paso(x); }
+
+/* Una orden en el paso siguiente; devuelve la salida de ese paso (FR-ORD-01) */
+static prot_salida_t ordenar(sim_t *x, int o) { x->orden = o; paso(x); return x->s; }
 
 /* primer instante ≥ desde de un evento de ese tipo (y a, si a ≥ 0); UINT32_MAX si no hay */
 static uint32_t cuando(const sim_t *x, prot_ev_tipo_t t, int a, uint32_t desde)
@@ -398,6 +404,57 @@ static void portal(void)
     OK(cuantos(&y, PEV_PORTAL, -1) == 0, "portal con la válvula en CERRANDO");
 }
 
+/* FR-ORD-01: cada orden responde con su fila o con un rechazo con motivo; FR-ORD-04; FR-EJE-04 */
+static void ordenes(void)
+{
+    static sim_t x; sim_iniciar(&x, &LIMPIO, 1.0);
+    correr(&x, 2000);
+    prot_salida_t r = ordenar(&x, PORD_CERRAR);                 /* V05; FR-ORD-04: fuga_remota es una orden más */
+    OK(r.hay_resp && !r.resp_bomba && r.resp_fila == 5 && !r.resp_rechazo && x.p.val.cerrada_por == VCP_ORDEN && !x.p.val.bloqueo_fuga,
+       "cerrar: fila %d, rechazo %s", r.resp_fila, r.resp_rechazo ? r.resp_rechazo : "-");
+    r = ordenar(&x, PORD_ABRIR);                                 /* V19: en marcha */
+    OK(r.resp_fila == 19 && r.resp_rechazo && !strcmp(r.resp_rechazo, "ocupado"), "abrir en CERRANDO: %s", r.resp_rechazo ? r.resp_rechazo : "-");
+    correr(&x, x.t + 4000);
+    x.pl.sonda[1] = MOJADA; correr(&x, x.t + 1600);
+    r = ordenar(&x, PORD_ABRIR);                                 /* V09 */
+    OK(r.resp_fila == 9 && r.resp_rechazo && !strcmp(r.resp_rechazo, "fuga_activa") && x.p.val.estado == VAL_CERRADA, "abrir con fuga: %s", r.resp_rechazo ? r.resp_rechazo : "-");
+    x.pl.sonda[1] = SECA; correr(&x, x.t + 1000);
+    r = ordenar(&x, PORD_CERRAR);                                /* CERRADA × cerrar: ignorada */
+    OK(r.hay_resp && r.resp_fila == 0 && !r.resp_rechazo, "cerrar en CERRADA: fila %d", r.resp_fila);
+    r = ordenar(&x, PORD_ABRIR);                                 /* V08 */
+    OK(r.resp_fila == 8 && !r.resp_rechazo, "abrir seca: fila %d", r.resp_fila);
+    /* bomba */
+    r = ordenar(&x, PORD_CORTAR);
+    OK(r.resp_bomba && r.resp_fila == 4 && x.p.bom.estado == BOM_CORTADA, "cortar: fila %d", r.resp_fila);
+    x.pl.flotador_agua = false; correr(&x, x.t + 500);
+    r = ordenar(&x, PORD_PERMITIR);
+    OK(r.resp_rechazo && !strcmp(r.resp_rechazo, "sin_agua"), "permitir sin agua: %s", r.resp_rechazo ? r.resp_rechazo : "-");
+    x.pl.flotador_agua = true; correr(&x, x.t + 500);
+    x.pl.nivel_pct_real = 5; correr(&x, x.t + 1000);
+    r = ordenar(&x, PORD_REARMAR);
+    OK(r.resp_rechazo && !strcmp(r.resp_rechazo, "nivel_bajo"), "rearmar con nivel bajo: %s", r.resp_rechazo ? r.resp_rechazo : "-");
+    /* BLOQUEADA → rearmar rechaza con bloqueada */
+    static sim_t y;
+    prot_persistente_t nvs = { false, VCP_NINGUNO, BOM_BLOQUEADA, BMOT_NINGUNO, 3, false };
+    sim_iniciar(&y, &nvs, 1.0); correr(&y, 2000);
+    r = ordenar(&y, PORD_REARMAR);
+    OK(r.resp_fila == 14 && r.resp_rechazo && !strcmp(r.resp_rechazo, "bloqueada") && y.p.bom.estado == BOM_BLOQUEADA, "rearmar en BLOQUEADA");
+    /* FR-EJE-04: posponer una vez por ciclo; la segunda se rechaza con estado */
+    y.pl.hora_valida = true; y.pl.ahora_s = 1800000000u; correr(&y, y.t + 300);
+    r = ordenar(&y, PORD_POSPONER);
+    OK(!r.resp_rechazo && y.p.ultimo_mov_s == 1800000000u, "posponer: rechazo %s, cuenta %u", r.resp_rechazo ? r.resp_rechazo : "-", (unsigned)y.p.ultimo_mov_s);
+    r = ordenar(&y, PORD_POSPONER);
+    OK(r.resp_rechazo && !strcmp(r.resp_rechazo, "estado"), "segundo posponer: %s", r.resp_rechazo ? r.resp_rechazo : "-");
+    /* ejercicio por orden: V13 con las mismas guardas */
+    r = ordenar(&y, PORD_EJERCICIO);
+    OK(r.resp_fila == 13 && y.p.val.estado == VAL_CERRANDO && y.p.val.cerrada_por == VCP_EJERCICIO, "ejercicio por orden: fila %d", r.resp_fila);
+    correr(&y, y.t + 8000);
+    OK(!y.p.pospuesto, "el ejercicio completado no reinicia el posponer");
+    /* sin orden, ninguna respuesta */
+    paso(&y);
+    OK(!y.s.hay_resp, "respuesta sin orden");
+}
+
 /* FR-EJE-01 + FR-EJE-03: el ejercicio a la hora 3 con los días cumplidos; una fuga a mitad de
  * cierre termina CERRADA con bloqueo */
 static void ejercicio(void)
@@ -497,6 +554,7 @@ int main(int argc, char **argv)
     else if (!strcmp(c, "falla_vref")) falla_vref();
     else if (!strcmp(c, "rearme_reinicio")) rearme_reinicio();
     else if (!strcmp(c, "portal")) portal();
+    else if (!strcmp(c, "ordenes")) ordenes();
     else { printf("caso desconocido: %s\n", c); return 2; }
     printf("%s: %d fallos\n", c, fallos);
     return fallos != 0;

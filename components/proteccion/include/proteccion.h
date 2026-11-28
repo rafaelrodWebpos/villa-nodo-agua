@@ -64,6 +64,9 @@ typedef struct {
     int hora_local;
     uint32_t ahora_s;
     bool conectado;
+    /* orden MQTT ya validada en su forma (FR-ORD-02), como mucho una por paso */
+    enum { PORD_NINGUNA, PORD_CERRAR, PORD_ABRIR, PORD_EJERCICIO, PORD_POSPONER,
+           PORD_CORTAR, PORD_PERMITIR, PORD_REARMAR } orden;
 } prot_entrada_t;
 
 typedef enum {
@@ -94,6 +97,13 @@ typedef struct {
     prot_evento_t ev[PROT_MAX_EVENTOS];
     int n_ev;
     bool persistir;          /* cambió algo de prot_persistente_t: guardarlo ya */
+    /* respuesta a la orden del paso (FR-ORD-01): rechazo con motivo, o fila 0 = ignorada
+     * (se responde con el `…/state` actual) o la fila ejecutada (sale su `…/state`) */
+    bool hay_resp;
+    bool resp_bomba;         /* la orden era de bomba/set */
+    int resp_fila;
+    const char *resp_rechazo;   /* NULL o fuga_activa | ocupado | sondas_en_falla | bateria_critica | estado |
+                                 * sin_agua | nivel_bajo | bloqueada */
 } prot_salida_t;
 
 typedef struct {
@@ -136,6 +146,7 @@ typedef struct {
     uint32_t marcha_cambio_ms;
     /* ejercicio y zumbador */
     uint32_t ultimo_mov_s;
+    bool pospuesto;                     /* FR-EJE-04: ya hubo un posponer_ejercicio en este ciclo */
     bool fuga_activa;
     uint32_t fuga_desde_ms;
     bool silenciado;
