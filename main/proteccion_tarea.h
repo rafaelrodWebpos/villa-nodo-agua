@@ -16,3 +16,12 @@ void proteccion_iniciar(const proteccion_ganchos_t *g);
 
 /* FR-MED-03: guarda ya el total y los pulsos del medidor (antes de un reinicio ordenado) */
 void medidor_guardar_ya(void);
+
+#include "cola_eventos.h"
+#include "medidor.h"
+/* Eventos del medidor (consumo_casa_cerrada, medidor_falla) para el publicador; false si no hay */
+bool medidor_evento(cev_t *ev, uint32_t espera_ms);
+/* Lectura para el tópico `medidor` (FR-MED-04) */
+void medidor_lectura(med_lectura_t *l);
+/* `permitir_consumo` (FR-MED-06/10) con el reloj y el margen del nodo */
+med_resultado_t medidor_permitir(int min, int *hasta_min);

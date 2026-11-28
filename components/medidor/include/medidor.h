@@ -4,6 +4,7 @@
  * Núcleo puro, sin ESP-IDF; lo compila tests/host. No toca la válvula ni la bomba (FR-MED-07). */
 #pragma once
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #define MED_MIN_MAX 720            /* `min` admitido: 1…720 (FR-MED-06) */
@@ -81,3 +82,16 @@ typedef struct { bool hay_base; float base_cm; bool avisado; } med_falla_t;
 void med_falla_pulso(med_falla_t *f);
 /* Con cada nivel válido; true si toca publicar medidor_falla (una vez, hasta el siguiente pulso) */
 bool med_falla_nivel(med_falla_t *f, float nivel_cm);
+
+/* ---- `medidor/set` (FR-MED-06, FR-ORD-02, P15) ---- */
+#define MED_ORDEN_MAX 256              /* más bytes: rechazo `payload` */
+typedef enum { MORD_OK, MORD_PAYLOAD, MORD_ACCION } med_orden_t;
+/* {"accion":"permitir_consumo","min":<1–720>}: JSON no válido, campo de tipo incorrecto, `min`
+ * ausente o fuera de rango → MORD_PAYLOAD; acción desconocida → MORD_ACCION (FR-ORD-02). */
+med_orden_t med_orden(const char *p, size_t n, int *min);
+const char *med_orden_motivo(med_orden_t r);    /* "payload" | "accion" | "" */
+
+/* ---- tópico `medidor` (FR-MED-04, §13.1) ---- */
+typedef struct { double total_l, caudal_lh; uint32_t pulsos; double galones_por_pulso; bool ts_valido; uint32_t ts; } med_lectura_t;
+/* {"total_l":…,"caudal_lh":…,"pulsos":…,"galones_por_pulso":…[,"ts":…]}; -1 si no cabe */
+int med_json(char *buf, size_t cap, const med_lectura_t *l);

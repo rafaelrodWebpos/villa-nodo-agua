@@ -8,6 +8,7 @@
 #include "esp_task_wdt.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "nvs.h"
@@ -46,6 +47,35 @@ static med_falla_t s_mf;
 static med_periodo_t s_periodo;                 /* FR-MED-06, en RAM */
 static struct { double galones_por_pulso; int alerta_l, ventana_min, margen_min, diario_l; } s_mcfg =
     { 1.0, 20, 60, 120, 50 };                   /* §19, valores de fábrica */
+static QueueHandle_t s_q_med;                   /* eventos del medidor hacia el publicador (sin red aquí, §2.3) */
+static double s_caudal;                         /* último caudal de A8 */
+
+static void med_encolar(const char *tipo, const char *extra, uint32_t t_ms, bool ts_valido, uint32_t ts)
+{
+    cev_t ev = { .tipo = tipo, .t_ms = t_ms, .ts_valido = ts_valido, .ts = ts };
+    snprintf(ev.extra, sizeof ev.extra, "%s", extra);
+    if (s_q_med) xQueueSend(s_q_med, &ev, 0);
+}
+
+bool medidor_evento(cev_t *ev, uint32_t espera_ms)
+{
+    return s_q_med && xQueueReceive(s_q_med, ev, pdMS_TO_TICKS(espera_ms)) == pdTRUE;
+}
+
+void medidor_lectura(med_lectura_t *l)
+{
+    xSemaphoreTake(s_mmux, portMAX_DELAY);
+    *l = (med_lectura_t){ s_mt.total_l, s_caudal, s_mt.pulsos, s_mcfg.galones_por_pulso, false, 0 };
+    xSemaphoreGive(s_mmux);
+}
+
+med_resultado_t medidor_permitir(int min, int *hasta_min)
+{
+    xSemaphoreTake(s_mmux, portMAX_DELAY);
+    med_resultado_t r = med_permitir(&s_periodo, seg(), min, s_mcfg.margen_min, hasta_min);
+    xSemaphoreGive(s_mmux);
+    return r;
+}
 
 static void med_leer(void)
 {
@@ -74,8 +104,9 @@ void medidor_guardar_ya(void)
 }
 
 /* Un paso del medidor: muestra del reed cada 10 ms y, con medidas nuevas, avisos */
-static void med_paso(uint32_t t_ms, uint32_t t_s, bool cerrado, bool hay_medidas, const prot_t *p)
+static void med_paso(uint32_t t_ms, uint32_t t_s, bool cerrado, bool hay_medidas, bool hora, uint32_t ahora_s, const prot_t *p)
 {
+    char x[CEV_EXTRA_LEN];
     xSemaphoreTake(s_mmux, portMAX_DELAY);
     if (med_muestra(&s_mp, t_ms, cerrado)) {                                  /* FR-MED-01 */
         double l = med_sumar(&s_mt, s_mcfg.galones_por_pulso);                /* FR-MED-02 */
@@ -84,9 +115,20 @@ static void med_paso(uint32_t t_ms, uint32_t t_s, bool cerrado, bool hay_medidas
     }
     if (hay_medidas) {
         med_aviso_t a = med_consumo_evaluar(&s_mc, t_s, p->cfg.casa_cerrada, s_mcfg.ventana_min, s_mcfg.alerta_l, s_mcfg.diario_l);
-        if (a.hora) ESP_LOGW(TAG, "eve: consumo_casa_cerrada motivo=hora l=%.1f ventana_min=%d", a.l_hora, s_mcfg.ventana_min);   /* A9, FR-MED-05 */
-        if (a.dia) ESP_LOGW(TAG, "eve: consumo_casa_cerrada motivo=diario l=%.1f", a.l_dia);                                       /* A9, FR-MED-09 */
-        if (p->nivel_valido && med_falla_nivel(&s_mf, p->nivel_cm)) ESP_LOGW(TAG, "eve: medidor_falla");                         /* A9, FR-MED-08 */
+        if (a.hora) {                                                         /* A9, FR-MED-05 */
+            ESP_LOGW(TAG, "eve: consumo_casa_cerrada motivo=hora l=%.1f ventana_min=%d", a.l_hora, s_mcfg.ventana_min);
+            snprintf(x, sizeof x, "\"motivo\":\"hora\",\"l\":%.1f,\"ventana_min\":%d", a.l_hora, s_mcfg.ventana_min);
+            med_encolar("consumo_casa_cerrada", x, t_ms, hora, ahora_s);
+        }
+        if (a.dia) {                                                          /* A9, FR-MED-09 */
+            ESP_LOGW(TAG, "eve: consumo_casa_cerrada motivo=diario l=%.1f", a.l_dia);
+            snprintf(x, sizeof x, "\"motivo\":\"diario\",\"l\":%.1f", a.l_dia);
+            med_encolar("consumo_casa_cerrada", x, t_ms, hora, ahora_s);
+        }
+        if (p->nivel_valido && med_falla_nivel(&s_mf, p->nivel_cm)) {         /* A9, FR-MED-08 */
+            ESP_LOGW(TAG, "eve: medidor_falla");
+            med_encolar("medidor_falla", "", t_ms, hora, ahora_s);
+        }
     }
     if (med_toca_guardar(&s_mg, t_s, s_mt.pulsos)) med_escribir(t_s);         /* FR-MED-03 */
     xSemaphoreGive(s_mmux);
@@ -97,6 +139,7 @@ static void log_med(uint32_t t_s)              /* A8 y caudal (FR-MED-04) */
     static double total0; static uint32_t t0; static bool hay0;
     xSemaphoreTake(s_mmux, portMAX_DELAY);
     double caudal = hay0 ? med_caudal_lh(s_mt.total_l - total0, t_s - t0) : 0.0;
+    s_caudal = caudal;
     total0 = s_mt.total_l; t0 = t_s; hay0 = true;
     ESP_LOGI(TAG, "med: pulsos=%lu total_l=%.2f caudal_lh=%.0f nvs=%d", (unsigned long)s_mt.pulsos, s_mt.total_l, caudal,
              s_mg.hecho && s_mg.pulsos == s_mt.pulsos);
@@ -269,7 +312,7 @@ static void tarea_proteccion(void *arg)
         e.conectado = s_g.conectado && s_g.conectado();
         prot_paso(&s_prot, &e, &s);
         es_hw_salidas(s.in1, s.in2, s.rele, s.led_verde, s.led_rojo, s.zumbador);
-        med_paso(e.t_ms, e.t_s, med_cerrado, e.hay_medidas, &s_prot);
+        med_paso(e.t_ms, e.t_s, med_cerrado, e.hay_medidas, e.hora_valida, e.ahora_s, &s_prot);
         for (int i = 0; i < s.n_ev; i++) registrar(&s.ev[i]);
         if (s.persistir) { prot_persistente_t p = prot_persistente(&s_prot); nvs_escribir(&p); }
         for (int i = 0; i < s.n_ev; i++)                       /* FR-LOC-06, tras guardar FR-PER-01 */
@@ -285,6 +328,7 @@ void proteccion_iniciar(const proteccion_ganchos_t *g)
     s_g = *g;
     s_mux = xSemaphoreCreateMutex();
     s_mmux = xSemaphoreCreateMutex();
+    s_q_med = xQueueCreate(8, sizeof(cev_t));
     med_leer();                                                /* FR-MED-03: restaurar total y pulsos */
     med_guardado(&s_mg, seg(), s_mt.pulsos);
     prot_config_t cfg;
