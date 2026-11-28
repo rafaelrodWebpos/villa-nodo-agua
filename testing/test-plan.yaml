@@ -1574,7 +1574,13 @@ tests:
       payloads de §13.1 (valvula/state, bomba/state, fuga/n, flotador, red, nivel, presion, corriente_bomba, bateria) con y sin ts,
       medidas sin v cuando no son válidas; status con eventos_perdidos al final; búfer corto → -1
     impl: tests/host/test_publicador.c
-    status: not_run
+    status: successful
+    commit: ace19d3
+    date: 2026-11-28
+    ci_run: 46170629925
+    evidence: CI host-tests (ctest), log del run 46170629925
+    observed: >
+      FSD 0.8.11: payloads de §13.1 con y sin ts y medida no válida sin v; status con eventos_perdidos; búfer corto → -1.
   - id: TC-ORD-A1
     shape: atomic
     kind: negative
@@ -1587,7 +1593,13 @@ tests:
       valvula/set, bomba/set y config/set: órdenes válidas; 300 bytes, `{`, acción desconocida (accion), acción numérica,
       motivo desconocido, campo extra, clave repetida, basura al final y escapes → payload
     impl: tests/host/test_ordenes.c
-    status: not_run
+    status: successful
+    commit: ace19d3
+    date: 2026-11-28
+    ci_run: 46170629925
+    evidence: CI host-tests (ctest), log del run 46170629925
+    observed: >
+      FSD 0.8.11: órdenes válidas de valvula/set, bomba/set y config/set; 300 bytes, `{`, acción desconocida (accion), acción numérica, motivo desconocido, campo extra, clave repetida, basura y escapes → payload.
   - id: TC-ORD-A2
     shape: atomic
     kind: standard
@@ -1602,7 +1614,13 @@ tests:
       agua (sin_agua), rearmar con nivel bajo (nivel_bajo) y en BLOQUEADA (bloqueada); posponer una vez y la segunda con estado;
       ejercicio por orden (V13); sin orden, sin respuesta
     impl: tests/host/test_proteccion.c (escenario ordenes)
-    status: not_run
+    status: successful
+    commit: ace19d3
+    date: 2026-11-28
+    ci_run: 46170629925
+    evidence: CI host-tests (ctest), log del run 46170629925
+    observed: >
+      FSD 0.8.11: cerrar (V05 sin bloqueo), ocupado, fuga_activa, ignorada en CERRADA, V08, cortar, sin_agua, nivel_bajo, bloqueada; posponer una vez y la segunda con estado; ejercicio por orden (V13).
   - id: TC-PUB-A4
     shape: atomic
     kind: standard
