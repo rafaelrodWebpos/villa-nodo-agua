@@ -9,7 +9,7 @@ FSD: `docs/Functionality/FSD-nodo-agua.md`. IDs: `FR-<ÁREA>-nn`, `NFR-<ÁREA>-n
 | # | Debe ser cierto | Dónde mirar | Evidencia |
 |---|---|---|---|
 | 1 | Todo Must/Should tiene contrato con columna o campo «No debe ocurrir» / `prohibited_outcomes` | FSD, capítulo de cada requisito | La fila de la tabla de contratos o un bloque `id:` YAML con su ID |
-| 2 | Toda fila V01–V29 y V03b (§5.3) y B01–B16 (§6.2) tiene desde, evento, guarda, hacia, acción y límite, y las reglas de completitud de §5.3 y §6.2 están escritas. Las filas T01–T26 se heredan de clima §6.3 (FSD del piloto 0.9.9) | FSD §5.3, §6.2 | Tablas completas |
+| 2 | Toda fila V01–V30 y V03b (§5.3) y B01–B16 (§6.2) tiene desde, evento, guarda, hacia, acción y límite, y las reglas de completitud de §5.3 y §6.2 están escritas. Las filas T01–T26 se heredan de clima §6.3 (FSD del piloto 0.9.9) | FSD §5.3, §6.2 | Tablas completas |
 | 3 | No queda ningún `(propuesto` sin decidir ni ningún `(assumed)` | FSD | grep |
 | 4 | No hay `{{parámetros}}` sin enlazar (salvo las plantillas `{{ value_json.* }}` de HA) | FSD | grep |
 | 5 | Cada fase de §3 se puede empezar con lo que entregan las anteriores | FSD §3 frente a los contratos | Los criterios de salida citan solo IDs cuyos contratos no usan capacidades de fases posteriores |
