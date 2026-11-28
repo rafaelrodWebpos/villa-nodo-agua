@@ -39,6 +39,11 @@ void proteccion_foto(prot_foto_t *f);
 bool proteccion_orden(int pord);
 typedef struct { bool bomba; int fila; const char *rechazo; } prot_resp_t;
 bool proteccion_respuesta(prot_resp_t *r, uint32_t espera_ms);
+
+/* config/set (§16): la configuración de campo vigente, guardarla en NVS y aplicarla (FR-CFG-A1) */
+#include "configuracion.h"
+void config_actual(cfg_t *c);
+bool config_guardar_y_aplicar(const cfg_t *c);
 /* Lectura para el tópico `medidor` (FR-MED-04) */
 void medidor_lectura(med_lectura_t *l);
 /* `permitir_consumo` (FR-MED-06/10) con el reloj y el margen del nodo */

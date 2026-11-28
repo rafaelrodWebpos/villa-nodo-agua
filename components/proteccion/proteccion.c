@@ -35,6 +35,14 @@ void prot_iniciar(prot_t *p, const prot_config_t *cfg, const prot_persistente_t 
     p->guardado = prot_persistente(p);
 }
 
+void prot_reconfigurar(prot_t *p, const prot_config_t *c)
+{
+    p->cfg = *c;
+    p->val.t_carrera_max_ms = c->t_carrera_max_s * 1000u;
+    p->bom.intentos_max = c->intentos_max;
+    p->bom.nivel_critico_pct = c->nivel_critico_pct;
+}
+
 prot_persistente_t prot_persistente(const prot_t *p)
 {
     return (prot_persistente_t){ p->val.bloqueo_fuga, p->val.cerrada_por, p->bom.estado,

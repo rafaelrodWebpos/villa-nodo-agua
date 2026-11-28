@@ -1621,6 +1621,20 @@ tests:
     evidence: CI host-tests (ctest), log del run 46170629925
     observed: >
       FSD 0.8.11: cerrar (V05 sin bloqueo), ocupado, fuga_activa, ignorada en CERRADA, V08, cortar, sin_agua, nivel_bajo, bloqueada; posponer una vez y la segunda con estado; ejercicio por orden (V13).
+  - id: TC-CFG-A1
+    shape: atomic
+    kind: negative
+    wave: 3
+    phase: 2
+    tier: host
+    verifies: [FR-CFG-A1, FR-CFG-A2, FR-CFG-A3, FR-CFG-A4]
+    needs: [hosted-ci]
+    expect: >
+      catálogo de §19 (interfaz mqtt): t_seco_s=15 aceptado; 0, 9999 y xyz rechazados sin cambio; sonda_activa y los
+      parámetros del portal rechazados; tipos (bool, entero sin decimales); nivel_rearme_pct ≥ nivel_critico_pct + 10 en
+      los dos sentidos; mínimo y máximo de cada parámetro; config/state completo; NVS fuera de rango → valores de fábrica
+    impl: tests/host/test_configuracion.c
+    status: not_run
   - id: TC-PUB-A4
     shape: atomic
     kind: standard

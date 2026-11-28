@@ -6,4 +6,4 @@ idf_component_register(SRCS "main.c" "proteccion_tarea.c" "publicador_tarea.c"
                                      esp_event esp_netif esp_wifi nvs_flash
                                      identidad conectividad portal udplog diagnostico publicador ha_discovery hora
                                      esp_timer freertos lwip esp_driver_uart
-                                     esp_hal_usb espressif__mqtt es proteccion medidor eventos ordenes fugas)
+                                     esp_hal_usb espressif__mqtt es proteccion medidor eventos ordenes fugas configuracion)
